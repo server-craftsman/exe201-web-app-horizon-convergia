@@ -1,16 +1,22 @@
 export const ROUTER_URL = {
     AUTH: {
-        LOGIN: "/auth/login",
-        SIGN_UP: "/auth/sign-up",
-        FORGOT_PASSWORD: "/auth/forgot-password",
-        RESET_PASSWORD: "/auth/reset-password",
-        VERIFY_EMAIL: "/auth/verify-email",
+        LOGIN: "/dang-nhap",
+        SIGN_UP: "/dang-ky",
+        FORGOT_PASSWORD: "/quen-mat-khau",
+        RESET_PASSWORD: "/doi-mat-khau",
+        VERIFY_EMAIL: "/xac-thuc-email",
         UNAUTHOZIZED: "/auth/unauthorized",
     },
     COMMON: {
-        HOME: "/home",
+        HOME: "/",
         ABOUT: "/about",
         CONTACT: "/contact",
         FAQ: "/faq",
+    },
+    CLIENT: {
+        BUY_MOTOR: "/mua-xe",
+        SELL_MOTOR: "/ban-xe",
+        ACCESSORIES: "/phu-kien",
+        NEWS: "/tin-tuc",
     }
 };

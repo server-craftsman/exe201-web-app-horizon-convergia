@@ -1,23 +1,21 @@
 import { Suspense } from "react";
-// import ScrollToTopButton from "./components/generic/home/ScrollToTopButton";
 // import Loading from "./app/redux/Loading";
-import { useSelector } from "react-redux";
-// import RunRoutes from "./routes/run/index";
+// import { useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import RunRoutes from "./routes/run";
+import ScrollTopButton from "./components/common/ScrollTopButton.com";
 export const App = () => {
   // const isLoading = useSelector((state: any) => state.loading);
 
   return (
     <>
-      {/* {isLoading && <Loading />}
+      {/* {isLoading && <Loading />} */}
       <Suspense>
         <RunRoutes />
       </Suspense>
-      <ScrollToTopButton /> */}
-        <h1>Nguyễn Đan Huy</h1>
-      {/* <ToastContainer /> */}
+      <ScrollTopButton />
+      <ToastContainer />
     </>
   );
 };

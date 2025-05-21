@@ -1,29 +1,23 @@
-// import { Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 // import { lazy, useEffect } from "react";
 
-// //import context
+//import context
 // import { useAuth } from "../../contexts/AuthContext";
 
-// // Import router path
-// import { ROUTER_URL } from "../../consts/router.path.const";
+// Import router path
+import { ROUTER_URL } from "../../consts/router.path.const";
 // import { UserRole } from "../../models/prototype/User";
 
-// // Import guard routes
+// Import guard routes
 // import GuardProtectedRoute from "../protected/GuardProtectedRoute";
-// import GuardPublicRoute from "../unprotected/GuardGuestRoute";
+import GuardPublicRoute from "../unprotected/GuardGuestRoute";
 
-// // Import layout
-// const AdminLayout = lazy(() => import("../../layout/admin/AdminLayout"));
-// const InstructorLayout = lazy(() => import("../../layout/instructor/InstructorLayout"));
-// const StudentLayout = lazy(() => import("../../layout/student/StudentDashboard"));
+// Import layout
 
-// // Import sub paths
-// import { adminSubPaths } from "../sub-paths/adminSubPaths";
-// import { publicSubPaths } from "../publish/publicSubPaths";
-// import { instructorSubPaths } from "../sub-paths/instructorSubPaths";
-// import { studentSubPaths } from "../sub-paths/studentSubPaths";
+// Import sub paths
+import { publicSubPaths } from "../unprotected/GuestSubPaths";
 
-// const RunRoutes = (): JSX.Element => {
+const RunRoutes = () => {
 //   const { role } = useAuth();
 
 //   const getDefaultPath = (role: string) => {
@@ -86,21 +80,21 @@
 //     );
 //   };
 
-//   return (
-//     <Routes>
-//       {/* Public Routes */}
-//       {Object.entries(publicSubPaths).map(([key, routes]) =>
-//         routes.map((route) => (
-//           <Route key={route.path || "index"} path={route.path} element={key === ROUTER_URL.COMMON.HOME ? <GuardPublicRoute component={route.element} /> : route.element}>
-//             {route.children?.map((childRoute) => <Route key={childRoute.path} path={childRoute.path} element={childRoute.element} />)}
-//           </Route>
-//         ))
-//       )}
+  return (
+    <Routes>
+      {/* Public Routes */}
+      {Object.entries(publicSubPaths).map(([key, routes]) =>
+        routes.map((route) => (
+          <Route key={route.path || "index"} path={route.path} element={key === ROUTER_URL.COMMON.HOME ? <GuardPublicRoute component={route.element} /> : route.element}>
+            {route.children?.map((childRoute) => <Route key={childRoute.path} path={childRoute.path} element={childRoute.element} />)}
+          </Route>
+        ))
+      )}
 
-//       {/* Protected Routes */}
-//       {renderProtectedRoutes()}
-//     </Routes>
-//   );
-// };
+      {/* Protected Routes */}
+      {/* {renderProtectedRoutes()} */}
+    </Routes>
+  );
+};
 
-// export default RunRoutes;
+export default RunRoutes;

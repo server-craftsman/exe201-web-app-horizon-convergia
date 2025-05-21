@@ -1,6 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .body {
     background-color: #f0f0f0;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
 }
+
+.bg-primary {
+    @apply bg-gradient-to-r from-gray-900 to-gray-800
+}
+
+.bg-secondary {
+    @apply bg-gradient-to-r from-amber-500 to-amber-400
+}
+
+.text-primary {
+    @apply text-gray-100
+}
+
+.text-secondary {
+    @apply text-amber-400
+}
+
