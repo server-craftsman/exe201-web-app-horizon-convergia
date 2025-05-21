@@ -99,7 +99,6 @@ const NewsCategories: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-4">
             Khám Phá Theo <span className="text-amber-500">Chủ Đề</span>
           </h2>
-          // ... existing code ...
           <p className="text-gray-400 max-w-2xl mx-auto">
             Tìm kiếm các bài viết theo chủ đề yêu thích của bạn từ sản phẩm mới đến kỹ thuật bảo dưỡng
           </p>

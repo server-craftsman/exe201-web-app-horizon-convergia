@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import '../../assets/logo.png';
+import logo from '../../assets/logo.png';
 import SearchComponent from '../../components/common/Search.com';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -56,7 +56,7 @@ const HeaderLayout: React.FC = () => {
           >
             <Link to="/" className="flex items-center">
               <motion.img 
-                src="/src/assets/logo.png" 
+                src={logo} 
                 alt="Logo" 
                 className={`h-12 mr-5 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)] rounded-md border-2 border-amber-400 p-1 ${
                   isScrolled ? 'animate-none' : 'animate-pulse'
