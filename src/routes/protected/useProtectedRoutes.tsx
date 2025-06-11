@@ -5,7 +5,7 @@ import { UserRole } from "../../app/enums";
 import Loading from "../../app/screens/Loading";
 import { AdminRoutes } from "./access/adminPermission";
 import { ROUTER_URL } from "../../consts/router.path.const";
-import { useUserInfo } from "../../hooks/useUserInfo";
+import { useUserInfo } from "../../hooks";
 
 const useProtectedRoutes = (): RouteObject[] => {
   const user = useUserInfo();

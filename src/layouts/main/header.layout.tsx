@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import SearchComponent from '../../components/common/Search.com';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUserInfo } from '../../hooks/useUserInfo';
+import { useUserInfo } from '../../hooks';
 
 const HeaderLayout: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);

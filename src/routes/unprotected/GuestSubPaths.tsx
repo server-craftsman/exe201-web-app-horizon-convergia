@@ -1,7 +1,7 @@
 // import { lazy } from "react";
 import { ROUTER_URL } from "../../consts/router.path.const";
 import type { RouteObject } from "react-router-dom";
-import MainLayout from "../../layouts/main/main.layout";
+import MainLayout from "../../layouts/main/Main.layout";
 
 //================= PUBLIC SUB PATHS =================
 import HomePage from "../../pages/client/home";

@@ -1,6 +1,5 @@
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
 import { ROUTER_URL } from "../../consts/router.path.const";
 import { UserRole } from "../../app/enums";
 import GuardPublicRoute from "../unprotected/GuardGuestRoute";
@@ -8,7 +7,7 @@ import GuardProtectedRoute from "../protected/GuardProtectedRoute";
 import { publicSubPaths } from "../unprotected/GuestSubPaths";
 import AdminLayout from "../../layouts/admin/Admin.layout";
 import { AdminRoutes } from "../protected/access/adminPermission";
-import { useUserInfo } from "../../hooks/useUserInfo";
+import { useUserInfo, useAuth } from "../../hooks";
 
 const RunRoutes = () => {
   const user = useUserInfo();

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTER_URL } from '../../consts/router.path.const';
-import { useLogout } from '../../hooks/useAuth';
-import { useUserInfo } from '../../hooks/useUserInfo';
+import { useLogout, useUserInfo } from '../../hooks';
 
 const SidebarLayout: React.FC = () => {
   const location = useLocation();

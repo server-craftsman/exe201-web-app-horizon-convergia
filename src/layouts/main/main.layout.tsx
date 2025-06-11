@@ -1,5 +1,5 @@
-import HeaderLayout from './header.layout'
-import FooterLayout from './footer.layout'
+import HeaderLayout from './Header.layout'
+import FooterLayout from './Footer.layout'
 import { Outlet } from 'react-router-dom'
 
 const MainLayout = () => {
