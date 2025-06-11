@@ -8,22 +8,22 @@ import GuardProtectedRoute from "../protected/GuardProtectedRoute";
 import { publicSubPaths } from "../unprotected/GuestSubPaths";
 import AdminLayout from "../../layouts/admin/Admin.layout";
 import { AdminRoutes } from "../protected/access/adminPermission";
+import { useUserInfo } from "../../hooks/useUserInfo";
 
 const RunRoutes = () => {
-  const { getCurrentRole, isAuthenticated, getDefaultPath } = useAuth();
+  const user = useUserInfo();
+  const currentRole = user?.role as UserRole | null;
+  const { isAuthenticated, getDefaultPath } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentRole = getCurrentRole();
     if (currentRole && window.location.pathname === "/") {
       const defaultPath = getDefaultPath(currentRole);
       navigate(defaultPath, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, currentRole, getDefaultPath]);
 
   const renderProtectedRoutes = () => {
-    const currentRole = getCurrentRole();
-
     if (!currentRole || !isAuthenticated()) {
       return null;
     }
