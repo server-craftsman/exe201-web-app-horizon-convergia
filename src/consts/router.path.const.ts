@@ -18,5 +18,11 @@ export const ROUTER_URL = {
         SELL_MOTOR: "/ban-xe",
         ACCESSORIES: "/phu-kien",
         NEWS: "/tin-tuc",
+    },
+    ADMIN: {
+        BASE: "/admin",
+        USERS: "/admin/users",
+        SETTINGS: "/admin/settings",
+        UPDATE_USER_PROFILE: "/admin/update-user-profile",
     }
 };

@@ -1,0 +1,38 @@
+import { BaseService } from "../../app/api/base.service";
+// import type { ApiResponse } from "../../app/interface/apiResponse.interface";
+import type { LoginRequest } from "../../types/user/User.req.type";
+import type { UserResponse } from "../../types/user/User.res.type";
+import { API_PATH } from "../../consts/api.path.const";
+import { UserRole } from "../../app/enums";
+
+export const AuthService = {
+    login(params: LoginRequest) {
+        const query = new URLSearchParams({
+            email: params.email,
+            password: params.password,
+        }).toString();
+
+        return BaseService.post<UserResponse>({
+            url: `${API_PATH.AUTH.LOGIN}?${query}`,
+        });
+    },
+
+    logout() {
+        localStorage.removeItem("user");
+        localStorage.removeItem("role");
+        localStorage.removeItem("accessToken");
+    },
+
+    getAccessToken(): string | null {
+        return localStorage.getItem("accessToken");
+    },
+
+    getRole(): UserRole | null {
+        const role = localStorage.getItem("role");
+        return role as UserRole || null;
+    },
+
+    isAuthenticated(): boolean {
+        return !!this.getAccessToken();
+    }
+}

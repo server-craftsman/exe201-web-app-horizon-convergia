@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTER_URL } from '../../../consts/router.path.const';
+import { useLogin } from '../../../hooks/useAuth';
+import { helpers } from '../../../utils';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const login = useLogin();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log({ email, password, rememberMe });
+    if (!email || !password) {
+      helpers.notificationMessage("Vui lòng nhập email và mật khẩu", "error");
+      return;
+    }
+    login.mutate({ email: email.trim(), password: password.trim() });
   };
 
   return (

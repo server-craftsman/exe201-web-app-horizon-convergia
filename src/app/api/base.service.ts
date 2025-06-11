@@ -8,8 +8,7 @@ import { store } from "../../app/store/redux";
 import { toggleLoading } from "../../app/store/loading.slice";
 import { HTTP_STATUS } from "../../app/enums";
 import { HttpException } from "../../app/exceptions";
-import { notificationMessage } from "../../utils/helper";
-// import { handleUploadFile, deleteFileFromCloudinary } from "../../utils/upload"; // Import the handleUploadFile and deleteFileFromCloudinary functions
+import { helpers, upload } from "../../utils";
 
 export const axiosInstance = axios.create({
     baseURL: DOMAIN_API,
@@ -106,74 +105,43 @@ export const BaseService = {
                 if (toggleLoading) toggleLoading(false);
             });
     },
-    // uploadMedia(url: string, file?: any, isMultiple: boolean = false, isLoading: boolean = true) {
-    //     const formData = new FormData();
-    //     if (isMultiple) {
-    //         for (let i = 0; i < file.length; i++) {
-    //             formData.append("files[]", file[i]);
-    //         }
-    //     } else {
-    //         formData.append("file", file);
-    //     }
-    //     const user: any = getItemInLocalStorage(LOCAL_STORAGE.ACCOUNT_ADMIN);
-    //     // if (isLoading) useToggleLoading()(true);
-    //     if (isLoading) store.dispatch(toggleLoading(true) as any);
-    //     return axios({
-    //         method: "post",
-    //         url: `${DOMAIN_ADMIN}${url}`,
-    //         data: formData,
-    //         params: {},
-    //         headers: {
-    //             "content-type": "multipart/form-data",
-    //             Authorization: `Bearer ${user.access_token}`
-    //         }
-    //     })
-    //         .then((res) => {
-    //             // useToggleLoading()(false);
-    //             return res.data;
-    //         })
-    //         .catch((error) => {
-    //             handleErrorByToast(error);
-    //             return null;
-    //         });
-    // },
-    // uploadFile: async (file: File, type: "video" | "image", isLoading: boolean = true) => {
-    //     if (isLoading) store.dispatch(toggleLoading(true) as any);
+    uploadFile: async (file: File, type: "video" | "image", isLoading: boolean = true) => {
+        if (isLoading) store.dispatch(toggleLoading(true) as any);
 
-    //     try {
-    //         const url = await handleUploadFile(file, type);
-    //         if (url) {
-    //             notificationMessage(`${type} uploaded successfully`);
-    //             return url;
-    //         } else {
-    //             throw new Error("Upload failed");
-    //         }
-    //     } catch (error) {
-    //         console.error("Upload error:", error);
-    //         notificationMessage(error instanceof Error ? error.message : "Upload failed", "error");
-    //         return null;
-    //     } finally {
-    //         if (isLoading) store.dispatch(toggleLoading(false));
-    //     }
-    // },
-    // deleteFile: async (publicId: string, type: "video" | "image", isLoading: boolean = true) => {
-    //     if (isLoading) store.dispatch(toggleLoading(true) as any);
-    //     try {
-    //         const success = await deleteFileFromCloudinary(publicId, type);
-    //         if (success) {
-    //             notificationMessage(`${type} deleted successfully`);
-    //             return true;
-    //         } else {
-    //             throw new Error("Delete failed");
-    //         }
-    //     } catch (error) {
-    //         console.error("Delete error:", error);
-    //         notificationMessage(error instanceof Error ? error.message : "Delete failed", "error");
-    //         return false;
-    //     } finally {
-    //         if (isLoading) store.dispatch(toggleLoading(false));
-    //     }
-    // }
+        try {
+            const url = await upload.handleUploadFile(file, type);
+            if (url) {
+                helpers.notificationMessage(`${type} uploaded successfully`);
+                return url;
+            } else {
+                throw new Error("Upload failed");
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            helpers.notificationMessage(error instanceof Error ? error.message : "Upload failed", "error");
+            return null;
+        } finally {
+            if (isLoading) store.dispatch(toggleLoading(false));
+        }
+    },
+    deleteFile: async (publicId: string, type: "video" | "image", isLoading: boolean = true) => {
+        if (isLoading) store.dispatch(toggleLoading(true) as any);
+        try {
+            const success = await upload.deleteFileFromCloudinary(publicId, type);
+            if (success) {
+                helpers.notificationMessage(`${type} deleted successfully`);
+                return true;
+            } else {
+                throw new Error("Delete failed");
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            helpers.notificationMessage(error instanceof Error ? error.message : "Delete failed", "error");
+            return false;
+        } finally {
+            if (isLoading) store.dispatch(toggleLoading(false));
+        }
+    }
 };
 
 export interface PromiseState<T = unknown> extends AxiosResponse<T> {
@@ -218,26 +186,26 @@ axiosInstance.interceptors.response.use(
                     }, 3000);
                     break;
                 case HTTP_STATUS.FORBIDDEN:
-                    notificationMessage("Access denied. You do not have permission to perform this action.", "error");
+                    helpers.notificationMessage("Bạn không có quyền truy cập vào trang này.", "error");
                     clearLocalStorage();
                     setTimeout(() => {
                         window.location.href = ROUTER_URL.AUTH.LOGIN;
                     }, 3000);
                     break;
                 case HTTP_STATUS.NOT_FOUND:
-                    notificationMessage("Requested resource not found.", "error");
+                    helpers.notificationMessage("Trang bạn đang tìm kiếm không tồn tại.", "error");
                     // setTimeout(() => {
                     //   window.location.href = ROUTER_URL.LOGIN;
                     // }, 2000);
                     break;
                 case HTTP_STATUS.INTERNAL_SERVER_ERROR:
-                    notificationMessage("Internal server error. Please try again later.", "error");
+                    helpers.notificationMessage("Lỗi máy chủ. Vui lòng thử lại sau.", "error");
                     break;
                 default:
-                    notificationMessage(response.data?.message || "An error occurred. Please try again.", "error");
+                    helpers.notificationMessage(response.data?.message || "Đã xảy ra lỗi. Vui lòng thử lại.", "error");
             }
         } else {
-            notificationMessage(err.message || "An error occurred. Please try again.", "error");
+            helpers.notificationMessage(err.message || "Đã xảy ra lỗi. Vui lòng thử lại.", "error");
         }
         return Promise.reject(new HttpException(err.message, response?.status || HTTP_STATUS.INTERNAL_SERVER_ERROR));
     }
@@ -245,6 +213,6 @@ axiosInstance.interceptors.response.use(
 
 const handleErrorByToast = (error: any) => {
     const message = error.response?.data?.message || error.message;
-    notificationMessage(message, "error");
+    helpers.notificationMessage(message, "error");
     return Promise.reject(error);
 };

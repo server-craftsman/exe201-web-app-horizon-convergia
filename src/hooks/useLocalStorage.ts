@@ -1,29 +1,44 @@
-import { useState } from "react";
+import { useCallback } from "react";
 
-function useLocalStorage<T>(key: string, initialValue: T) {
-    const [storedValue, setStoredValue] = useState<T>(() => {
+export const useLocalStorage = () => {
+    const setItem = useCallback((key: string, value: string) => {
         try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialValue;
+            if (!key || !value) {
+                console.warn('Invalid key or value for localStorage');
+                return;
+            }
+            localStorage.setItem(key, value);
         } catch (error) {
-            console.error(error);
-            return initialValue;
+            console.error('Error saving to localStorage:', error);
+            throw new Error('Failed to save data to localStorage');
         }
-    });
+    }, []);
 
-    const setValue = (value: T) => {
+    const getItem = useCallback((key: string) => {
         try {
-            setStoredValue(value);
-            window.localStorage.setItem(key, JSON.stringify(value));
+            if (!key) {
+                console.warn('Invalid key for localStorage');
+                return null;
+            }
+            return localStorage.getItem(key);
         } catch (error) {
-            console.error(error);
+            console.error('Error reading from localStorage:', error);
+            return null;
         }
-    };
+    }, []);
 
-    return [storedValue, setValue] as const;
+    const removeItem = useCallback((key: string) => {
+        try {
+            if (!key) {
+                console.warn('Invalid key for localStorage');
+                return;
+            }
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.error('Error removing from localStorage:', error);
+            throw new Error('Failed to remove data from localStorage');
+        }
+    }, []);
+
+    return { setItem, getItem, removeItem };
 }
-
-// Lưu trữ và lấy dữ liệu từ localStorage trở nên dễ dàng 
-// và tái sử dụng với hook useLocalStorage.
-
-export default useLocalStorage;

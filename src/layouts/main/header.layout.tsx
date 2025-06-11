@@ -3,11 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import SearchComponent from '../../components/common/Search.com';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUserInfo } from '../../hooks/useUserInfo';
 
 const HeaderLayout: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const user = useUserInfo();
 
   // Effect để xác định vị trí scroll
   useEffect(() => {
@@ -199,22 +201,46 @@ const HeaderLayout: React.FC = () => {
                 placeholder="Tìm kiếm xe, phụ kiện..."
                 className="w-full pl-10 pr-4 py-3 rounded-full bg-gray-800 border border-gray-700 focus:outline-none focus:border-amber-400 text-gray-200"
               />
+              {!user && (
+                <>
+                  <motion.button 
+                    className="w-full py-3 px-6 font-bold text-gray-900 bg-amber-400 rounded-full"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link to="/dang-nhap">Đăng nhập</Link>
+                  </motion.button>
               
-              <motion.button 
-                className="w-full py-3 px-6 font-bold text-gray-900 bg-amber-400 rounded-full"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link to="/dang-nhap">Đăng nhập</Link>
-              </motion.button>
-              
-              <motion.button 
-                className="w-full py-3 px-6 font-bold text-amber-400 border border-amber-400 rounded-full"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link to="/dang-ky">Đăng ký</Link>
-              </motion.button>
+                  <motion.button 
+                    className="w-full py-3 px-6 font-bold text-amber-400 border border-amber-400 rounded-full"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Link to="/dang-ky">Đăng ký</Link>
+                  </motion.button>
+                </>
+              )}
+              {user && (
+                <>
+                  <div className="flex items-center space-x-3 ml-4">
+                    {user.profilePicUrl ? (
+                      <img
+                        src={user.profilePicUrl}
+                        alt="avatar"
+                        className="w-8 h-8 rounded-full border-2 border-amber-400"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-gray-900 font-bold">
+                        {user.firstName?.[0] || user.email?.[0]}
+                      </div>
+                    )}
+                    <div className="hidden md:block">
+                      <div className="font-semibold text-sm text-white">{user.firstName} {user.lastName}</div>
+                      <div className="text-xs text-gray-300">{user.email}</div>
+                    </div>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}

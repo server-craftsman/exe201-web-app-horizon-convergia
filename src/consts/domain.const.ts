@@ -1,1 +1,1 @@
-export const DOMAIN_API = import.meta.env.VITE_API_URL;
+export const DOMAIN_API = "https://horizonconvergia2025-bwenemhsgqeygpb9.canadacentral-01.azurewebsites.net/api";
