@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AuthService } from "../services/auth/auth.service";
 import type { UserInfo } from "../types/user/User.res.type";
-import { useLocalStorage } from "./useLocalStorage1";
+import { useLocalStorage } from "./useLocalstorage";
 
 /**
  * useUserInfo hook
