@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useLocalStorage } from "./useLocalstorage";
+import { useLocalStorage } from "./useLocalStorage";
 import { AuthService } from "../services/auth/auth.service";
 import type { LoginRequest } from "../types/user/User.req.type";
 import { helpers } from "../utils";
