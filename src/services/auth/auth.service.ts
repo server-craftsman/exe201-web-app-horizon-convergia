@@ -17,10 +17,10 @@ export const AuthService = {
         });
     },
 
-    getCurrentUser() {
+    getCurrentLoginUser() {
         return BaseService.get<UserInfo>({
-            url: API_PATH.USER.GET_USER_PROFILE
-        })
+            url: API_PATH.AUTH.CURRENT_USER,
+        });
     },
 
     logout() {
@@ -39,6 +39,8 @@ export const AuthService = {
     },
 
     isAuthenticated(): boolean {
-        return !!this.getAccessToken();
+        const hasToken = !!this.getAccessToken();
+        const hasRole = !!this.getRole();
+        return hasToken && hasRole;
     }
 }

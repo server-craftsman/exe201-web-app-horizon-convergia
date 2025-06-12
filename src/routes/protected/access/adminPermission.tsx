@@ -6,15 +6,16 @@ import type { RouteObject } from "react-router-dom";
 const OverviewPage = lazy(() => import("../../../pages/admin/overview"));
 const UserManagementPage = lazy(() => import("../../../pages/admin/user"));
 
-export const AdminRoutes: Record<string, RouteObject[]> = {
-    [ROUTER_URL.ADMIN.BASE]: [
+export const AdminRoutes: RouteObject = {
+    path: ROUTER_URL.ADMIN.BASE,
+    children: [
         {
             index: true,
             element: <OverviewPage />,
         },
         {
-            element: <UserManagementPage />,
             path: ROUTER_URL.ADMIN.USERS,
+            element: <UserManagementPage />,
         },
     ],
 };

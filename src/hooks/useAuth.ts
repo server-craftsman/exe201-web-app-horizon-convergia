@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useLocalStorage } from "./useLocalstorage";
+import { useLocalStorage } from "./useLocalStorage";
 import { AuthService } from "../services/auth/auth.service";
 import type { LoginRequest } from "../types/user/User.req.type";
 import { helpers } from "../utils";
@@ -8,16 +8,27 @@ import { ROUTER_URL } from "../consts/router.path.const";
 import { UserRole } from "../app/enums";
 
 export const useAuth = () => {
+    const { getItem } = useLocalStorage();
 
     const getCurrentRole = (): UserRole | null => {
-        return AuthService.getRole();
+        const role = getItem("role");
+        return role as UserRole || null;
     };
 
     const isAuthenticated = (): boolean => {
-        return AuthService.isAuthenticated();
+        const hasToken = !!getItem("accessToken");
+        const hasRole = !!getCurrentRole();
+        return hasToken && hasRole;
+    };
+
+    const getCurrentUser = () => {
+        return AuthService.getCurrentLoginUser();
     };
 
     const getDefaultPath = (role: UserRole): string => {
+        if (!role) {
+            return ROUTER_URL.COMMON.HOME;
+        }
         switch (role) {
             case UserRole.ADMIN:
                 return ROUTER_URL.ADMIN.BASE;
@@ -29,6 +40,7 @@ export const useAuth = () => {
     return {
         getCurrentRole,
         isAuthenticated,
+        getCurrentUser,
         getDefaultPath
     };
 };
@@ -39,37 +51,48 @@ export const useLogin = () => {
 
     return useMutation({
         mutationFn: async (data: LoginRequest) => {
-            // Defensive: ensure data is not empty
             if (!data.email || !data.password) {
                 throw new Error('Email and password are required');
             }
-            // Optionally trim
             return AuthService.login({
                 email: data.email.trim(),
                 password: data.password.trim(),
             });
         },
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
             if (!response?.data) {
                 throw new Error('Invalid response format');
             }
 
             const userData = response.data;
 
-            // Store user data and token
-            setItem("user", JSON.stringify(userData));
+            // Store token and role directly from login response
             setItem("accessToken", userData.accessToken || '');
             setItem("role", userData.role);
 
-            helpers.notificationMessage("Đăng nhập thành công!", "success");
+            // Fetch user info with direct API call, not using hooks
+            try {
+                const userInfoResponse = await AuthService.getCurrentLoginUser();
+                if (userInfoResponse && userInfoResponse.data) {
+                    setItem("userInfo", JSON.stringify(userInfoResponse.data));
 
-            // Redirect based on role
-            switch (userData.role) {
-                case UserRole.ADMIN:
-                    navigate(ROUTER_URL.ADMIN.BASE);
-                    break;
-                default:
-                    navigate(ROUTER_URL.COMMON.HOME);
+                    // Only navigate after all data is set
+                    helpers.notificationMessage("Đăng nhập thành công!", "success");
+
+                    // Navigate based on role
+                    switch (userData.role) {
+                        case UserRole.ADMIN:
+                            navigate(ROUTER_URL.ADMIN.BASE);
+                            break;
+                        default:
+                            navigate(ROUTER_URL.COMMON.HOME);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch user info after login:", error);
+                // Clear auth data on error
+                AuthService.logout();
+                helpers.notificationMessage("Failed to fetch user info", "error");
             }
         },
         onError: (error: any) => {
@@ -77,7 +100,7 @@ export const useLogin = () => {
 
             if (error.response?.data?.errors) {
                 const errors = error.response.data.errors;
-                Object.entries(errors).forEach(([messages]) => {
+                Object.entries(errors).forEach(([_, messages]) => {
                     if (Array.isArray(messages)) {
                         messages.forEach(message => {
                             helpers.notificationMessage(message, "error");
@@ -95,10 +118,19 @@ export const useLogin = () => {
 
 export const useLogout = () => {
     const navigate = useNavigate();
+    const { removeItem } = useLocalStorage();
 
     const logout = () => {
+        // Clear all auth-related items
+        removeItem("accessToken");
+        removeItem("userInfo");
+        removeItem("role");
+
+        // Call service logout if needed
         AuthService.logout();
-        navigate(ROUTER_URL.COMMON.HOME);
+
+        // Navigate to home
+        navigate(ROUTER_URL.AUTH.LOGIN);
         helpers.notificationMessage("Đăng xuất thành công!", "success");
     };
 

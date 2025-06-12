@@ -11,15 +11,15 @@ export interface UserResponse {
     role: UserRole;
     expiredAt?: string;
 }
-
 export interface UserInfo {
-    id: string;
-    email: string;
-    role: UserRole | ''; // UserRole
-    name: string;
-    dob: string | null;
-    gender: string;
+    id: number | null;
+    name: string | null;
+    email: string | null;
     phoneNumber: string | null;
-    profilePicUrl: string | null;
-    token: string;
+    address: string | null;
+    gender: string | null;
+    avatarUrl: string | null;
+    status: string | null;
+    role: UserRole | null;
+    dob: string | null;
 }
