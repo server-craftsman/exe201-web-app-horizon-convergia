@@ -1,56 +1,30 @@
-import { Route, Routes, useNavigate, Navigate } from "react-router-dom";
-import { useEffect, Suspense } from "react";
+import { Route, Routes, Navigate } from "react-router-dom";
+import { Suspense } from "react";
 import { ROUTER_URL } from "../../consts/router.path.const";
 import { UserRole } from "../../app/enums";
 import GuardPublicRoute from "../unprotected/GuardGuestRoute";
 import GuardProtectedRoute from "../protected/GuardProtectedRoute";
 import { publicSubPaths } from "../unprotected/GuestSubPaths";
-import { useUserInfo, useAuth } from "../../hooks";
 import AdminLayout from "../../layouts/admin/Admin.layout";
 import { AdminRoutes } from "../protected/access/adminPermission";
 import Loading from "../../app/screens/Loading";
 
 const RunRoutes = () => {
-  const user = useUserInfo();
-  const currentRole = user?.role as UserRole | null;
-  const { isAuthenticated, getDefaultPath } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Log to help debug
-    console.log("RunRoutes - Current user:", user);
-    console.log("RunRoutes - Current role:", currentRole);
-    console.log("RunRoutes - Is authenticated:", isAuthenticated());
-    console.log("RunRoutes - Current path:", window.location.pathname);
-    
-    if (isAuthenticated() && currentRole && window.location.pathname === "/") {
-      const defaultPath = getDefaultPath(currentRole);
-      console.log("Redirecting to default path:", defaultPath);
-      navigate(defaultPath, { replace: true });
-    }
-  }, [navigate, currentRole, getDefaultPath, user, isAuthenticated]);
-
   return (
     <Routes>
       {/* Public Routes */}
-      {Object.entries(publicSubPaths).map(([key, routes]) =>
+      {Object.entries(publicSubPaths).map(([_, routes]) =>
         routes.map((route) => (
-          <Route 
-            key={route.path || "index"} 
-            path={route.path} 
-            element={
-              key === ROUTER_URL.COMMON.HOME ? (
-                <GuardPublicRoute component={route.element} />
-              ) : (
-                route.element
-              )
-            }
+          <Route
+            key={route.path || "index"}
+            path={route.path}
+            element={<GuardPublicRoute component={route.element} />}
           >
             {route.children?.map((childRoute) => (
-              <Route 
-                key={childRoute.path} 
-                path={childRoute.path} 
-                element={childRoute.element} 
+              <Route
+                key={childRoute.path}
+                path={childRoute.path}
+                element={<GuardPublicRoute component={childRoute.element} />}
               />
             ))}
           </Route>
@@ -70,11 +44,11 @@ const RunRoutes = () => {
           index
           element={
             <Suspense fallback={<Loading />}>
-              {AdminRoutes.children?.find(route => route.index)?.element}
+              {AdminRoutes.children?.find((route) => route.index)?.element}
             </Suspense>
           }
         />
-        {AdminRoutes.children?.filter(route => !route.index).map(route => (
+        {AdminRoutes.children?.filter((route) => !route.index).map((route) => (
           <Route
             key={route.path}
             path={route.path}

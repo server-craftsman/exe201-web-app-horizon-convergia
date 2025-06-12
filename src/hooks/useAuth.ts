@@ -8,12 +8,17 @@ import { ROUTER_URL } from "../consts/router.path.const";
 import { UserRole } from "../app/enums";
 
 export const useAuth = () => {
+    const { getItem } = useLocalStorage();
+
     const getCurrentRole = (): UserRole | null => {
-        return AuthService.getRole();
+        const role = getItem("role");
+        return role as UserRole || null;
     };
 
     const isAuthenticated = (): boolean => {
-        return AuthService.isAuthenticated();
+        const hasToken = !!getItem("accessToken");
+        const hasRole = !!getCurrentRole();
+        return hasToken && hasRole;
     };
 
     const getCurrentUser = () => {
@@ -21,6 +26,9 @@ export const useAuth = () => {
     };
 
     const getDefaultPath = (role: UserRole): string => {
+        if (!role) {
+            return ROUTER_URL.COMMON.HOME;
+        }
         switch (role) {
             case UserRole.ADMIN:
                 return ROUTER_URL.ADMIN.BASE;

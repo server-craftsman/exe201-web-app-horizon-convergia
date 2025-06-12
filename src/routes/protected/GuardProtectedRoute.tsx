@@ -6,7 +6,7 @@ import { UserRole } from "../../app/enums";
 
 interface GuardProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles: UserRole[];
+  allowedRoles?: UserRole[] | "";
 }
 
 const GuardProtectedRoute: React.FC<GuardProtectedRouteProps> = ({
@@ -23,13 +23,13 @@ const GuardProtectedRoute: React.FC<GuardProtectedRouteProps> = ({
     console.log('GuardProtectedRoute - Allowed roles:', allowedRoles);
     console.log('GuardProtectedRoute - Current path:', location.pathname);
     console.log('GuardProtectedRoute - Includes role:',
-      currentRole ? allowedRoles.includes(currentRole) : false);
+      currentRole && allowedRoles ? allowedRoles.includes(currentRole) : false);
   }, [currentRole, allowedRoles, location.pathname]);
 
 
 
   // If not in allowed roles, redirect to home
-  if (!currentRole || !allowedRoles.includes(currentRole)) {
+  if (!currentRole || !allowedRoles || !allowedRoles.includes(currentRole)) {
     console.log(`Role ${currentRole} not in allowed roles:`, allowedRoles);
     return <Navigate to={ROUTER_URL.COMMON.HOME} replace />;
   }
