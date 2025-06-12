@@ -42,5 +42,15 @@ export const AuthService = {
         const hasToken = !!this.getAccessToken();
         const hasRole = !!this.getRole();
         return hasToken && hasRole;
+    },
+
+    updateUserInfo(user: UserInfo) {
+        return BaseService.put<UserInfo>({
+            url: API_PATH.USER.UPDATE_USER_PROFILE.replace(":id", user.id?.toString() || ""),
+            payload: user
+        })
+    },
+    async uploadAvatar(file: File): Promise<string | null> {
+        return await BaseService.uploadFile(file, "image");
     }
 }

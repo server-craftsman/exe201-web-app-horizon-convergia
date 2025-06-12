@@ -5,8 +5,8 @@ import MainLayout from "../../layouts/main/Main.layout";
 
 //================= PUBLIC SUB PATHS =================
 import HomePage from "../../pages/client/home";
-import LoginPage from "../../pages/client/login";
-import RegisterPage from "../../pages/client/register";
+import LoginPage from "../../pages/auth/login";
+import RegisterPage from "../../pages/auth/register";
 import BuyMotorPage from "../../pages/client/buy_motor";
 import SellMotorPage from "../../pages/client/sell_motor";
 import AccessoriesPage from "../../pages/client/accessories";
