@@ -9,6 +9,6 @@ export default defineConfig({
     open: true,
   },
   build: {
-    chunkSizeWarningLimit: 10000,
+    chunkSizeWarningLimit: 100000,
   },
 })
