@@ -41,6 +41,7 @@ export function useUserInfo() {
                     };
                     setUser(userObj);
                     setItem("userInfo", JSON.stringify(userObj));
+                    setItem("role", currentUser.data.role ?? "");
                 } else if (isMounted) {
                     setUser(null);
                 }

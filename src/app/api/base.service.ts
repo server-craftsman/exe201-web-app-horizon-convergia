@@ -9,7 +9,6 @@ import { toggleLoading } from "../../app/store/loading.slice";
 import { HTTP_STATUS } from "../../app/enums";
 import { HttpException } from "../../app/exceptions";
 import { helpers, upload } from "../../utils";
-import { useLocalStorage } from "../../hooks";
 
 export const axiosInstance = axios.create({
     baseURL: DOMAIN_API,
@@ -151,17 +150,25 @@ export interface PromiseState<T = unknown> extends AxiosResponse<T> {
 
 axiosInstance.interceptors.request.use(
     (config: AxiosRequestConfig) => {
-        const { getItem } = useLocalStorage();
-        const token = getItem("accessToken");
-        const userInfo = getItem("userInfo");
+        // Direct localStorage access instead of using hooks
+        const token = localStorage.getItem("accessToken");
+        const userInfoStr = localStorage.getItem("userInfo");
+        
         if (!config.headers) config.headers = {};
+        
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
-        if (userInfo) {
-            const parsedUserInfo = JSON.parse(userInfo);
-            config.headers["User-Id"] = parsedUserInfo.id; // debug add user id
+        
+        if (userInfoStr) {
+            try {
+                const parsedUserInfo = JSON.parse(userInfoStr);
+                config.headers["User-Id"] = parsedUserInfo.id;
+            } catch (e) {
+                console.error("Failed to parse user info from localStorage", e);
+            }
         }
+        
         store.dispatch(toggleLoading(true)); // Show loading
         return config as InternalAxiosRequestConfig;
     },

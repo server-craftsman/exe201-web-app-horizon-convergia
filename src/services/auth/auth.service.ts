@@ -39,6 +39,8 @@ export const AuthService = {
     },
 
     isAuthenticated(): boolean {
-        return !!this.getAccessToken();
+        const hasToken = !!this.getAccessToken();
+        const hasRole = !!this.getRole();
+        return hasToken && hasRole;
     }
 }

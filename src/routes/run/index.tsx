@@ -1,13 +1,14 @@
-import { Route, Routes, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Route, Routes, useNavigate, Navigate } from "react-router-dom";
+import { useEffect, Suspense } from "react";
 import { ROUTER_URL } from "../../consts/router.path.const";
 import { UserRole } from "../../app/enums";
 import GuardPublicRoute from "../unprotected/GuardGuestRoute";
 import GuardProtectedRoute from "../protected/GuardProtectedRoute";
 import { publicSubPaths } from "../unprotected/GuestSubPaths";
+import { useUserInfo, useAuth } from "../../hooks";
 import AdminLayout from "../../layouts/admin/Admin.layout";
 import { AdminRoutes } from "../protected/access/adminPermission";
-import { useUserInfo, useAuth } from "../../hooks";
+import Loading from "../../app/screens/Loading";
 
 const RunRoutes = () => {
   const user = useUserInfo();
@@ -16,37 +17,18 @@ const RunRoutes = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (currentRole && window.location.pathname === "/") {
+    // Log to help debug
+    console.log("RunRoutes - Current user:", user);
+    console.log("RunRoutes - Current role:", currentRole);
+    console.log("RunRoutes - Is authenticated:", isAuthenticated());
+    console.log("RunRoutes - Current path:", window.location.pathname);
+    
+    if (isAuthenticated() && currentRole && window.location.pathname === "/") {
       const defaultPath = getDefaultPath(currentRole);
+      console.log("Redirecting to default path:", defaultPath);
       navigate(defaultPath, { replace: true });
     }
-  }, [navigate, currentRole, getDefaultPath]);
-
-  const renderProtectedRoutes = () => {
-    if (!currentRole || !isAuthenticated()) {
-      return null;
-    }
-
-    return (
-      <Route 
-        path={ROUTER_URL.ADMIN.BASE}
-        element={
-          <GuardProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-            <AdminLayout />
-          </GuardProtectedRoute>
-        }
-      >
-        {AdminRoutes.children?.map((route) => (
-          <Route
-            key={route.path || "index"}
-            index={route.index}
-            path={route.path}
-            element={route.element}
-          />
-        ))}
-      </Route>
-    );
-  };
+  }, [navigate, currentRole, getDefaultPath, user, isAuthenticated]);
 
   return (
     <Routes>
@@ -56,7 +38,13 @@ const RunRoutes = () => {
           <Route 
             key={route.path || "index"} 
             path={route.path} 
-            element={key === ROUTER_URL.COMMON.HOME ? <GuardPublicRoute component={route.element} /> : route.element}
+            element={
+              key === ROUTER_URL.COMMON.HOME ? (
+                <GuardPublicRoute component={route.element} />
+              ) : (
+                route.element
+              )
+            }
           >
             {route.children?.map((childRoute) => (
               <Route 
@@ -69,8 +57,38 @@ const RunRoutes = () => {
         ))
       )}
 
-      {/* Protected Routes */}
-      {renderProtectedRoutes()}
+      {/* Admin Layout Route */}
+      <Route
+        path={ROUTER_URL.ADMIN.BASE}
+        element={
+          <GuardProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <AdminLayout />
+          </GuardProtectedRoute>
+        }
+      >
+        <Route
+          index
+          element={
+            <Suspense fallback={<Loading />}>
+              {AdminRoutes.children?.find(route => route.index)?.element}
+            </Suspense>
+          }
+        />
+        {AdminRoutes.children?.filter(route => !route.index).map(route => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <Suspense fallback={<Loading />}>
+                {route.element}
+              </Suspense>
+            }
+          />
+        ))}
+      </Route>
+
+      {/* Fallback route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

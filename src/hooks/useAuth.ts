@@ -6,10 +6,8 @@ import type { LoginRequest } from "../types/user/User.req.type";
 import { helpers } from "../utils";
 import { ROUTER_URL } from "../consts/router.path.const";
 import { UserRole } from "../app/enums";
-import { useUserInfo } from "./useUserInfo";
 
 export const useAuth = () => {
-
     const getCurrentRole = (): UserRole | null => {
         return AuthService.getRole();
     };
@@ -59,24 +57,34 @@ export const useLogin = () => {
             }
 
             const userData = response.data;
+
+            // Store token and role directly from login response
             setItem("accessToken", userData.accessToken || '');
+            setItem("role", userData.role);
 
-            // Fetch user info using the new token
-            const userInfo = useUserInfo();
-            // const userInfoResponse = await AuthService.getCurrentLoginUser();
-            // if (userInfoResponse && userInfoResponse.data) {
-            //     setItem("userInfo", JSON.stringify(userInfoResponse.data));
-            // }
-            console.log("userInfo", userInfo);
+            // Fetch user info with direct API call, not using hooks
+            try {
+                const userInfoResponse = await AuthService.getCurrentLoginUser();
+                if (userInfoResponse && userInfoResponse.data) {
+                    setItem("userInfo", JSON.stringify(userInfoResponse.data));
 
-            helpers.notificationMessage("Đăng nhập thành công!", "success");
+                    // Only navigate after all data is set
+                    helpers.notificationMessage("Đăng nhập thành công!", "success");
 
-            switch (userData.role) {
-                case UserRole.ADMIN:
-                    navigate(ROUTER_URL.ADMIN.BASE);
-                    break;
-                default:
-                    navigate(ROUTER_URL.COMMON.HOME);
+                    // Navigate based on role
+                    switch (userData.role) {
+                        case UserRole.ADMIN:
+                            navigate(ROUTER_URL.ADMIN.BASE);
+                            break;
+                        default:
+                            navigate(ROUTER_URL.COMMON.HOME);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch user info after login:", error);
+                // Clear auth data on error
+                AuthService.logout();
+                helpers.notificationMessage("Failed to fetch user info", "error");
             }
         },
         onError: (error: any) => {
@@ -84,7 +92,7 @@ export const useLogin = () => {
 
             if (error.response?.data?.errors) {
                 const errors = error.response.data.errors;
-                Object.entries(errors).forEach(([messages]) => {
+                Object.entries(errors).forEach(([_, messages]) => {
                     if (Array.isArray(messages)) {
                         messages.forEach(message => {
                             helpers.notificationMessage(message, "error");
@@ -102,10 +110,19 @@ export const useLogin = () => {
 
 export const useLogout = () => {
     const navigate = useNavigate();
+    const { removeItem } = useLocalStorage();
 
     const logout = () => {
+        // Clear all auth-related items
+        removeItem("accessToken");
+        removeItem("userInfo");
+        removeItem("role");
+
+        // Call service logout if needed
         AuthService.logout();
-        navigate(ROUTER_URL.COMMON.HOME);
+
+        // Navigate to home
+        navigate(ROUTER_URL.AUTH.LOGIN);
         helpers.notificationMessage("Đăng xuất thành công!", "success");
     };
 
