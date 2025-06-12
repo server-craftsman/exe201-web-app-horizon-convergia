@@ -67,8 +67,8 @@ export const useLogin = () => {
             const userData = response.data;
 
             // Store token and role directly from login response
-            setItem("accessToken", userData.accessToken || '');
-            setItem("role", userData.role);
+            setItem("accessToken", userData.data.accessToken || '');
+            setItem("role", userData.data.role);
 
             // Fetch user info with direct API call, not using hooks
             try {
@@ -80,7 +80,7 @@ export const useLogin = () => {
                     helpers.notificationMessage("Đăng nhập thành công!", "success");
 
                     // Navigate based on role
-                    switch (userData.role) {
+                    switch (userData.data.role) {
                         case UserRole.ADMIN:
                             navigate(ROUTER_URL.ADMIN.BASE);
                             break;

@@ -12,14 +12,14 @@ import { useLocalStorage } from "./useLocalStorage";
  */
 export function useUserInfo() {
     const [user, setUser] = useState<UserInfo | null>(null);
-    const { getItem, setItem } = useLocalStorage();
+    const { setItem } = useLocalStorage();
     useEffect(() => {
-        // Only fetch user info if accessToken exists
-        const accessToken = getItem("accessToken");
-        if (!accessToken) {
-            setUser(null);
-            return;
-        }
+        // // Only fetch user info if accessToken exists
+        // const accessToken = getItem("accessToken");
+        // if (!accessToken) {
+        //     setUser(null);
+        //     return;
+        // }
 
         let isMounted = true;
 
