@@ -9,7 +9,7 @@ export const API_PATH = {
     },
     USER: {
         GET_USER_PROFILE: "/user/profile",
-        UPDATE_USER_PROFILE: "/user/profile/update",
+        UPDATE_USER_PROFILE: "/Users/update/:id",
         CHANGE_PASSWORD: "/user/password/change"
     },
     PRODUCT: {

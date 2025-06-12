@@ -20,9 +20,9 @@ export const ROUTER_URL = {
         NEWS: "/tin-tuc",
     },
     ADMIN: {
-        BASE: "/admin",
-        USERS: "users",
-        SETTINGS: "settings",
+        BASE: "/quan-tri-he-thong",
+        USERS: "quan-ly-nguoi-dung",
+        SETTINGS: "cai-dat",
         UPDATE_USER_PROFILE: "update-user-profile",
     }
 };
