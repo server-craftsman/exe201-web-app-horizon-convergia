@@ -54,7 +54,7 @@ const HeaderLayout: React.FC = () => {
     <>
       {user ? (
         <div className="relative">
-          <motion.div 
+          <motion.div
             className={`flex items-center ${mobile ? 'justify-center mt-4' : 'ml-4'} cursor-pointer`}
             onClick={() => setUserMenuOpen(!userMenuOpen)}
             whileHover={{ scale: 1.05 }}
@@ -90,7 +90,7 @@ const HeaderLayout: React.FC = () => {
           {/* Dropdown Menu - only show if not mobile or if mobile and userMenuOpen */}
           <AnimatePresence>
             {userMenuOpen && (!mobile || (mobile && userMenuOpen)) && (
-              <motion.div 
+              <motion.div
                 className={`${mobile ? 'relative mt-2' : 'absolute right-0 mt-2 w-48'} bg-gray-800 rounded-lg shadow-xl border border-gray-700 overflow-hidden z-50`}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -112,7 +112,7 @@ const HeaderLayout: React.FC = () => {
                 <Link to="/don-hang" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
                   Đơn hàng của tôi
                 </Link>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors border-t border-gray-700"
                 >
@@ -124,7 +124,7 @@ const HeaderLayout: React.FC = () => {
         </div>
       ) : (
         <div className={`flex ${mobile ? 'flex-col space-y-3 mt-6' : 'flex-row space-x-3'}`}>
-          <motion.button 
+          <motion.button
             className={`${mobile ? 'w-full py-3 px-6 font-bold text-gray-900 bg-amber-400 rounded-full' : 'hidden md:block px-4 py-2 text-amber-400 border border-amber-400 rounded-md font-bold overflow-hidden relative group'}`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -137,7 +137,7 @@ const HeaderLayout: React.FC = () => {
             </span>
           </motion.button>
 
-          <motion.button 
+          <motion.button
             className={`${mobile ? 'w-full py-3 px-6 font-bold text-amber-400 border border-amber-400 rounded-full' : 'px-5 py-2 font-bold bg-gradient-to-r from-amber-500 to-amber-400 text-gray-900 rounded-md shadow-lg relative overflow-hidden group'}`}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -155,31 +155,29 @@ const HeaderLayout: React.FC = () => {
   );
 
   return (
-    <header 
-      className={`sticky top-0 z-50 transition-all duration-500 ${
-        isScrolled 
+    <header
+      className={`sticky top-0 z-50 transition-all duration-500 ${isScrolled
           ? 'bg-gray-900/95 backdrop-blur-md shadow-xl'
           : 'bg-gradient-to-r from-gray-900 to-gray-800'
-      }`}
+        }`}
     >
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <motion.div 
+          <motion.div
             className="flex items-center"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
             <Link to="/" className="flex items-center">
-              <motion.img 
-                src={logo} 
-                alt="Logo" 
-                className={`h-12 mr-5 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)] rounded-md border-2 border-amber-400 p-1 ${
-                  isScrolled ? 'animate-none' : 'animate-pulse'
-                }`}
-                whileHover={{ 
-                  scale: 1.15, 
+              <motion.img
+                src={logo}
+                alt="Logo"
+                className={`h-12 mr-5 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)] rounded-md border-2 border-amber-400 p-1 ${isScrolled ? 'animate-none' : 'animate-pulse'
+                  }`}
+                whileHover={{
+                  scale: 1.15,
                   rotate: 5,
                   transition: { duration: 0.3 }
                 }}
@@ -189,7 +187,7 @@ const HeaderLayout: React.FC = () => {
           </motion.div>
 
           {/* Desktop Navigation */}
-          <motion.nav 
+          <motion.nav
             className="hidden md:flex items-center space-x-8"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -202,15 +200,14 @@ const HeaderLayout: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 * index }}
               >
-                <Link 
-                  to={item.path} 
+                <Link
+                  to={item.path}
                   className={`relative text-gray-100 font-bold text-sm uppercase tracking-wider transition-colors duration-300 py-1 group overflow-hidden`}
                 >
                   <span className="relative z-10">{item.label}</span>
-                  <motion.span 
-                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 transform origin-left ${
-                      location.pathname === item.path ? 'scale-x-100' : 'scale-x-0'
-                    }`}
+                  <motion.span
+                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 transform origin-left ${location.pathname === item.path ? 'scale-x-100' : 'scale-x-0'
+                      }`}
                     initial={false}
                     animate={{ scaleX: location.pathname === item.path ? 1 : 0 }}
                     transition={{ duration: 0.3 }}
@@ -225,7 +222,7 @@ const HeaderLayout: React.FC = () => {
           {/* Search and User Info for Desktop */}
           <div className="hidden md:flex items-center">
             <SearchComponent />
-            
+
             {/* User Info for Desktop */}
             <UserProfileComponent />
           </div>
@@ -233,17 +230,17 @@ const HeaderLayout: React.FC = () => {
           {/* Mobile Menu Button */}
           <div className="flex items-center md:hidden">
             <SearchComponent />
-            <motion.button 
+            <motion.button
               className="text-amber-400 ml-4"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <motion.path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
+                <motion.path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
                   d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
                   initial={false}
                   animate={{ d: mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16" }}
@@ -258,7 +255,7 @@ const HeaderLayout: React.FC = () => {
       {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div 
+          <motion.div
             className="fixed inset-0 bg-gray-900/95 backdrop-blur-md flex flex-col items-center justify-center z-40"
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -267,7 +264,7 @@ const HeaderLayout: React.FC = () => {
           >
             {/* User Info for Mobile */}
             <UserProfileComponent mobile={true} />
-            
+
             {/* Mobile Navigation */}
             <nav className="flex flex-col items-center space-y-6 my-8">
               {menuItems.map((item, index) => (
@@ -277,8 +274,8 @@ const HeaderLayout: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 * index }}
                 >
-                  <Link 
-                    to={item.path} 
+                  <Link
+                    to={item.path}
                     className={`text-2xl font-bold ${location.pathname === item.path ? 'text-amber-400' : 'text-white hover:text-amber-400'}`}
                   >
                     {item.label}

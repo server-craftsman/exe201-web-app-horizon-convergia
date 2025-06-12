@@ -42,7 +42,11 @@ export default tseslint.config({
   plugins: {
     // Add the react-x and react-dom plugins
     'react-x': reactX,
+<<<<<<< HEAD
     'react-dom': reactDom,  
+=======
+    'react-dom': reactDom,
+>>>>>>> 1153d40cf037794001b08740c99627306960e71e
   },
   rules: {
     // other rules...
@@ -54,4 +58,8 @@ export default tseslint.config({
 ```
 
 ### &#169; 2025 Bản quyền thuộc về Nguyễn Đan Huy | fb/danhuyspm
+<<<<<<< HEAD
 demo
+=======
+# Demo Test
+>>>>>>> 1153d40cf037794001b08740c99627306960e71e
