@@ -6,6 +6,7 @@ import type { LoginRequest } from "../types/user/User.req.type";
 import { helpers } from "../utils";
 import { ROUTER_URL } from "../consts/router.path.const";
 import { UserRole } from "../app/enums";
+import { useUserInfo } from "./useUserInfo";
 
 export const useAuth = () => {
 
@@ -44,31 +45,32 @@ export const useLogin = () => {
 
     return useMutation({
         mutationFn: async (data: LoginRequest) => {
-            // Defensive: ensure data is not empty
             if (!data.email || !data.password) {
                 throw new Error('Email and password are required');
             }
-            // Optionally trim
             return AuthService.login({
                 email: data.email.trim(),
                 password: data.password.trim(),
             });
         },
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
             if (!response?.data) {
                 throw new Error('Invalid response format');
             }
 
             const userData = response.data;
-
-            // Store user data and token
-            setItem("user", JSON.stringify(userData));
             setItem("accessToken", userData.accessToken || '');
-            setItem("role", userData.role);
+
+            // Fetch user info using the new token
+            const userInfo = useUserInfo();
+            // const userInfoResponse = await AuthService.getCurrentLoginUser();
+            // if (userInfoResponse && userInfoResponse.data) {
+            //     setItem("userInfo", JSON.stringify(userInfoResponse.data));
+            // }
+            console.log("userInfo", userInfo);
 
             helpers.notificationMessage("Đăng nhập thành công!", "success");
 
-            // Redirect based on role
             switch (userData.role) {
                 case UserRole.ADMIN:
                     navigate(ROUTER_URL.ADMIN.BASE);

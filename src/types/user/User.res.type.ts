@@ -20,6 +20,6 @@ export interface UserInfo {
     gender: string | null;
     avatarUrl: string | null;
     status: string | null;
-    role: string | null;
+    role: UserRole | null;
     dob: string | null;
 }

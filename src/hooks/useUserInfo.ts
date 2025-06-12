@@ -12,7 +12,7 @@ import { useLocalStorage } from "./useLocalStorage";
  */
 export function useUserInfo() {
     const [user, setUser] = useState<UserInfo | null>(null);
-    const { getItem } = useLocalStorage();
+    const { getItem, setItem } = useLocalStorage();
     useEffect(() => {
         // Only fetch user info if accessToken exists
         const accessToken = getItem("accessToken");
@@ -40,6 +40,7 @@ export function useUserInfo() {
                         address: currentUser.data.address,
                     };
                     setUser(userObj);
+                    setItem("userInfo", JSON.stringify(userObj));
                 } else if (isMounted) {
                     setUser(null);
                 }
