@@ -21,9 +21,14 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    // "erasableSyntaxOnly": true,
+//    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "esModuleInterop": true,
+    "baseUrl": "./src",                 // Optional but recommended for module aliasing
+    "paths": {
+      "@components/*": ["components/*"] // Optional aliasing
+    }
   },
   "include": [
     "src/**/*.ts",
