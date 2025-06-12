@@ -1,5 +1,5 @@
 import { BaseService } from "../../app/api/base.service";
-// import type { ApiResponse } from "../../app/interface/apiResponse.interface";
+import type { ApiResponse } from "../../app/interface/apiResponse.interface";
 import type { LoginRequest } from "../../types/user/User.req.type";
 import type { UserResponse, UserInfo } from "../../types/user/User.res.type";
 import { API_PATH } from "../../consts/api.path.const";
@@ -12,7 +12,7 @@ export const AuthService = {
             password: params.password,
         }).toString();
 
-        return BaseService.post<UserResponse>({
+        return BaseService.post<ApiResponse<UserResponse>>({
             url: `${API_PATH.AUTH.LOGIN}?${query}`,
         });
     },
