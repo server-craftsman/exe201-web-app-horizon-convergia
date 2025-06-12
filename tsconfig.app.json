@@ -10,27 +10,47 @@
     ],
     "module": "ESNext",
     "skipLibCheck": true,
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    /* Linting */
     "strict": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-//    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "esModuleInterop": true,
-    "baseUrl": "./src",                 // Optional but recommended for module aliasing
+    "baseUrl": "./src",
     "paths": {
-      "@components/*": ["components/*"] // Optional aliasing
+      "@components/*": ["components/*"],
+        "@hooks/*": ["hooks/*"],
+        "@utils/*": ["utils/*"],
+        "@assets/*": ["assets/*"],
+        "@pages/*": ["pages/*"],
+        "@styles/*": ["styles/*"],
+        "@types/*": ["types/*"],
+        "@contexts/*": ["contexts/*"],
+        "@services/*": ["services/*"],
+        "@constants/*": ["constants/*"],
+        "@layouts/*": ["layouts/*"],
+        "@reducers/*": ["reducers/*"],
+        "@actions/*": ["actions/*"],
+        "@store/*": ["store/*"],
+        "@routes/*": ["routes/*"],
+        "@config/*": ["config/*"],
+        "@interfaces/*": ["interfaces/*"],
+        "@enums/*": ["enums/*"],
+        "@models/*": ["models/*"],
+        "@mocks/*": ["mocks/*"],
+        "@tests/*": ["tests/*"]
     }
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx"
   ]
 }
