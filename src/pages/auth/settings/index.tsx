@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { DisplayUserProfileComponent } from '../../../components/auth/settings/DisplayUserProfile.com';
 import ChangePasswordComponent from '../../../components/auth/settings/ChangePassword.com';
 
