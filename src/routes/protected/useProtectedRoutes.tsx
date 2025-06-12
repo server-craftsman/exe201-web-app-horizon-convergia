@@ -40,7 +40,7 @@ const useProtectedRoutes = (): RouteObject[] => {
 
   switch (role) {
     case UserRole.ADMIN:
-      roleBasedRoutes = mapRoutes(AdminRoutes[ROUTER_URL.ADMIN.BASE], UserRole.ADMIN) as RouteObject[];
+      roleBasedRoutes = mapRoutes(AdminRoutes.children || [], UserRole.ADMIN) as RouteObject[];
       break;
     default:
       roleBasedRoutes = [
