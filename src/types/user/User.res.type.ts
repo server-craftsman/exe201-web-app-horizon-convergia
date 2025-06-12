@@ -12,3 +12,14 @@ export interface UserResponse {
     expiredAt?: string;
 }
 
+export interface UserInfo {
+    id: string;
+    email: string;
+    role: UserRole | ''; // UserRole
+    name: string;
+    dob: string | null;
+    gender: string;
+    phoneNumber: string | null;
+    profilePicUrl: string | null;
+    token: string;
+}

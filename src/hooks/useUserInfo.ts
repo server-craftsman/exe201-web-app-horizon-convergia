@@ -1,48 +1,40 @@
 import { useEffect, useState } from "react";
 import { useLocalStorage } from "./useLocalstorage";
-import { jwtDecode } from "jwt-decode";
-
-export interface UserInfo {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    dob?: string;
-    role?: string;
-    gender?: string;
-    phoneNumber?: string;
-    profilePicUrl?: string | null;
-    token?: string;
-}
+import { AuthService } from "../services/auth/auth.service.ts";
+import type { UserInfo } from "../types/user/User.res.type";
 
 export function useUserInfo() {
-    const { getItem } = useLocalStorage();
     const [user, setUser] = useState<UserInfo | null>(null);
+    const { getItem, setItem } = useLocalStorage();
 
     useEffect(() => {
-        try {
-            const userStr = getItem("accessToken");
-            if (userStr) {
-                const decoded: any = jwtDecode(userStr);
-                const userObj: UserInfo = {
-                    id: decoded.UserId || "",
-                    email: decoded.Email || "",
-                    role: decoded.Role || "",
-                    firstName: decoded.UserName || "",
-                    lastName: "",
-                    dob: decoded.Dob,
-                    gender: decoded.Gender,
-                    phoneNumber: decoded.PhoneNumber,
-                    profilePicUrl: decoded.ProfilePicUrl,
-                    token: userStr,
-                };
-                setUser(userObj);
-                console.log("user: ", userObj);
-                return;
+        // Try to get user from localStorage first
+        const storedUser = getItem("userInfo");
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Failed to parse stored user info");
             }
-            setUser(null);
-        } catch {
-            setUser(null);
+        }
+
+        // Check if we have a token before trying to fetch user data
+        const token = localStorage.getItem("accessToken");
+        if (token && AuthService.isAuthenticated()) {
+            AuthService.getCurrentUser()
+                .then((response) => {
+                    if (response && response.data) {
+                        setItem("userInfo", JSON.stringify(response.data));
+                        setUser(response.data);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Failed to fetch user information:", error);
+                    // If we get a 401, clear the token as it's invalid
+                    if (error?.response?.status === 401) {
+                        AuthService.logout();
+                    }
+                });
         }
     }, []);
 

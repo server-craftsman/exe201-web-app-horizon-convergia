@@ -1,5 +1,5 @@
 import { Route, Routes, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { ROUTER_URL } from "../../consts/router.path.const";
 import { UserRole } from "../../app/enums";
 import GuardPublicRoute from "../unprotected/GuardGuestRoute";
@@ -12,7 +12,7 @@ import { useUserInfo, useAuth } from "../../hooks";
 const RunRoutes = () => {
   const user = useUserInfo();
   const currentRole = user?.role as UserRole | null;
-  const { isAuthenticated, getDefaultPath } = useAuth();
+  const { getDefaultPath } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,34 +21,6 @@ const RunRoutes = () => {
       navigate(defaultPath, { replace: true });
     }
   }, [navigate, currentRole, getDefaultPath]);
-
-  const renderProtectedRoutes = () => {
-    if (!currentRole || !isAuthenticated()) {
-      return null;
-    }
-
-    return (
-      <>
-        <Route 
-          path={ROUTER_URL.ADMIN.BASE} 
-          element={
-            <GuardProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-              <AdminLayout>
-                {AdminRoutes[ROUTER_URL.ADMIN.BASE]?.map((route) => (
-                  <Route
-                    key={route.path || "index"}
-                    index={route.index}
-                    path={route.path?.replace("/admin/", "")}
-                    element={route.element}
-                  />
-                ))}
-              </AdminLayout>
-            </GuardProtectedRoute>
-          }
-        />
-      </>
-    );
-  };
 
   return (
     <Routes>
@@ -71,8 +43,38 @@ const RunRoutes = () => {
         ))
       )}
 
-      {/* Protected Routes */}
-      {renderProtectedRoutes()}
+      {/* Admin Routes */}
+      <Route 
+        path="/admin" 
+        element={
+          <GuardProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <AdminLayout />
+          </GuardProtectedRoute>
+        }
+      >
+        <Route 
+          index 
+          element={
+            <Suspense fallback={<div>Loading...</div>}>
+              {AdminRoutes[ROUTER_URL.ADMIN.BASE].find(route => route.index)?.element}
+            </Suspense>
+          } 
+        />
+        {AdminRoutes[ROUTER_URL.ADMIN.BASE]
+          .filter(route => !route.index)
+          .map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  {route.element}
+                </Suspense>
+              }
+            />
+          ))
+        }
+      </Route>
     </Routes>
   );
 };

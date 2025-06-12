@@ -7,7 +7,7 @@ export const API_PATH = {
         RESET_PASSWORD: "/Auth/ResetPassword"
     },
     USER: {
-        GET_USER_PROFILE: "/user/profile",
+        GET_USER_PROFILE: "/Auth/whoami",
         UPDATE_USER_PROFILE: "/user/profile/update",
         CHANGE_PASSWORD: "/user/password/change"
     },

@@ -21,8 +21,11 @@ export const ROUTER_URL = {
     },
     ADMIN: {
         BASE: "/admin",
-        USERS: "/admin/users",
-        SETTINGS: "/admin/settings",
-        UPDATE_USER_PROFILE: "/admin/update-user-profile",
+        USERS: "users",
+        SETTINGS: "settings",
+        UPDATE_USER_PROFILE: "update-user-profile",
+        PRODUCTS: "products",
+        ORDERS: "orders",
+        ADD_PRODUCT: "add-product",
     }
 };

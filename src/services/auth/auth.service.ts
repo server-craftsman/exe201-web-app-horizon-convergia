@@ -1,7 +1,7 @@
 import { BaseService } from "../../app/api/base.service";
 // import type { ApiResponse } from "../../app/interface/apiResponse.interface";
 import type { LoginRequest } from "../../types/user/User.req.type";
-import type { UserResponse } from "../../types/user/User.res.type";
+import type { UserResponse, UserInfo } from "../../types/user/User.res.type";
 import { API_PATH } from "../../consts/api.path.const";
 import { UserRole } from "../../app/enums";
 
@@ -15,6 +15,12 @@ export const AuthService = {
         return BaseService.post<UserResponse>({
             url: `${API_PATH.AUTH.LOGIN}?${query}`,
         });
+    },
+
+    getCurrentUser() {
+        return BaseService.get<UserInfo>({
+            url: API_PATH.USER.GET_USER_PROFILE
+        })
     },
 
     logout() {

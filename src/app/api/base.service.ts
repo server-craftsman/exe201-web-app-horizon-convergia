@@ -150,16 +150,16 @@ export interface PromiseState<T = unknown> extends AxiosResponse<T> {
 
 axiosInstance.interceptors.request.use(
     (config: AxiosRequestConfig) => {
-        const token = localStorage.getItem("token");
-        const userInfo = localStorage.getItem("userInfo");
+        const token = localStorage.getItem("accessToken");
+        // const userInfo = localStorage.getItem("userInfo");
         if (!config.headers) config.headers = {};
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
-        if (userInfo) {
-            const parsedUserInfo = JSON.parse(userInfo);
-            config.headers["User-Id"] = parsedUserInfo._id; // debug add user id
-        }
+        // if (userInfo) {
+        //     const parsedUserInfo = JSON.parse(userInfo);
+        //     config.headers["User-Id"] = parsedUserInfo._id; // debug add user id
+        // }
         store.dispatch(toggleLoading(true)); // Show loading
         return config as InternalAxiosRequestConfig;
     },
