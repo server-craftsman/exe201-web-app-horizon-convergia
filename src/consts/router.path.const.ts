@@ -23,6 +23,13 @@ export const ROUTER_URL = {
         BASE: "/admin",
         OVERVIEW: "/admin/tong-quan",
         USERS: "/admin/quan-ly-nguoi-dung",
+        CATEGORIES: "/admin/quan-ly-danh-muc",
+        PRODUCTS: "/admin/quan-ly-san-pham",
+        ACCESSORIES: "/admin/quan-ly-phu-kien",
+        ORDERS: "/admin/quan-ly-don-hang",
+        REPORTS: "/admin/bao-cao",
+        REVIEWS: "/admin/quan-ly-danh-gia",
+        STATISTICS: "/admin/thong-ke",
         SETTINGS: "/admin/cai-dat",
         UPDATE_USER_PROFILE: "update-user-profile",
     }

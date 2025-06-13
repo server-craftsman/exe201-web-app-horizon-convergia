@@ -111,7 +111,7 @@ const SearchComponent: React.FC = () => {
             {/* Submit button */}
             <motion.button
               type="submit"
-              className="flex rounded-full items-center justify-center h-full px-4 text-amber-400 focus:outline-none bg-amber-500/20"
+              className="flex items-center justify-center h-full px-4 text-amber-400"
               whileHover={{ backgroundColor: 'rgba(245, 158, 11, 0.3)' }}
               whileTap={{ scale: 0.95 }}
             >
