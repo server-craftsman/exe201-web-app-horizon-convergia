@@ -14,10 +14,12 @@ export const AdminRoutes: RouteObject = {
             element: <OverviewPage />,
         },
         {
+            index: false,
             path: ROUTER_URL.ADMIN.USERS,
             element: <UserManagementPage />,
         },
         {
+            index: false,
             path: ROUTER_URL.ADMIN.SETTINGS,
             element: <SettingManagementPage />,
         }
