@@ -5,9 +5,9 @@ import { UserRole } from "../../app/enums";
 import Loading from "../../app/screens/Loading";
 import { AdminRoutes } from "./access/adminPermission";
 import { useUserInfo } from "../../hooks";
-import AdminLayout from "../../layouts/admin/Admin.layout";
+// import AdminLayout from "../../layouts/admin/Admin.layout";
 import { ROUTER_URL } from "../../consts/router.path.const";
-
+//
 const useProtectedRoutes = (): RouteObject[] => {
   const user = useUserInfo();
   const role = user?.role as UserRole | null;
@@ -26,7 +26,7 @@ const useProtectedRoutes = (): RouteObject[] => {
     return [
       {
         path: ROUTER_URL.ADMIN.BASE,
-        element: <AdminLayout />,
+        // element: <AdminLayout />,
         children: [
           {
             index: true,

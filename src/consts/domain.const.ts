@@ -1,1 +1,1 @@
-export const DOMAIN_API = "https://horizonconvergia2025-bwenemhsgqeygpb9.canadacentral-01.azurewebsites.net/api";
+export const DOMAIN_API = "https://horizon-convergia.onrender.com/api";

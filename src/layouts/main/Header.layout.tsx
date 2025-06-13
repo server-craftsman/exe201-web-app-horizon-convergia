@@ -106,7 +106,7 @@ const HeaderLayout: React.FC = () => {
                     Quản trị viên
                   </Link>
                 )}
-                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
+                <Link to={ROUTER_URL.ADMIN.SETTINGS} className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
                   Hồ sơ cá nhân
                 </Link>
                 <Link to="/don-hang" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
@@ -133,7 +133,7 @@ const HeaderLayout: React.FC = () => {
               <span className="absolute inset-0 w-full h-full bg-amber-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></span>
             )}
             <span className={`${mobile ? '' : 'relative z-10 group-hover:text-gray-900 transition-colors duration-300'}`}>
-              <Link to="/dang-nhap">Đăng nhập</Link>
+              <Link to={ROUTER_URL.AUTH.LOGIN}>Đăng nhập</Link>
             </span>
           </motion.button>
 
@@ -146,7 +146,7 @@ const HeaderLayout: React.FC = () => {
               <span className="absolute inset-0 w-0 h-full bg-white/20 transform skew-x-10 transition-all duration-500 ease-out origin-left group-hover:w-full"></span>
             )}
             <span className="relative z-10">
-              <Link to="/dang-ky">Đăng ký</Link>
+              <Link to={ROUTER_URL.AUTH.LOGIN}>Đăng ký</Link>
             </span>
           </motion.button>
         </div>
