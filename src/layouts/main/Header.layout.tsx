@@ -109,7 +109,7 @@ const HeaderLayout: React.FC = () => {
                 <Link to={ROUTER_URL.ADMIN.SETTINGS} className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
                   Hồ sơ cá nhân
                 </Link>
-                <Link to="/don-hang" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
+                <Link to={ROUTER_URL.ADMIN.ORDERS} className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
                   Đơn hàng của tôi
                 </Link>
                 <button
@@ -206,13 +206,13 @@ const HeaderLayout: React.FC = () => {
                 >
                   <span className="relative z-10">{item.label}</span>
                   <motion.span
-                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 transform origin-left ${location.pathname === item.path ? 'scale-x-100' : 'scale-x-0'
+                    className={`absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 rounded-md transform origin-left ${location.pathname === item.path ? 'scale-x-110' : 'scale-x-0'
                       }`}
                     initial={false}
                     animate={{ scaleX: location.pathname === item.path ? 1 : 0 }}
                     transition={{ duration: 0.3 }}
                   />
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-400 rounded-md transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                   <span className="absolute inset-0 w-full h-full bg-amber-400/10 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300"></span>
                 </Link>
               </motion.div>
