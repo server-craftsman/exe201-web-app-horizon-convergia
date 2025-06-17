@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "./useLocalStorage";
 import { AuthService } from "../services/auth/auth.service";
-import type { LoginRequest } from "../types/user/User.req.type";
+import type { LoginRequest, ResetPasswordRequest } from "../types/user/User.req.type";
 import { helpers } from "../utils";
 import { ROUTER_URL } from "../consts/router.path.const";
 import { UserRole } from "../app/enums";
@@ -37,11 +37,50 @@ export const useAuth = () => {
         }
     };
 
+    const verifyEmail = useMutation({
+        mutationFn: AuthService.verifyEmail,
+        onSuccess: (response) => {
+            helpers.notificationMessage(response.data.data, "success");
+        },
+        onError: (error: any) => {
+            console.error('Verify email error:', error);
+        }
+    });
+
+    const forgotPassword = useMutation({
+        mutationFn: AuthService.forgotPassword,
+        onSuccess: (response) => {
+            helpers.notificationMessage(response.data.data, "success");
+        },
+        onError: (error: any) => {
+            console.error('Forgot password error:', error);
+        }
+    });
+
+
+    const resetPassword = useMutation({
+        mutationFn: async (data: ResetPasswordRequest) => {
+            if (!data.token || !data.newPassword) {
+                throw new Error('Token and password are required');
+            }
+            return AuthService.resetPassword({ token: data.token, newPassword: data.newPassword });
+        },
+        onSuccess: (response) => {
+            helpers.notificationMessage(response.data.data, "success");
+        },
+        onError: (error: any) => {
+            console.error('Reset password error:', error);
+        }
+    });
+
     return {
         getCurrentRole,
         isAuthenticated,
         getCurrentUser,
-        getDefaultPath
+        getDefaultPath,
+        verifyEmail,
+        forgotPassword,
+        resetPassword
     };
 };
 

@@ -11,7 +11,7 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const userInfo = useUserInfo();
+    const userInfo= useUserInfo();
     const {logout} = useLogout();
     return (
       <div className="flex h-screen bg-gray-800 text-white">
@@ -54,8 +54,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                                   className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-2 z-10"
                               >
                                   <div className="px-4 py-2 text-sm">
-                                      {userInfo.name}
-                                      <div className="text-xs text-gray-400">{userInfo.email}</div>
+                                      {userInfo?.name}
+                                      <div className="text-xs text-gray-400">{userInfo?.email}</div>
                                   </div>
                                   <button
                                       onClick={logout}

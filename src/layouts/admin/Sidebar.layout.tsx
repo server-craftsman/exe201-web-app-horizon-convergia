@@ -157,11 +157,11 @@ const SidebarLayout: React.FC = () => {
                 {menuItems.map((item) => (
                     <Link
                         key={item.path}
-                        to={item.path}
+                        to={item.path || '#'}
                         className={`flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors rounded-lg ${location.pathname === item.path ? 'bg-gray-700 text-white' : ''
                         }`}
                     >
-                        <span className="mr-3">{item.icon}</span>
+                            <span className="mr-3">{item.icon}</span>
                         {item.label}
                     </Link>
                 ))}

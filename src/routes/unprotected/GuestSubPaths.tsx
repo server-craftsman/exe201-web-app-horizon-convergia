@@ -1,16 +1,20 @@
-// import { lazy } from "react";
+import { lazy } from "react";
 import { ROUTER_URL } from "../../consts/router.path.const";
 import type { RouteObject } from "react-router-dom";
 import MainLayout from "../../layouts/main/Main.layout";
 
 //================= PUBLIC SUB PATHS =================
-import HomePage from "../../pages/client/home";
-import LoginPage from "../../pages/auth/login";
-import RegisterPage from "../../pages/auth/register";
-import BuyMotorPage from "../../pages/client/buy_motor";
-import SellMotorPage from "../../pages/client/sell_motor";
-import AccessoriesPage from "../../pages/client/accessories";
-import NewsPage from "../../pages/client/news";
+const HomePage = lazy(() => import("../../pages/client/home"));
+const BuyMotorPage = lazy(() => import("../../pages/client/buy_motor"));
+const SellMotorPage = lazy(() => import("../../pages/client/sell_motor"));
+const AccessoriesPage = lazy(() => import("../../pages/client/accessories"));
+const NewsPage = lazy(() => import("../../pages/client/news"));
+// auth pages
+const LoginPage = lazy(() => import("../../pages/auth/login"));
+const RegisterPage = lazy(() => import("../../pages/auth/register"));
+const VerifyEmailPage = lazy(() => import("../../pages/auth/verify_email"));
+const ResetPasswordPage = lazy(() => import("../../pages/auth/reset_password"));
+const ForgotPasswordPage = lazy(() => import("../../pages/auth/forgot_password"));
 //======================================================
 //export public sub paths
 export const publicSubPaths: Record<string, RouteObject[]> = {
@@ -37,6 +41,18 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
         {
           path: ROUTER_URL.CLIENT.NEWS,
           element: <NewsPage />
+        },
+        {
+          path: ROUTER_URL.AUTH.VERIFY_EMAIL,
+          element: <VerifyEmailPage />
+        },
+        {
+          path: ROUTER_URL.AUTH.FORGOT_PASSWORD,
+          element: <ForgotPasswordPage />
+        },
+        {
+          path: ROUTER_URL.AUTH.RESET_PASSWORD,
+          element: <ResetPasswordPage />
         }
       ]
     }
