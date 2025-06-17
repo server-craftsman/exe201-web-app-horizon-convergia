@@ -35,7 +35,7 @@ export const DisplayUserProfileComponent = () => {
                         {userInfo.avatarUrl ? (
                             <img src={userInfo.avatarUrl} alt="avatar" className="w-40 h-40 rounded-full border-4 border-amber-400 shadow-lg" />
                         ) : (
-                            <div className="w-40 h-40 rounded-full bg-amber-400 flex items-center justify-center text-white font-bold text-5xl shadow-lg">
+                            <div className="w-40 h-40 rounded-full bg-vip flex items-center justify-center text-white font-bold text-5xl shadow-lg">
                                 {userInfo.name?.[0] || userInfo.email?.[0]}
                             </div>
                         )}
@@ -50,7 +50,7 @@ export const DisplayUserProfileComponent = () => {
                             </svg>
                         </motion.div>
                     </motion.div>
-                    <h1 className="text-3xl font-bold mt-6 text-amber-400">{userInfo.name || 'User Name'}</h1>
+                    <h1 className="text-3xl font-bold mt-6 text-vip">{userInfo.name || 'User Name'}</h1>
                     <p className="text-lg text-gray-400 mt-2">{userInfo.email || 'user@example.com'}</p>
 
                 </div>

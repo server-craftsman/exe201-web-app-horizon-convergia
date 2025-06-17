@@ -1,14 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { useLocalStorage } from "./useLocalStorage";
-import { AuthService } from "../services/auth/auth.service";
-import type { LoginRequest, ResetPasswordRequest } from "../types/user/User.req.type";
-import { helpers } from "../utils";
-import { ROUTER_URL } from "../consts/router.path.const";
-import { UserRole } from "../app/enums";
+import { useLocalStorage } from "../other/useLocalStorage.ts";
+import { AuthService } from "@services/auth/auth.service.ts";
+// @ts-ignore
+import type { LoginRequest, ResetPasswordRequest } from "@types/user/User.req.type";
+import { helpers } from "@utils/index.ts";
+import { ROUTER_URL } from "@consts/router.path.const.ts";
+import { UserRole } from "@app/enums";
 
 export const useAuth = () => {
-    const { getItem } = useLocalStorage();
+    const { getItem, clearStorage  } = useLocalStorage();
 
     const getCurrentRole = (): UserRole | null => {
         const role = getItem("role");
@@ -73,6 +74,33 @@ export const useAuth = () => {
         }
     });
 
+    const changePassword = useMutation({
+        mutationFn: async ({ newPassword, id }: { newPassword: string, id: string | null }) => {
+            if (!id) {
+                throw new Error('User ID is required');
+            }
+            return AuthService.changePassword(newPassword, id.toString()) as Promise<any>;
+        },
+        onSuccess: (response) => {
+            helpers.notificationMessage(response.data.data, "success");
+        },
+        onError: (error: any) => {
+            console.error('Change password error:', error);
+        }
+    });
+
+    const logout = useMutation({
+        mutationFn: AuthService.logout,
+        onSuccess: () => {
+            helpers.notificationMessage("Đăng xuất thành công!", "success");
+            clearStorage();
+            window.location.href = ROUTER_URL.AUTH.LOGIN;},
+        onError: (error: any) => {
+            console.error('Logout error:', error);
+        }
+    });
+
+
     return {
         getCurrentRole,
         isAuthenticated,
@@ -80,7 +108,9 @@ export const useAuth = () => {
         getDefaultPath,
         verifyEmail,
         forgotPassword,
-        resetPassword
+        resetPassword,
+        changePassword,
+        logout,
     };
 };
 
@@ -153,25 +183,4 @@ export const useLogin = () => {
             }
         },
     });
-};
-
-export const useLogout = () => {
-    const navigate = useNavigate();
-    const { removeItem } = useLocalStorage();
-
-    const logout = () => {
-        // Clear all auth-related items
-        removeItem("accessToken");
-        removeItem("userInfo");
-        removeItem("role");
-
-        // Call service logout if needed
-        AuthService.logout();
-
-        // Navigate to home
-        navigate(ROUTER_URL.AUTH.LOGIN);
-        helpers.notificationMessage("Đăng xuất thành công!", "success");
-    };
-
-    return { logout };
 };

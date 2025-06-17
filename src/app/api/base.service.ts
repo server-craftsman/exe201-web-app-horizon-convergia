@@ -152,7 +152,7 @@ axiosInstance.interceptors.request.use(
     (config: AxiosRequestConfig) => {
         // Direct localStorage access instead of using hooks
         const token = localStorage.getItem("accessToken");
-        const userInfoStr = localStorage.getItem("userInfo");
+        // const userInfoStr = localStorage.getItem("userInfo");
 
         if (!config.headers) config.headers = {};
 
@@ -160,14 +160,14 @@ axiosInstance.interceptors.request.use(
             config.headers["Authorization"] = `Bearer ${token}`;
         }
 
-        if (userInfoStr) {
-            try {
-                const parsedUserInfo = JSON.parse(userInfoStr);
-                config.headers["User-Id"] = parsedUserInfo.id;
-            } catch (e) {
-                console.error("Failed to parse user info from localStorage", e);
-            }
-        }
+        // if (userInfoStr) {
+        //     try {
+        //         const parsedUserInfo = JSON.parse(userInfoStr);
+        //         config.headers["User-Id"] = parsedUserInfo.id;
+        //     } catch (e) {
+        //         console.error("Failed to parse user info from localStorage", e);
+        //     }
+        // }
 
         store.dispatch(toggleLoading(true)); // Show loading
         return config as InternalAxiosRequestConfig;

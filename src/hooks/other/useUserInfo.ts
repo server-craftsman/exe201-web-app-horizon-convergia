@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { AuthService } from "../services/auth/auth.service";
-import type { UserInfo } from "../types/user/User.res.type";
-import { useLocalStorage } from "./useLocalStorage";
+import { AuthService } from "@services/auth/auth.service.ts";
+// @ts-ignore
+import type { UserInfo } from "@types/user/User.res.type.ts";
+import { useLocalStorage } from "./useLocalStorage.ts";
 
 /**
  * useUserInfo hook
@@ -12,14 +13,15 @@ import { useLocalStorage } from "./useLocalStorage";
  */
 export function useUserInfo() {
     const [user, setUser] = useState<UserInfo | null>(null);
-    const { setItem } = useLocalStorage();
+    const { getItem, setItem } = useLocalStorage();
+
     useEffect(() => {
-        // // Only fetch user info if accessToken exists
-        // const accessToken = getItem("accessToken");
-        // if (!accessToken) {
-        //     setUser(null);
-        //     return;
-        // }
+        // Only fetch user info if accessToken exists
+        const accessToken = getItem("accessToken");
+        if (!accessToken) {
+            setUser(null);
+            return;
+        }
 
         let isMounted = true;
 
@@ -42,6 +44,7 @@ export function useUserInfo() {
                     setUser(userObj);
                     setItem("userInfo", JSON.stringify(userObj));
                     setItem("role", currentUser.data.role ?? "");
+                    setItem("userId", currentUser.data.id ? currentUser.data.id.toString() : "");
                 } else if (isMounted) {
                     setUser(null);
                 }
@@ -50,12 +53,13 @@ export function useUserInfo() {
                 if (isMounted) setUser(null);
             }
         };
+
         fetchUser();
 
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [getItem]);
 
     return user;
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTER_URL } from '../../../consts/router.path.const';
-import { useLogin } from '../../../hooks/useAuth';
+import { useLogin } from '@hooks/modules/useAuth.ts';
 import { helpers } from '../../../utils';
 
 const LoginPage: React.FC = () => {
@@ -154,9 +154,9 @@ const LoginPage: React.FC = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
+                <Link to={ROUTER_URL.AUTH.FORGOT_PASSWORD} className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
                   Quên mật khẩu?
-                </a>
+                </Link>
               </div>
             </div>
 

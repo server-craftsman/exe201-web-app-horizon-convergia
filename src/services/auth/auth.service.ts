@@ -24,9 +24,13 @@ export const AuthService = {
     },
 
     logout() {
-        localStorage.removeItem("user");
-        localStorage.removeItem("role");
-        localStorage.removeItem("accessToken");
+        return BaseService.post<ApiResponse<any>>({
+            url: API_PATH.AUTH.LOGOUT,
+        });
+        // localStorage.removeItem("user");
+        // localStorage.removeItem("role");
+        // localStorage.removeItem("userId");
+        // localStorage.removeItem("accessToken");
     },
 
     getAccessToken(): string | null {
@@ -64,7 +68,8 @@ export const AuthService = {
     forgotPassword(email: string) {
         const url = API_PATH.AUTH.FORGOT_PASSWORD;
         return BaseService.post<ApiResponse<any>>({
-            url: `${url}?email=${encodeURIComponent(email)}`,
+            url,
+            payload: { email }
         });
     },
 
@@ -72,6 +77,14 @@ export const AuthService = {
         const url = API_PATH.AUTH.RESET_PASSWORD;
         return BaseService.post<ApiResponse<any>>({
             url: `${url}?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`,
+        });
+    },
+
+    changePassword(newPassword: string, id: string) {
+        const url = API_PATH.AUTH.CHANGE_PASSWORD(id);
+        return BaseService.put<ApiResponse<any>>({
+            url,
+            payload: { newPassword }
         });
     }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { ROUTER_URL } from "../../consts/router.path.const";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@hooks/modules/useAuth.ts";
 import { UserRole } from "../../app/enums";
 
 interface GuardProtectedRouteProps {
