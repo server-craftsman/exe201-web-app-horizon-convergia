@@ -15,7 +15,7 @@ export interface UserInfo {
     id: number | null;
     name: string | null;
     email: string | null;
-    phoneNumber: string | null;
+    phoneNumber: number | null;
     address: string | null;
     gender: string | null;
     avatarUrl: string | null;

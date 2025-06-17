@@ -1,304 +1,572 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTER_URL } from '../../../consts/router.path.const';
+import { useVietnamAddress, useUser } from '../../../hooks';
+import { helpers } from '../../../utils';
+import {Gender} from "../../../app/enums";
 
 const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    agreeTerms: false
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phoneNumber: 0,
+        password: '',
+        confirmPassword: '',
+        streetAddress: '',
+        gender: Gender.MALE,
+        dob: '',
+        agreeTerms: false,
+        provinceCode: '',
+        districtCode: '',
+        wardCode: ''
     });
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle registration logic here
-    console.log(formData);
-  };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-        <div className="absolute w-96 h-96 bg-amber-500/10 rounded-full -top-20 -right-20 blur-3xl"></div>
-        <div className="absolute w-96 h-96 bg-blue-500/10 rounded-full -bottom-20 -left-20 blur-3xl"></div>
-        
-        {/* Animated Particles */}
-        {[...Array(6)].map((_, i) => (
+    const [selectedProvince, setSelectedProvince] = useState('');
+    const [selectedDistrict, setSelectedDistrict] = useState('');
+    const [selectedWard, setSelectedWard] = useState('');
+    const [fullAddress, setFullAddress] = useState('');
+    const [passwordStrength, setPasswordStrength] = useState(0);
+
+    const { register } = useUser();
+    const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
+    const districts = getDistricts(formData.provinceCode);
+    const wards = getWards(formData.districtCode);
+
+    // Password strength checker
+    useEffect(() => {
+      if (!formData.password) {
+        setPasswordStrength(0);
+        return;
+      }
+
+      let strength = 0;
+      if (formData.password.length >= 8) strength += 1;
+      if (/[A-Z]/.test(formData.password)) strength += 1;
+      if (/[0-9]/.test(formData.password)) strength += 1;
+      if (/[^A-Za-z0-9]/.test(formData.password)) strength += 1;
+
+      setPasswordStrength(strength);
+    }, [formData.password]);
+
+    // Update full address when address components change
+    useEffect(() => {
+      if (selectedProvince && selectedDistrict && selectedWard && formData.streetAddress) {
+        const address = formatAddress(
+          formData.streetAddress,
+          selectedWard,
+          selectedDistrict,
+          selectedProvince
+        );
+        setFullAddress(address);
+      }
+    }, [selectedProvince, selectedDistrict, selectedWard, formData.streetAddress, formatAddress]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const { name, value, type } = e.target;
+      const checked = (e.target as HTMLInputElement).checked;
+
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value
+      });
+
+      // Handle address selections
+      if (name === 'provinceCode') {
+        const selectedProvinceName = provinces.data?.find((p: { code: string; }) => p.code === value)?.name || '';
+        setSelectedProvince(selectedProvinceName);
+        setFormData(prev => ({ ...prev, districtCode: '', wardCode: '' }));
+        setSelectedDistrict('');
+        setSelectedWard('');
+      } else if (name === 'districtCode') {
+        const selectedDistrictName = districts.data?.find((d: { code: string; }) => d.code === value)?.name || '';
+        setSelectedDistrict(selectedDistrictName);
+        setFormData(prev => ({ ...prev, wardCode: '' }));
+        setSelectedWard('');
+      } else if (name === 'wardCode') {
+        const selectedWardName = wards.data?.find((w: { code: string; }) => w.code === value)?.name || '';
+        setSelectedWard(selectedWardName);
+      }
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+
+      // Validate password confirmation
+      if (formData.password !== formData.confirmPassword) {
+        helpers.notificationMessage("Mật khẩu xác nhận không khớp", "error");
+        return;
+      }
+
+      // Validate password strength
+      if (passwordStrength < 2) {
+        helpers.notificationMessage("Mật khẩu quá yếu. Vui lòng tạo mật khẩu mạnh hơn", "error");
+        return;
+      }
+
+      register.mutate({
+        name: formData.name?.trim() || null,
+        email: formData.email.trim(),
+        password: formData.password.trim(),
+        phoneNumber: formData.phoneNumber,
+        address: fullAddress || '',
+        gender: formData.gender,
+        dob: formData.dob ? new Date(formData.dob) : new Date()
+      });
+    };
+
+    const getStrengthColor = () => {
+      if (passwordStrength === 0) return 'bg-gray-300';
+      if (passwordStrength === 1) return 'bg-red-500';
+      if (passwordStrength === 2) return 'bg-yellow-500';
+      if (passwordStrength === 3) return 'bg-amber-500';
+      return 'bg-green-500';
+    };
+
+    const getStrengthText = () => {
+      if (passwordStrength === 0) return '';
+      if (passwordStrength === 1) return 'Yếu';
+      if (passwordStrength === 2) return 'Trung bình';
+      if (passwordStrength === 3) return 'Tốt';
+      return 'Mạnh';
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute w-96 h-96 bg-amber-500/10 rounded-full -top-20 -right-20 blur-3xl"></div>
+          <div className="absolute w-96 h-96 bg-blue-500/10 rounded-full -bottom-20 -left-20 blur-3xl"></div>
+
+          {/* Animated Particles */}
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-3 h-3 bg-amber-400/20 rounded-full"
+              initial={{
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+              }}
+              animate={{
+                x: [
+                  Math.random() * window.innerWidth,
+                  Math.random() * window.innerWidth,
+                  Math.random() * window.innerWidth,
+                ],
+                y: [
+                  Math.random() * window.innerHeight,
+                  Math.random() * window.innerHeight,
+                  Math.random() * window.innerHeight,
+                ],
+                scale: [0.8, 1.2, 0.8],
+              }}
+              transition={{
+                duration: Math.random() * 10 + 20,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
           <motion.div
-            key={i}
-            className="absolute w-3 h-3 bg-amber-400/20 rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              x: [
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth,
-              ],
-              y: [
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight,
-              ],
-              scale: [0.8, 1.2, 0.8],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 20,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        ))}
-      </div>
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <Link to={ROUTER_URL.COMMON.HOME}>
+              <h2 className="text-3xl font-bold text-amber-400 mb-1">HORIZON CONVERGIA</h2>
+              <p className="text-gray-300 text-sm tracking-wider uppercase">Thế giới xe máy của bạn</p>
+            </Link>
+          </motion.div>
+        </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <Link to={ROUTER_URL.COMMON.HOME}>
-            <h2 className="text-3xl font-bold text-amber-400 mb-1">HORIZON CONVERGIA</h2>
-            <p className="text-gray-300 text-sm tracking-wider uppercase">Thế giới xe máy của bạn</p>
-          </Link>
-        </motion.div>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl z-10">
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white/10 backdrop-blur-lg py-8 px-4 sm:px-10 rounded-xl shadow-2xl border border-white/10"
-        >
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-extrabold text-white">Đăng Ký Tài Khoản</h2>
-            <p className="mt-2 text-sm text-gray-300">
-              Đã có tài khoản?{' '}
-              <Link to={ROUTER_URL.AUTH.LOGIN} className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
-                Đăng nhập ngay
-              </Link>
-            </p>
-          </div>
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-200">
-                  Họ và tên
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                    placeholder="Nguyễn Văn A"
-                  />
-                  <div className="absolute left-3 top-3.5 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-200">
-                  Số điện thoại
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    autoComplete="tel"
-                    required
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                    placeholder="0901234567"
-                  />
-                  <div className="absolute left-3 top-3.5 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl z-10">
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white/10 backdrop-blur-lg py-8 px-4 sm:px-10 rounded-xl shadow-2xl border border-white/10"
+          >
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-extrabold text-white">Đăng Ký Tài Khoản</h2>
+              <p className="mt-2 text-sm text-gray-300">
+                Đã có tài khoản?{' '}
+                <Link to={ROUTER_URL.AUTH.LOGIN} className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
+                  Đăng nhập ngay
+                </Link>
+              </p>
             </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-200">
-                Email
-              </label>
-              <div className="mt-1 relative">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-200">
+                    Họ và tên
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Nguyễn Văn A"
+                    />
+                    <div className="absolute left-3 top-3.5 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-200">
+                    Số điện thoại
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      autoComplete="tel"
+                      value={formData.phoneNumber || undefined}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="0123456789"
+                    />
+                    <div className="absolute left-3 top-3.5 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-200">
+                  Email
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                    placeholder="example@gmail.com"
+                  />
+                  <div className="absolute left-3 top-3.5 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-200">
+                    Mật khẩu
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="••••••••"
+                    />
+                    <div className="absolute left-3 top-3.5 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Password strength meter */}
+                  {formData.password && (
+                    <div className="mt-2">
+                      <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${getStrengthColor()}`}
+                          style={{ width: `${(passwordStrength / 4) * 100}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-right mt-1 text-gray-400">
+                        Độ mạnh: <span className={passwordStrength > 2 ? "text-amber-400" : "text-gray-300"}>{getStrengthText()}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-200">
+                    Xác nhận mật khẩu
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="••••••••"
+                    />
+                    <div className="absolute left-3 top-3.5 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                  </div>
+                  {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-400">Mật khẩu xác nhận không khớp</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Vietnam Address Selection */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+                  <div>
+                    <label htmlFor="provinceCode" className="block text-sm font-medium text-gray-200">
+                      Tỉnh/Thành phố
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="provinceCode"
+                        name="provinceCode"
+                        value={formData.provinceCode}
+                        onChange={handleChange}
+                        className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="">Chọn tỉnh/thành phố</option>
+                        {provinces.data?.map((province: {code: string | number, name: React.ReactNode } ) => (
+                          <option key={province.code} value={province.code}>
+                            {province.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="districtCode" className="block text-sm font-medium text-gray-200">
+                      Quận/Huyện
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="districtCode"
+                        name="districtCode"
+                        value={formData.districtCode}
+                        onChange={handleChange}
+                        disabled={!formData.provinceCode}
+                        className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Chọn quận/huyện</option>
+                        {districts.data?.map((district: { code: string | number, name: React.ReactNode }) => (
+                          <option key={district.code} value={district.code}>
+                            {district.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="wardCode" className="block text-sm font-medium text-gray-200">
+                      Phường/Xã
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="wardCode"
+                        name="wardCode"
+                        value={formData.wardCode}
+                        onChange={handleChange}
+                        disabled={!formData.districtCode}
+                        className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Chọn phường/xã</option>
+                        {wards.data?.map((ward: { code: string | number; name: React.ReactNode }) => (
+                            <option key={ward.code} value={ward.code}>
+                              {ward.name}
+                            </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="streetAddress" className="block text-sm font-medium text-gray-200">
+                    Địa chỉ chi tiết
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="streetAddress"
+                      name="streetAddress"
+                      type="text"
+                      value={formData.streetAddress}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Số nhà, tên đường..."
+                    />
+                    <div className="absolute left-3 top-3.5 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {fullAddress && (
+                  <div className="rounded-lg bg-gray-800/30 border border-gray-700 p-3">
+                    <p className="text-sm text-gray-300">
+                      <span className="text-xs font-medium text-amber-400">Địa chỉ đầy đủ:</span> {fullAddress}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-200">
+                    Giới tính
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                    >
+                      <option>Chọn giới tính</option>
+                      <option value={Gender.MALE}>Nam</option>
+                      <option value={Gender.FEMALE}>Nữ</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="dob" className="block text-sm font-medium text-gray-200">
+                    Ngày sinh
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="dob"
+                      name="dob"
+                      type="date"
+                      value={formData.dob}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="agreeTerms"
+                  name="agreeTerms"
+                  type="checkbox"
                   required
-                  value={formData.email}
+                  checked={formData.agreeTerms}
                   onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                  placeholder="example@gmail.com"
+                  className="h-4 w-4 text-amber-500 focus:ring-amber-500 border-gray-600 rounded bg-gray-800"
                 />
-                <div className="absolute left-3 top-3.5 text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-200">
-                  Mật khẩu
+                <label htmlFor="agreeTerms" className="ml-2 block text-sm text-gray-300">
+                  Tôi đồng ý với{' '}
+                  <a href="#" className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
+                    điều khoản dịch vụ
+                  </a>{' '}
+                  và{' '}
+                  <a href="#" className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
+                    chính sách bảo mật
+                  </a>
                 </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                    placeholder="••••••••"
-                  />
-                  <div className="absolute left-3 top-3.5 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                </div>
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-200">
-                  Xác nhận mật khẩu
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                    placeholder="••••••••"
-                  />
-                  <div className="absolute left-3 top-3.5 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={register.isSuccess}
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-gray-900 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {register.isError ? (
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                  </div>
+                  ) : null}
+                  Đăng ký
+                </motion.button>
+              </div>
+            </form>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-800/50 backdrop-blur text-gray-300">Hoặc đăng ký với</span>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center">
-              <input
-                id="agreeTerms"
-                name="agreeTerms"
-                type="checkbox"
-                required
-                checked={formData.agreeTerms}
-                onChange={handleChange}
-                className="h-4 w-4 text-amber-500 focus:ring-amber-500 border-gray-600 rounded bg-gray-800"
-              />
-              <label htmlFor="agreeTerms" className="ml-2 block text-sm text-gray-300">
-                Tôi đồng ý với{' '}
-                <a href="#" className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
-                  điều khoản dịch vụ
-                </a>{' '}
-                và{' '}
-                <a href="#" className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
-                  chính sách bảo mật
-                </a>
-              </label>
-            </div>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <a
+                    href="#"
+                    className="w-full inline-flex justify-center py-3 px-4 border border-gray-600 rounded-lg shadow-sm bg-gray-800/50 text-sm font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
+                  >
+                    <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+                    </svg>
+                  </a>
+                </motion.div>
 
-            <div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-gray-900 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300"
-              >
-                Đăng ký
-              </motion.button>
-            </div>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-800/50 backdrop-blur text-gray-300">Hoặc đăng ký với</span>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <a
+                    href="#"
+                    className="w-full inline-flex justify-center py-3 px-4 border border-gray-600 rounded-lg shadow-sm bg-gray-800/50 text-sm font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
+                  >
+                    <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.498 0 2.866.549 3.921 1.453l2.814-2.814A9.969 9.969 0 0012.545 2C7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748l-9.426-.013z" />
+                    </svg>
+                  </a>
+                </motion.div>
               </div>
             </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <a
-                  href="#"
-                  className="w-full inline-flex justify-center py-3 px-4 border border-gray-600 rounded-lg shadow-sm bg-gray-800/50 text-sm font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
-                >
-                  <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <a
-                  href="#"
-                  className="w-full inline-flex justify-center py-3 px-4 border border-gray-600 rounded-lg shadow-sm bg-gray-800/50 text-sm font-medium text-gray-200 hover:bg-gray-700/50 transition-colors"
-                >
-                  <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.498 0 2.866.549 3.921 1.453l2.814-2.814A9.969 9.969 0 0012.545 2C7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748l-9.426-.013z" />
-                  </svg>
-                </a>
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-export default RegisterPage;
+  export default RegisterPage;

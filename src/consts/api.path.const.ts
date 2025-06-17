@@ -2,10 +2,11 @@ export const API_PATH = {
     AUTH: {
         LOGIN: "/Auth/Login",
         LOGOUT: "/Auth/Logout",
-        REGISTER: "/Auth/Register",
+        REGISTER: "/Auth/register",
         FORGOT_PASSWORD: "/Auth/ForgotPassword",
         RESET_PASSWORD: "/Auth/ResetPassword",
-        CURRENT_USER: "/Auth/whoami"
+        CURRENT_USER: "/Auth/whoami",
+        VERIFY_EMAIL: "/Auth/verify-email"
     },
     USER: {
         GET_USER_PROFILE: "/user/profile",

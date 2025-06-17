@@ -1,9 +1,9 @@
-import { BaseService } from "../../app/api/base.service";
+import { BaseService } from "@app/api/base.service.ts";
 import type { ApiResponse } from "../../app/interface/apiResponse.interface";
-import type { LoginRequest } from "../../types/user/User.req.type";
+import type { LoginRequest, ResetPasswordRequest } from "../../types/user/User.req.type";
 import type { UserResponse, UserInfo } from "../../types/user/User.res.type";
 import { API_PATH } from "../../consts/api.path.const";
-import { UserRole } from "../../app/enums";
+import { UserRole } from "@app/enums";
 
 export const AuthService = {
     login(params: LoginRequest) {
@@ -52,5 +52,26 @@ export const AuthService = {
     },
     async uploadAvatar(file: File): Promise<string | null> {
         return await BaseService.uploadFile(file, "image");
+    },
+
+    verifyEmail(token: string) {
+        const url = API_PATH.AUTH.VERIFY_EMAIL;
+        return BaseService.get<ApiResponse<any>>({
+            url: `${url}?token=${encodeURIComponent(token)}`,
+        });
+    },
+
+    forgotPassword(email: string) {
+        const url = API_PATH.AUTH.FORGOT_PASSWORD;
+        return BaseService.post<ApiResponse<any>>({
+            url: `${url}?email=${encodeURIComponent(email)}`,
+        });
+    },
+
+    resetPassword({ token, newPassword }: ResetPasswordRequest) {
+        const url = API_PATH.AUTH.RESET_PASSWORD;
+        return BaseService.post<ApiResponse<any>>({
+            url: `${url}?token=${encodeURIComponent(token)}&newPassword=${encodeURIComponent(newPassword)}`,
+        });
     }
 }

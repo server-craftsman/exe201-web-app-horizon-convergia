@@ -4,7 +4,7 @@ export const ROUTER_URL = {
         SIGN_UP: "/dang-ky",
         FORGOT_PASSWORD: "/quen-mat-khau",
         RESET_PASSWORD: "/doi-mat-khau",
-        VERIFY_EMAIL: "/xac-thuc-email",
+        VERIFY_EMAIL: "/api/auth/verify-email",
         UNAUTHOZIZED: "/auth/unauthorized",
     },
     COMMON: {
