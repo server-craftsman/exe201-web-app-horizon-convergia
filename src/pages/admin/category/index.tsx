@@ -1,12 +1,11 @@
 import React from 'react';
+import { Display } from '@components/admin/category/Display';
 
 const CategoryPage: React.FC = () => {
-    return (
-        <>
-            <h1>Category Management</h1>
-            <p>This page will allow you to manage categories.</p>
-            {/* Add your category management components here */}
-        </>
+     return (
+        <div style={{ padding: '15px' }}>
+            <Display />
+        </div>
     );
 };
 

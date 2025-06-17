@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTER_URL } from '../../../consts/router.path.const';
-import { useAuth } from '../../../hooks/useAuth';
+import { useAuth } from '@hooks/modules/useAuth.ts';
 import { helpers } from '../../../utils';
 
 const ResetPassword = () => {

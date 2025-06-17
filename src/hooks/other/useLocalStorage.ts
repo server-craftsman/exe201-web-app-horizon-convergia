@@ -40,5 +40,14 @@ export const useLocalStorage = () => {
         }
     }, []);
 
-    return { setItem, getItem, removeItem };
+    const clearStorage = useCallback(() => {
+        try {
+            localStorage.clear();
+        } catch (error) {
+            console.error('Error clearing localStorage:', error);
+            throw new Error('Failed to clear localStorage');
+        }
+    }, []);
+
+    return { setItem, getItem, removeItem, clearStorage };
 }

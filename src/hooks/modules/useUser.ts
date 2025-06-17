@@ -1,10 +1,10 @@
-import {UserSerice} from "@services/user/user.service";
+import {UserSerice} from "@services/user/user.service.ts";
 import { useMutation} from "@tanstack/react-query";
 
 // @ts-ignore
-import type {RegisterRequest} from "@types/user/User.req.type";
+import type {RegisterRequest} from "@types/user/User.req.type.ts";
 // import type {UserInfo} from "@types/user/User.res.type";
-import {helpers} from "@utils/index";
+import {helpers} from "@utils/index.ts";
 
 export const useUser = () => {
     const register = useMutation({

@@ -3,10 +3,11 @@ export const API_PATH = {
         LOGIN: "/Auth/Login",
         LOGOUT: "/Auth/Logout",
         REGISTER: "/Auth/register",
-        FORGOT_PASSWORD: "/Auth/ForgotPassword",
-        RESET_PASSWORD: "/Auth/ResetPassword",
+        FORGOT_PASSWORD: "/Auth/forgot-password",
+        RESET_PASSWORD: "/Auth/reset-password",
         CURRENT_USER: "/Auth/whoami",
-        VERIFY_EMAIL: "/Auth/verify-email"
+        VERIFY_EMAIL: "/Auth/verify-email",
+        CHANGE_PASSWORD: (id: string) => `/Auth/${id}/change-password`,
     },
     USER: {
         GET_USER_PROFILE: "/user/profile",
@@ -19,5 +20,12 @@ export const API_PATH = {
         CREATE_PRODUCT: "/products/create",
         UPDATE_PRODUCT: (id: string) => `/products/update/${id}`,
         DELETE_PRODUCT: (id: string) => `/products/delete/${id}`
+    },
+    CATEGORY: {
+        CREATE: "/Categories/",
+        GET_ALL: "/Categories",
+        GET_BY_ID: (id: string) => `/Categories/${id}`,
+        UPDATE: (id: string) => `/Categories/${id}`,
+        DELETE: (id: string) => `/Categories/${id}`
     }
 };

@@ -1,13 +1,21 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ROUTER_URL } from '../../consts/router.path.const';
-import { useLogout, useUserInfo } from '../../hooks';
+import { useUserInfo, useAuth } from '../../hooks';
 import logo from '../../assets/logo.png';
 
 const SidebarLayout: React.FC = () => {
   const location = useLocation();
-  const { logout } = useLogout();
+  const { logout } = useAuth();
   const user = useUserInfo();
+
+  const handleLogout = async () => {
+    try {
+      await logout.mutate();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }
 
     const menuItems = [
         {
@@ -169,7 +177,7 @@ const SidebarLayout: React.FC = () => {
 
             <div className="absolute bottom-0 w-64">
                 <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors rounded"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24"

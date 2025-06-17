@@ -28,6 +28,7 @@
         "@app/*": ["app/*"],
         "@src/*": ["src/*"],
         "@components/*": ["components/*"],
+        "@consts/*": ["consts/*"],
         "@hooks/*": ["hooks/*"],
         "@utils/*": ["utils/*"],
         "@assets": ["assets"],

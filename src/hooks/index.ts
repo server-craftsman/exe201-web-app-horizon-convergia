@@ -8,10 +8,11 @@
 // import useToggle from "./practice/useToggle";
 
 // for Project
-import { useUserInfo } from "./useUserInfo";
-import { useAuth, useLogout } from "./useAuth";
-import { useLocalStorage } from "./useLocalStorage";
-import {useUser} from "./useUser.ts";
-import {useVietnamAddress}  from "@hooks/useVietnamAddress.ts";
+import { useUserInfo } from "./other/useUserInfo.ts";
+import { useAuth, useLogin } from "./modules/useAuth.ts";
+import { useLocalStorage } from "./other/useLocalStorage.ts";
+import {useUser} from "./modules/useUser.ts";
+import { useCategory } from "./modules/useCategory.ts";
+import {useVietnamAddress}  from "@hooks/other/useVietnamAddress.ts";
 
-export { useUserInfo, useAuth, useLogout, useLocalStorage, useUser, useVietnamAddress };
+export { useUserInfo, useAuth, useLocalStorage, useUser, useCategory, useLogin, useVietnamAddress };
