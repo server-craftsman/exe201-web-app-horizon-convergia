@@ -11,7 +11,7 @@ type CreateProps = {
     createCategory: ReturnType<typeof useMutation>;
 };
 
-export const Create = ({ open, onCancel, onSuccess, createCategory }: CreateProps) => {
+export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateProps) => {
     const formRef = useRef<HTMLFormElement>(null);
 
     const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {

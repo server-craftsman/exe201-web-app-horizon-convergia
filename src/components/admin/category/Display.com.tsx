@@ -3,12 +3,12 @@ import { cn } from '@utils/cn';
 import { useCategory } from "@hooks/modules/useCategory";
 // @ts-ignore
 import type { ICategory } from '@types/category/Category.res.type';
-import { Create } from './Create';
-import { Update } from './Update';
+import { CreateCom } from './Create.com.tsx';
+import { UpdateCom } from './Update.com.tsx';
 import { motion } from 'framer-motion';
 import {helpers} from "@utils/index.ts";
 
-export const Display = () => {
+export const DisplayCom = () => {
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
@@ -147,7 +147,7 @@ export const Display = () => {
                 </motion.tbody>
             </motion.table>
 
-            <Create
+            <CreateCom
                 open={isCreateModalVisible}
                 onCancel={() => setIsCreateModalVisible(false)}
                 onSuccess={handleCreateSuccess}
@@ -155,7 +155,7 @@ export const Display = () => {
             />
 
             {selectedCategory && (
-                <Update
+                <UpdateCom
                     open={isUpdateModalVisible}
                     category={selectedCategory}
                     recordId={selectedCategory.id}

@@ -10,7 +10,7 @@ interface DeleteProps {
     onSuccess: () => void;
 }
 
-export const Delete = ({ visible, categoryId, onClose, onSuccess }: DeleteProps) => {
+export const DeleteCom = ({ visible, categoryId, onClose, onSuccess }: DeleteProps) => {
     const [loading, setLoading] = useState(false);
 
     const handleDelete = async () => {

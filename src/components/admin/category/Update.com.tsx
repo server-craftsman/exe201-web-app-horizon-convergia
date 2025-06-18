@@ -16,7 +16,8 @@ interface UpdateProps {
     updateCategory: ReturnType<typeof useMutation>;
 }
 
-export const Update = ({ open, recordId, category, onCancel, onSuccess, updateCategory }: UpdateProps) => {
+export const UpdateCom
+    = ({ open, recordId, category, onCancel, onSuccess, updateCategory }: UpdateProps) => {
     const formRef = useRef<HTMLFormElement>(null);
     const { getCategory } = useCategory();
     // useEffect(() => {
