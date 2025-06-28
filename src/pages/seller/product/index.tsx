@@ -1,8 +1,11 @@
 import React from 'react'
+import Products from '@components/seller/product/DisplayProducts.com';
 
 const ProductManagement: React.FC = () => {
     return (
-        <div>Product Management</div>
+        <div>
+            <Products />
+        </div>
     )
 }
 

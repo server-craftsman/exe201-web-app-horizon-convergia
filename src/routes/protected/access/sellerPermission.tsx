@@ -9,6 +9,7 @@ const SellerOrders = lazy(() => import("../../../pages/seller/order"));
 const SellerSupport = lazy(() => import("../../../pages/seller/support"));
 const SellerReviews = lazy(() => import("../../../pages/seller/review"));
 const SettingsManagement = lazy(() => import("../../../pages/auth/settings"));
+const AddProduct = lazy(() => import("../../../components/seller/product/AddProduct.com"));
 // const SellerProfile = lazy(() => import("../../../components/seller/dashboard/Profile"));
 // const SellerShop = lazy(() => import("../../../components/seller/dashboard/Shop"));
 // const SellerAddProduct = lazy(() => import("../../../components/seller/product/AddProduct"));
@@ -31,7 +32,7 @@ export const SellerRoutes: RouteObject = {
         // { index: false, path: ROUTER_URL.SELLER.PROFILE, element: <SellerProfile /> },
         // { index: false, path: ROUTER_URL.SELLER.SHOP, element: <SellerShop /> },
         { index: false, path: ROUTER_URL.SELLER.PRODUCTS, element: <SellerProducts /> },
-        // { index: false, path: ROUTER_URL.SELLER.ADD_PRODUCT, element: <SellerAddProduct /> },
+        { index: false, path: ROUTER_URL.SELLER.ADD_PRODUCT, element: <AddProduct /> },
         // { index: false, path: ROUTER_URL.SELLER.EDIT_PRODUCT, element: <SellerEditProduct /> },
         { index: false, path: ROUTER_URL.SELLER.ORDERS, element: <SellerOrders /> },
         // { index: false, path: ROUTER_URL.SELLER.ORDER_MANAGEMENT, element: <SellerOrderManagement /> },

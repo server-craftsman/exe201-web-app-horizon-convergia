@@ -17,9 +17,11 @@ export const API_PATH = {
         CHANGE_PASSWORD: "/user/password/change"
     },
     PRODUCT: {
-        GET_ALL_PRODUCTS: "/products",
+        CREATE_PRODUCT_BY_SELLER: (sellerId: string) => `/Products/${sellerId}`,
+        VERIFY_PRODUCT_BY_SELLER: (id: string) => `/Products/verify/${id}`,
+        ACTIVATE_PRODUCT: (productId: string) => `/Products/activate/${productId}`,
+        GET_ALL_PRODUCTS: "/Products",
         GET_PRODUCT_BY_ID: (id: string) => `/products/${id}`,
-        CREATE_PRODUCT: "/products/create",
         UPDATE_PRODUCT: (id: string) => `/products/update/${id}`,
         DELETE_PRODUCT: (id: string) => `/products/delete/${id}`
     },
