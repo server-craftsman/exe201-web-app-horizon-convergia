@@ -8,28 +8,44 @@ const SellerDashboard: React.FC = () => {
         {
             title: 'Thêm Sản Phẩm',
             description: 'Đăng bán sản phẩm mới',
-            icon: '➕',
+            icon: (
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+            ),
             href: ROUTER_URL.SELLER.ADD_PRODUCT,
             color: 'from-green-500 to-green-600',
         },
         {
             title: 'Quản Lý Đơn Hàng',
             description: 'Xử lý đơn hàng mới',
-            icon: '📦',
+            icon: (
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+            ),
             href: ROUTER_URL.SELLER.ORDERS,
             color: 'from-blue-500 to-blue-600',
         },
         {
             title: 'Thống Kê',
             description: 'Phân tích doanh thu',
-            icon: '📊',
+            icon: (
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            ),
             href: ROUTER_URL.SELLER.ANALYTICS,
             color: 'from-purple-500 to-purple-600',
         },
         {
             title: 'Cửa Hàng',
             description: 'Quản lý shop của bạn',
-            icon: '🏪',
+            icon: (
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            ),
             href: ROUTER_URL.SELLER.SHOP,
             color: 'from-amber-500 to-amber-600',
         },
@@ -78,8 +94,11 @@ const SellerDashboard: React.FC = () => {
                 >
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">
-                                Seller Dashboard 📊
+                            <h1 className="text-3xl font-bold text-white mb-2 flex items-center space-x-2">
+                                <span>Seller Dashboard</span>
+                                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
                             </h1>
                             <p className="text-gray-400">
                                 Quản lý cửa hàng và theo dõi hiệu suất kinh doanh
@@ -112,7 +131,7 @@ const SellerDashboard: React.FC = () => {
                                 to={action.href}
                                 className={`block p-6 bg-gradient-to-br ${action.color} rounded-xl shadow-lg hover:shadow-xl transition-all duration-300`}
                             >
-                                <div className="text-4xl mb-3">{action.icon}</div>
+                                <div className="mb-3">{action.icon}</div>
                                 <h3 className="text-xl font-bold text-white mb-2">{action.title}</h3>
                                 <p className="text-gray-100 text-sm">{action.description}</p>
                             </Link>
@@ -172,7 +191,9 @@ const SellerDashboard: React.FC = () => {
                                 >
                                     <div className="flex items-center space-x-4">
                                         <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                                            <span className="text-white font-bold">📦</span>
+                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                            </svg>
                                         </div>
                                         <div>
                                             <p className="font-semibold text-white">{order.product}</p>
@@ -297,4 +318,4 @@ const SellerDashboard: React.FC = () => {
     );
 };
 
-export default SellerDashboard; 
+export default SellerDashboard;

@@ -60,9 +60,6 @@ importers:
       '@stagewise-plugins/react':
         specifier: ^0.4.9
         version: 0.4.9(@stagewise/toolbar@0.4.9)
-      '@stagewise/toolbar':
-        specifier: ^0.4.9
-        version: 0.4.9
       '@stagewise/toolbar-react':
         specifier: ^0.4.9
         version: 0.4.9(@types/react@19.1.4)(react@19.1.0)
