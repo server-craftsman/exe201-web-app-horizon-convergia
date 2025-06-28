@@ -1,10 +1,10 @@
 import React from 'react';
-import { Display } from '@components/admin/category/Display';
+import { DisplayCom } from '@components/admin/category/Display.com.tsx';
 
 const CategoryPage: React.FC = () => {
      return (
         <div style={{ padding: '15px' }}>
-            <Display />
+            <DisplayCom />
         </div>
     );
 };

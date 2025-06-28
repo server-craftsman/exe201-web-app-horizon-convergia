@@ -1,0 +1,74 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Rule Name: horizon.mdc
+Description: Guidelines & architecture conventions for the Horizon Convergia web-app (buy/sell used motorbikes & accessories)
+
+---
+
+# 1. Architecture Overview
+- The project follows a **Feature-Sliced + Clean Layer** approach.
+- Layers (no reverse dependencies):
+  1. **pages** – UI & layout (presentation).
+  2. **routes** – routing, guards, permissions.
+  3. **hooks** – reusable logic (React Query, Zustand, custom hooks).
+  4. **app** – core configs (enums, providers, global screens).
+
+# 2. Directory Rules
+```
+src/
+ ├─ app/           # enums, configs, providers, global screens
+ ├─ consts/        # constants (ROUTER_URL, regex, theme …)
+ ├─ pages/         # role-specific pages (buyer, seller, shipper, admin)
+ ├─ routes/
+ │   ├─ public/
+ │   └─ protected/
+ │       ├─ useProtectedRoutes.tsx
+ │       └─ access/           # buyerPermission.tsx, …
+ ├─ hooks/
+ │   ├─ index.ts        # re-export hooks
+ │   └─ modules/        # useAuth, useUser …
+ └─ services/          # axios services
+```
+- When adding a new feature, create a sub-folder in **pages/** and a matching permission file in **routes/protected/access/**.
+- All static paths **must** come from `ROUTER_URL`.
+
+# 3. Coding Conventions
+- UI components **do not** call Axios directly – consume data via props or hooks.
+- All hooks live in `hooks/` and start with `use…`.
+- Always lazy-load page components and wrap them with `<Suspense fallback={<Loading />}>`.
+- Role-based routing logic stays **only** in `useProtectedRoutes.tsx`.
+
+# 4. Patterns in Use
+- **Repository** pattern for data access (services implement repository interface).
+- **Factory** pattern where dynamic instantiation by role/type is needed.
+- **Guard** components/HOCs for auth & role checks (`GuardProtectedRoute`, `GuardRoleRoute`).
+
+# 5. Naming Rules
+- Enums: `PascalCase` singular (`UserRole`).
+- Components: `PascalCase` matching filename (`Dashboard.tsx`).
+- Hooks: `camelCase` starting with `use` (`useBuyerOrders`).
+- Route objects: `<Role>Routes`.
+- Paths: lowercase, kebab-case (`/dang-nhap`).
+
+# 6. Lint & Test
+- Run `npm run lint` & `npm run type-check` before commit.
+- New code should include unit tests for key hooks (e.g., `useAuth`, `useProtectedRoutes`).
+
+# 7. PR Checklist
+- [ ] File in correct directory.
+- [ ] No layer violation (imports follow architecture).
+- [ ] No hard-coded router paths.
+- [ ] Component ≤ 300 LOC.
+- [ ] Hooks free of unnecessary side-effects.
+
+---
+
+Use these rules for every future code addition or modification.  @files and cross-references are allowed as per Cursor guidelines.
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to

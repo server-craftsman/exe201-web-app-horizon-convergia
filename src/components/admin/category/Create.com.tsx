@@ -1,0 +1,239 @@
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+// @ts-ignore
+import type { ICategory } from '@types/category/Category.res.type';
+
+interface CreateComProps {
+    open: boolean;
+    onCancel: () => void;
+    onSuccess: () => void;
+    createCategory: any;
+}
+
+export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateComProps) => {
+    const [formData, setFormData] = useState({
+        name: ''
+    });
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const nameInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (open && nameInputRef.current) {
+            nameInputRef.current.focus();
+        }
+    }, [open]);
+
+    const validateForm = useCallback(() => {
+        const newErrors: { [key: string]: string } = {};
+
+        if (!formData.name.trim()) {
+            newErrors.name = 'Tên danh mục không được để trống';
+        } else if (formData.name.trim().length < 2) {
+            newErrors.name = 'Tên danh mục phải có ít nhất 2 ký tự';
+        } else if (formData.name.trim().length > 50) {
+            newErrors.name = 'Tên danh mục không được vượt quá 50 ký tự';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }, [formData]);
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Clear error when user starts typing
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    }, [errors]);
+
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        setIsSubmitting(true);
+        try {
+            await createCategory.mutateAsync({ name: formData.name.trim() });
+            setFormData({ name: '' });
+            setErrors({});
+            onSuccess();
+        } catch (error: any) {
+            if (error?.response?.data?.message) {
+                setErrors({ submit: error.response.data.message });
+            } else {
+                setErrors({ submit: 'Có lỗi xảy ra khi tạo danh mục' });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [formData, validateForm, createCategory, onSuccess]);
+
+    const handleCancel = useCallback(() => {
+        setFormData({ name: '' });
+        setErrors({});
+        setIsSubmitting(false);
+        onCancel();
+    }, [onCancel]);
+
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            handleCancel();
+        }
+    }, [handleCancel]);
+
+    return (
+        <AnimatePresence>
+            {open && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    onKeyDown={handleKeyDown}
+                >
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={handleCancel}
+                    />
+
+                    {/* Modal */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        transition={{ type: "spring", duration: 0.3 }}
+                        className="relative w-full max-w-md mx-auto"
+                    >
+                        <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+                            {/* Header */}
+                            <div className="relative bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-white">
+                                            Tạo Danh Mục Mới
+                                        </h3>
+                                    </div>
+                                    <button
+                                        onClick={handleCancel}
+                                        className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+                                        disabled={isSubmitting}
+                                    >
+                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Form */}
+                            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                                {/* Submit Error */}
+                                {errors.submit && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p className="text-red-400 text-sm">{errors.submit}</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {/* Name Input */}
+                                <div className="space-y-2">
+                                    <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+                                        Tên danh mục <span className="text-red-400">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            ref={nameInputRef}
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            placeholder="Nhập tên danh mục..."
+                                            className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-200 ${errors.name
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                                                : 'border-gray-700 focus:border-amber-500 focus:ring-amber-500/20'
+                                                }`}
+                                            maxLength={50}
+                                            disabled={isSubmitting}
+                                        />
+                                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                            <span className="text-xs text-gray-500">
+                                                {formData.name.length}/50
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {errors.name && (
+                                        <motion.p
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="text-red-400 text-sm flex items-center gap-1"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {errors.name}
+                                        </motion.p>
+                                    )}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleCancel}
+                                        disabled={isSubmitting}
+                                        className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting || !formData.name.trim()}
+                                        className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Đang tạo...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                Tạo danh mục
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};

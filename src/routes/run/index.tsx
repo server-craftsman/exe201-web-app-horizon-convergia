@@ -6,8 +6,13 @@ import GuardPublicRoute from "../unprotected/GuardGuestRoute";
 import GuardProtectedRoute from "../protected/GuardProtectedRoute";
 import { publicSubPaths } from "../unprotected/GuestSubPaths";
 import AdminLayout from "../../layouts/admin/Admin.layout";
+import BuyerLayout from "../../layouts/buyer/Buyer.layout";
+import SellerLayout from "../../layouts/seller/Seller.layout";
+import ShipperLayout from "../../layouts/shipper/Shipper.layout";
 import { AdminRoutes } from "../protected/access/adminPermission";
-import Loading from "../../app/screens/Loading";
+import { BuyerRoutes } from "../protected/access/buyerPermission";
+import { SellerRoutes } from "../protected/access/sellerPermission";
+import { ShipperRoutes } from "../protected/access/shipperPermission";
 
 const RunRoutes = () => {
     return (
@@ -43,7 +48,7 @@ const RunRoutes = () => {
                 <Route
                     index
                     element={
-                        <Suspense fallback={<Loading />}>
+                        <Suspense>
                             {AdminRoutes.children?.find(route => route.index)?.element}
                         </Suspense>
                     }
@@ -59,7 +64,118 @@ const RunRoutes = () => {
                             key={route.path}
                             path={relativePath}
                             element={
-                                <Suspense fallback={<Loading />}>
+                                <Suspense>
+                                    {route.element}
+                                </Suspense>
+                            }
+                        />
+                    );
+                })}
+            </Route>
+
+            {/* Buyer Layout Route */}
+            <Route
+                path={ROUTER_URL.BUYER.BASE}
+                element={
+                    <GuardProtectedRoute allowedRoles={[UserRole.BUYER]}>
+                        <BuyerLayout />
+                    </GuardProtectedRoute>
+                }
+            >
+                <Route
+                    index
+                    element={
+                        <Suspense>
+                            {BuyerRoutes.children?.find(route => route.index)?.element}
+                        </Suspense>
+                    }
+                />
+                {BuyerRoutes.children?.filter(route => !route.index).map(route => {
+                    // Extract the relative path part after the buyer base URL
+                    const relativePath = route.path?.includes('/')
+                        ? route.path?.split('/').slice(-1)[0]
+                        : route.path;
+
+                    return (
+                        <Route
+                            key={route.path}
+                            path={relativePath}
+                            element={
+                                <Suspense>
+                                    {route.element}
+                                </Suspense>
+                            }
+                        />
+                    );
+                })}
+            </Route>
+
+            {/* Seller Layout Route */}
+            <Route
+                path={ROUTER_URL.SELLER.BASE}
+                element={
+                    <GuardProtectedRoute allowedRoles={[UserRole.SELLER]}>
+                        <SellerLayout />
+                    </GuardProtectedRoute>
+                }
+            >
+                <Route
+                    index
+                    element={
+                        <Suspense>
+                            {SellerRoutes.children?.find(route => route.index)?.element}
+                        </Suspense>
+                    }
+                />
+                {SellerRoutes.children?.filter(route => !route.index).map(route => {
+                    // Extract the relative path part after the seller base URL
+                    const relativePath = route.path?.includes('/')
+                        ? route.path?.split('/').slice(-1)[0]
+                        : route.path;
+
+                    return (
+                        <Route
+                            key={route.path}
+                            path={relativePath}
+                            element={
+                                <Suspense>
+                                    {route.element}
+                                </Suspense>
+                            }
+                        />
+                    );
+                })}
+            </Route>
+
+            {/* Shipper Layout Route */}
+            <Route
+                path={ROUTER_URL.SHIPPER.BASE}
+                element={
+                    <GuardProtectedRoute allowedRoles={[UserRole.SHIPPER]}>
+                        <ShipperLayout />
+                    </GuardProtectedRoute>
+                }
+            >
+                <Route
+                    index
+                    element={
+                        <Suspense>
+                            {ShipperRoutes.children?.find(route => route.index)?.element}
+                        </Suspense>
+                    }
+                />
+                {ShipperRoutes.children?.filter(route => !route.index).map(route => {
+                    // Extract the relative path part after the shipper base URL
+                    const relativePath = route.path?.includes('/')
+                        ? route.path?.split('/').slice(-1)[0]
+                        : route.path;
+
+                    return (
+                        <Route
+                            key={route.path}
+                            path={relativePath}
+                            element={
+                                <Suspense>
                                     {route.element}
                                 </Suspense>
                             }

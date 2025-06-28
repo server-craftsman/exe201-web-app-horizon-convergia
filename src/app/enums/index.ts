@@ -1,5 +1,5 @@
 import { HTTP_STATUS } from './http.enum'
-import { UserRole } from './userRole.enum'
-import  {Gender}  from './gender.enum'
+import { UserRole, UserRoleInteger } from './userRole.enum'
+import { Gender } from './gender.enum'
 
-export { HTTP_STATUS, UserRole, Gender };
+export { HTTP_STATUS, UserRole, UserRoleInteger, Gender };

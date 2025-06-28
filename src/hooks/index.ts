@@ -11,8 +11,9 @@
 import { useUserInfo } from "./other/useUserInfo.ts";
 import { useAuth, useLogin } from "./modules/useAuth.ts";
 import { useLocalStorage } from "./other/useLocalStorage.ts";
-import {useUser} from "./modules/useUser.ts";
+import { useUser } from "./modules/useUser.ts";
 import { useCategory } from "./modules/useCategory.ts";
-import {useVietnamAddress}  from "@hooks/other/useVietnamAddress.ts";
+import { useVietnamAddress } from "@hooks/other/useVietnamAddress.ts";
+import { useProduct } from "./modules/useProduct.ts";
 
-export { useUserInfo, useAuth, useLocalStorage, useUser, useCategory, useLogin, useVietnamAddress };
+export { useUserInfo, useAuth, useLocalStorage, useUser, useCategory, useLogin, useVietnamAddress, useProduct };

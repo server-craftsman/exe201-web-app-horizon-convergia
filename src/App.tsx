@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import RunRoutes from "./routes/run";
 import ScrollTopButton from "./components/common/ScrollTopButton.com";
 import { QueryProvider } from "./providers/QueryProvider";
+import StagewiseToolbar from "./components/common/StagewiseToolbar";
 
 export const App = () => {
   const isLoading = useSelector((state: any) => state.loading);
@@ -19,6 +20,8 @@ export const App = () => {
         </Suspense>
         <ScrollTopButton />
         <ToastContainer />
+        {/* Stagewise Toolbar - Development Only */}
+        <StagewiseToolbar />
       </QueryProvider>
     </>
   );

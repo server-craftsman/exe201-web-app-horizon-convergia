@@ -8,6 +8,8 @@ export const API_PATH = {
         CURRENT_USER: "/Auth/whoami",
         VERIFY_EMAIL: "/Auth/verify-email",
         CHANGE_PASSWORD: (id: string) => `/Auth/${id}/change-password`,
+        GOOGLE_LOGIN: "/Auth/google-login",
+        GOOGLE_CALLBACK: "/Auth/google-response",
     },
     USER: {
         GET_USER_PROFILE: "/user/profile",
@@ -15,9 +17,11 @@ export const API_PATH = {
         CHANGE_PASSWORD: "/user/password/change"
     },
     PRODUCT: {
-        GET_ALL_PRODUCTS: "/products",
+        CREATE_PRODUCT_BY_SELLER: (sellerId: string) => `/Products/${sellerId}`,
+        VERIFY_PRODUCT_BY_SELLER: (id: string) => `/Products/verify/${id}`,
+        ACTIVATE_PRODUCT: (productId: string) => `/Products/activate/${productId}`,
+        GET_ALL_PRODUCTS: "/Products",
         GET_PRODUCT_BY_ID: (id: string) => `/products/${id}`,
-        CREATE_PRODUCT: "/products/create",
         UPDATE_PRODUCT: (id: string) => `/products/update/${id}`,
         DELETE_PRODUCT: (id: string) => `/products/delete/${id}`
     },
