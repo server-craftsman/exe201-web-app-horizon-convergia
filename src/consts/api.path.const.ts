@@ -8,6 +8,8 @@ export const API_PATH = {
         CURRENT_USER: "/Auth/whoami",
         VERIFY_EMAIL: "/Auth/verify-email",
         CHANGE_PASSWORD: (id: string) => `/Auth/${id}/change-password`,
+        GOOGLE_LOGIN: "/Auth/google-login",
+        GOOGLE_CALLBACK: "/Auth/google-response",
     },
     USER: {
         GET_USER_PROFILE: "/user/profile",

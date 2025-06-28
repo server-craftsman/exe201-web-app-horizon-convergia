@@ -57,6 +57,15 @@ importers:
       '@eslint/js':
         specifier: ^9.25.0
         version: 9.26.0
+      '@stagewise-plugins/react':
+        specifier: ^0.4.9
+        version: 0.4.9(@stagewise/toolbar@0.4.9)
+      '@stagewise/toolbar':
+        specifier: ^0.4.9
+        version: 0.4.9
+      '@stagewise/toolbar-react':
+        specifier: ^0.4.9
+        version: 0.4.9(@types/react@19.1.4)(react@19.1.0)
       '@types/node':
         specifier: ^22.15.21
         version: 22.15.21
@@ -605,6 +614,20 @@ packages:
     resolution: {integrity: sha512-bwspbWB04XJpeElvsp+DCylKfF4trJDa2Y9Go8O6A7YLX2LIKGcNK/CYImJN6ZP4DcuOHB4Utl3iCbnR62DudA==}
     cpu: [x64]
     os: [win32]
+
+  '@stagewise-plugins/react@0.4.9':
+    resolution: {integrity: sha512-njlmHe92sAAvEGPeeyZS+a+twuVBNNaEmjFuUGs02WWnG20HquoXMHRgdUFH5Ecr0cxHS2SP/AbKq/kYEFwMjA==}
+    peerDependencies:
+      '@stagewise/toolbar': 0.4.9
+
+  '@stagewise/toolbar-react@0.4.9':
+    resolution: {integrity: sha512-K27i8GT20EWQJTmY+XQTvgiZh4EDq83W82zSUdSF7Fo8v9ogypn+wZbyFlLg97F2OYysc0uhILwUlS5eVItpyQ==}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      react: '>=18.0.0'
+
+  '@stagewise/toolbar@0.4.9':
+    resolution: {integrity: sha512-fBggX+4nLwRDHnevWk32BjpMpc6vjF2k9mdamsPqAUnbsKbJnkTCjm0o8DOKcjRO9M/PGwcED4Ct0AWHQvkR/Q==}
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
@@ -2812,6 +2835,18 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.40.2':
     optional: true
+
+  '@stagewise-plugins/react@0.4.9(@stagewise/toolbar@0.4.9)':
+    dependencies:
+      '@stagewise/toolbar': 0.4.9
+
+  '@stagewise/toolbar-react@0.4.9(@types/react@19.1.4)(react@19.1.0)':
+    dependencies:
+      '@stagewise/toolbar': 0.4.9
+      '@types/react': 19.1.4
+      react: 19.1.0
+
+  '@stagewise/toolbar@0.4.9': {}
 
   '@standard-schema/spec@1.0.0': {}
 

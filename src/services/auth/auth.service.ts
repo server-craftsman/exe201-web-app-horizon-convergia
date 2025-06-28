@@ -86,5 +86,19 @@ export const AuthService = {
             url,
             payload: { newPassword }
         });
+    },
+
+    loginViaGoogle() {
+        const url = API_PATH.AUTH.GOOGLE_LOGIN;
+        return BaseService.get<ApiResponse<any>>({
+            url,
+        });
+    },
+
+    googleCallback() {
+        const url = API_PATH.AUTH.GOOGLE_CALLBACK;
+        return BaseService.get<ApiResponse<any>>({
+            url,
+        });
     }
 }

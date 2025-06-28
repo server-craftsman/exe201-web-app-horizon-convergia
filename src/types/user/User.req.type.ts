@@ -1,4 +1,4 @@
-import {Gender} from "../../app/enums";
+import { Gender, UserRoleInteger } from "../../app/enums";
 
 export interface LoginRequest {
     email: string;
@@ -12,7 +12,12 @@ export interface RegisterRequest {
     phoneNumber: number | undefined,
     address: string | undefined,
     gender: Gender,
-    dob: Date | undefined
+    dob: Date | undefined,
+    role?: UserRoleInteger,
+    shopName?: string,
+    shopDescription?: string,
+    businessType?: string,
+
 }
 
 export interface ResetPasswordRequest {
