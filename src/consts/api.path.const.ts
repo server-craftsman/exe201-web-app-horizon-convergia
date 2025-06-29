@@ -17,13 +17,16 @@ export const API_PATH = {
         CHANGE_PASSWORD: "/user/password/change"
     },
     PRODUCT: {
+        CREATE_PRODUCT: "/Products",
         CREATE_PRODUCT_BY_SELLER: (sellerId: string) => `/Products/${sellerId}`,
-        VERIFY_PRODUCT_BY_SELLER: (id: string) => `/Products/verify/${id}`,
+        VERIFY_PRODUCT_BY_ADMIN: (id: string) => `/Products/verify/${id}`,
         ACTIVATE_PRODUCT: (productId: string) => `/Products/activate/${productId}`,
+        SEND_PRODUCT_PAYMENT: (productId: string) => `/Products/send-payment-link/${productId}`,
         GET_ALL_PRODUCTS: "/Products",
-        GET_PRODUCT_BY_ID: (id: string) => `/products/${id}`,
-        UPDATE_PRODUCT: (id: string) => `/products/update/${id}`,
-        DELETE_PRODUCT: (id: string) => `/products/delete/${id}`
+        GET_ALL_PRODUCTS_UNVERIFIED: "/Products/unverified-unpaid",
+        GET_PRODUCT_BY_ID: (id: string) => `/Products/${id}`,
+        UPDATE_PRODUCT: (id: string) => `/Products/${id}`,
+        DELETE_PRODUCT: (id: string) => `/Products/${id}`
     },
     CATEGORY: {
         CREATE: "/Categories/",

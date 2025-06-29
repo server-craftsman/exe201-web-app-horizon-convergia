@@ -4,7 +4,7 @@ import { useProduct, useCategory } from '../../../hooks';
 import { ROUTER_URL } from '@consts/router.path.const';
 
 const AddProduct: React.FC = () => {
-    const { createProduct, isCreatingProduct } = useProduct();
+    const { createProductBySeller, isCreatingProduct } = useProduct();
     const { getCategorys } = useCategory();
     const navigate = useNavigate();
 
@@ -65,7 +65,7 @@ const AddProduct: React.FC = () => {
         };
 
         try {
-            await createProduct(productData);
+            await createProductBySeller(productData);
             // Redirect to product management page after successful creation
             navigate(ROUTER_URL.SELLER.PRODUCTS);
         } catch (error) {
