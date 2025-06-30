@@ -1,0 +1,384 @@
+import { useState, useEffect, useRef } from 'react';
+import { useUser } from "@hooks/modules/useUser";
+// @ts-ignore
+import type { UserSearchItem } from '../../../types/user/User.res.type';
+import { motion } from 'framer-motion';
+import { helpers } from "@utils/index.ts";
+import type { UserSearchAllParams } from "@services/user/user.service.ts";
+
+export const DisplayCom = () => {
+    const [users, setUsers] = useState<UserSearchItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const { searchUsers } = useUser();
+    const searchUsersRef = useRef(searchUsers);
+
+    useEffect(() => {
+        searchUsersRef.current = searchUsers;
+    }, [searchUsers]);
+
+    useEffect(() => {
+        let isMounted = true;
+        setIsLoading(true);
+
+        const fetchData = async () => {
+            try {
+                const params: UserSearchAllParams = {
+                    pageIndex: currentPage,
+                    pageSize: pageSize,
+                    sortBy: 'CreatedAt',
+                    sortOrder: 'desc',
+                };
+                if (searchTerm.trim() !== '') {
+                    params.keyword = searchTerm.trim();
+                }
+                const response = await searchUsersRef.current.mutateAsync(params);
+                if (!isMounted) return;
+                if (response.data.isSuccess) {
+                    setUsers(response.data.data.items || []);
+                    setTotalRecords(response.data.data.totalRecords || 0);
+                } else {
+                    helpers.notificationMessage(response.data.message || "Lỗi khi tải danh sách người dùng", "error");
+                }
+            } catch (error) {
+                if (!isMounted) return;
+                console.error('Error fetching users:', error);
+                helpers.notificationMessage("Lỗi khi tải danh sách người dùng", "error");
+            } finally {
+                if (!isMounted) return;
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+        return () => { isMounted = false; };
+    }, [searchTerm, currentPage, pageSize]);
+
+    const handleSearch = (value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1);
+    };
+
+    const getRoleLabel = (role: number) => {
+        switch (role) {
+            case 0: return 'Admin';
+            case 1: return 'Buyer';
+            case 2: return 'Seller';
+            case 3: return 'Shipper';
+            default: return 'Unknown';
+        }
+    };
+
+    const getStatusLabel = (status: number) => {
+        switch (status) {
+            case 0: return 'Active';
+            case 1: return 'Inactive';
+            case 2: return 'Banned';
+            default: return 'Unknown';
+        }
+    };
+
+    const getStatusColor = (status: number) => {
+        switch (status) {
+            case 0: return 'bg-green-500/20 text-green-400';
+            case 1: return 'bg-yellow-500/20 text-yellow-400';
+            case 2: return 'bg-red-500/20 text-red-400';
+            default: return 'bg-gray-500/20 text-gray-400';
+        }
+    };
+
+    const getRoleColor = (role: number) => {
+        switch (role) {
+            case 0: return 'bg-purple-500/20 text-purple-400';
+            case 1: return 'bg-blue-500/20 text-blue-400';
+            case 2: return 'bg-amber-500/20 text-amber-400';
+            case 3: return 'bg-green-500/20 text-green-400';
+            default: return 'bg-gray-500/20 text-gray-400';
+        }
+    };
+
+    const totalPages = Math.ceil(totalRecords / pageSize);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 rounded-lg shadow-lg">
+            <div className="max-w-7xl mx-auto">
+                {/* Header Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-8"
+                >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-white mb-2">
+                                Quản Lý Người Dùng
+                            </h1>
+                            <p className="text-gray-400">
+                                Quản lý tài khoản người dùng trong hệ thống
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Search and Stats */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="mb-6"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        {/* Search */}
+                        <div className="md:col-span-2">
+                            <div className="relative">
+                                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm người dùng theo tên, email..."
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        onClick={() => handleSearch('')}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-all duration-200"
+                                        title="Xóa tìm kiếm"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Stats Cards */}
+                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-400 text-sm">Tổng người dùng</p>
+                                    <p className="text-2xl font-bold text-white">{totalRecords}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-400 text-sm">Kết quả hiện tại</p>
+                                    <p className="text-2xl font-bold text-white">{users.length}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Users Table */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl overflow-hidden"
+                >
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+                        </div>
+                    ) : users.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-semibold text-white mb-2">
+                                {searchTerm ? 'Không tìm thấy người dùng' : 'Chưa có người dùng nào'}
+                            </h3>
+                            <p className="text-gray-400">
+                                {searchTerm ? 'Thử tìm kiếm với từ khóa khác' : 'Chưa có người dùng nào trong hệ thống'}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-700/50">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                                Người Dùng
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                                Thông Tin Liên Hệ
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                                Vai Trò
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                                Trạng Thái
+                                            </th>
+                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                                Thao Tác
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-700">
+                                        {users.map((user, index) => (
+                                            <motion.tr
+                                                key={user.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className="hover:bg-gray-700/30 transition-colors"
+                                            >
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-full flex items-center justify-center">
+                                                            <span className="text-white font-semibold text-sm">
+                                                                {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <div className="text-sm font-medium text-white">
+                                                                {user.name || 'N/A'}
+                                                            </div>
+                                                            <div className="text-sm text-gray-400">
+                                                                ID: {user.id}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm text-white">{user.email}</div>
+                                                    <div className="text-sm text-gray-400">{user.phoneNumber}</div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                                                        {getRoleLabel(user.role)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.status)}`}>
+                                                        {getStatusLabel(user.status)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-200"
+                                                            title="Xem chi tiết"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            className="p-2 text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all duration-200"
+                                                            title="Chỉnh sửa"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                                                            title="Xóa"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </motion.tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="px-6 py-4 bg-gray-700/30 border-t border-gray-700">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-sm text-gray-400">
+                                                Hiển thị {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, totalRecords)} của {totalRecords} kết quả
+                                            </span>
+                                            <select
+                                                value={pageSize}
+                                                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                                                className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-1 focus:outline-none focus:border-amber-500"
+                                            >
+                                                <option value={5}>5</option>
+                                                <option value={10}>10</option>
+                                                <option value={20}>20</option>
+                                                <option value={50}>50</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                disabled={currentPage === 1}
+                                                className="px-3 py-1 bg-gray-800 border border-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-amber-500 transition-colors"
+                                            >
+                                                Trước
+                                            </button>
+                                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                const page = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                                                return (
+                                                    <button
+                                                        key={page}
+                                                        onClick={() => handlePageChange(page)}
+                                                        className={`px-3 py-1 rounded-lg transition-colors ${
+                                                            currentPage === page
+                                                                ? 'bg-amber-500 text-white'
+                                                                : 'bg-gray-800 border border-gray-700 text-white hover:border-amber-500'
+                                                        }`}
+                                                    >
+                                                        {page}
+                                                    </button>
+                                                );
+                                            })}
+                                            <button
+                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                disabled={currentPage === totalPages}
+                                                className="px-3 py-1 bg-gray-800 border border-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:border-amber-500 transition-colors"
+                                            >
+                                                Sau
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </motion.div>
+            </div>
+        </div>
+    );
+};
