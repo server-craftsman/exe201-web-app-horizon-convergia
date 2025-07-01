@@ -18,6 +18,7 @@ export const ROUTER_URL = {
         SELL_MOTOR: "/ban-xe",
         ACCESSORIES: "/phu-kien",
         NEWS: "/tin-tuc",
+        PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
     },
     // BUYER ROUTES
     BUYER: {

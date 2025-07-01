@@ -15,6 +15,10 @@ const RegisterPage = lazy(() => import("../../pages/auth/register"));
 const VerifyEmailPage = lazy(() => import("../../pages/auth/verify_email"));
 const ResetPasswordPage = lazy(() => import("../../pages/auth/reset_password"));
 const ForgotPasswordPage = lazy(() => import("../../pages/auth/forgot_password"));
+// product
+const ProductListByCategoryIdPage = lazy(() => import("../../components/client/home/ProductListByCategoryId.com"));
+
+
 //======================================================
 //export public sub paths
 export const publicSubPaths: Record<string, RouteObject[]> = {
@@ -22,6 +26,10 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
     {
       element: <MainLayout />,
       children: [
+        {
+          path: ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID,
+          element: <ProductListByCategoryIdPage />
+        },
         {
           path: ROUTER_URL.COMMON.HOME,
           element: <HomePage />

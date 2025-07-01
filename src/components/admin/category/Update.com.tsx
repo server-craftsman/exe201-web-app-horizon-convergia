@@ -90,8 +90,10 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
         try {
             await updateCategory.mutateAsync({
                 id: recordId,
-                name: formData.name.trim(),
-                imageUrl: formData.imageUrl
+                params: {
+                    name: formData.name.trim(),
+                    imageUrl: formData.imageUrl
+                }
             });
             setFormData({ name: '', imageUrl: '' });
             setErrors({});

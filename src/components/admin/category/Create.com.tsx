@@ -75,7 +75,7 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
 
         setIsSubmitting(true);
         try {
-            await createCategory.mutateAsync({ name: formData.name.trim() });
+            await createCategory.mutateAsync({ name: formData.name.trim(), imageUrl: formData.imageUrl });
             setFormData({ name: '', imageUrl: '' });
             setErrors({});
             onSuccess();
