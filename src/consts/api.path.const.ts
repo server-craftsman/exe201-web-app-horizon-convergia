@@ -19,6 +19,7 @@ export const API_PATH = {
     PRODUCT: {
         CREATE_PRODUCT: "/Products",
         CREATE_PRODUCT_BY_SELLER: (sellerId: string) => `/Products/${sellerId}`,
+        // GET_PRODUCTS_BY_SELLER: (sellerId: string) => `/Products/seller/${sellerId}`,
         VERIFY_PRODUCT_BY_ADMIN: (id: string) => `/Products/verify/${id}`,
         ACTIVATE_PRODUCT: (productId: string) => `/Products/activate/${productId}`,
         SEND_PRODUCT_PAYMENT: (productId: string) => `/Products/send-payment-link/${productId}`,

@@ -13,10 +13,16 @@ export interface CreateProduct {
 }
 
 export interface UpdateProduct {
-    brand: string;
-    model: string;
-    year: number;
-    price: number;
+    brand?: string;
+    model?: string;
+    year?: number;
+    price?: number;
+    description?: string;
+    location?: string;
+    condition?: string;
+    quantity?: number;
+    categoryId?: string;
+    imageUrls?: string[];
 }
 
 export interface SendProductPayment {
@@ -26,15 +32,29 @@ export interface SendProductPayment {
 
 export interface VerifyProduct {
     productId: string;
-    sellerId: string;
 }
 
 export interface ActivateProduct {
     productId: string;
-    sellerId: string;
 }
 
 export interface DeleteProduct {
     productId: string;
-    sellerId: string;
+}
+
+// Additional interfaces for better type safety
+export interface ProductFilter {
+    sellerId?: string;
+    categoryId?: string;
+    status?: number;
+    isVerified?: boolean;
+}
+
+export interface ProductStatus {
+    DRAFT: 0;
+    PENDING_APPROVAL: 1;
+    PENDING_PAYMENT: 2;
+    PAID: 3;
+    APPROVED: 4;
+    REJECTED: 5;
 }
