@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore
 import type { ICategory } from '@types/category/Category.res.type';
+import { BaseService } from '../../../app/api/base.service';
 
 interface CreateComProps {
     open: boolean;
@@ -12,11 +13,13 @@ interface CreateComProps {
 
 export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateComProps) => {
     const [formData, setFormData] = useState({
-        name: ''
+        name: '',
+        imageUrl: ''
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const nameInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     useEffect(() => {
         if (open && nameInputRef.current) {
@@ -35,6 +38,10 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
             newErrors.name = 'Tên danh mục không được vượt quá 50 ký tự';
         }
 
+        if (!formData.imageUrl) {
+            newErrors.imageUrl = 'Vui lòng tải lên hình ảnh danh mục';
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     }, [formData]);
@@ -49,6 +56,18 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
         }
     }, [errors]);
 
+    const handleUploadImage = async (files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        setUploadingImage(true);
+        const url = await BaseService.uploadFile(files[0], 'image', false);
+        if (url) {
+            setFormData(prev => ({ ...prev, imageUrl: url }));
+        } else {
+            setErrors(prev => ({ ...prev, imageUrl: 'Tải ảnh thất bại' }));
+        }
+        setUploadingImage(false);
+    };
+
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -57,7 +76,7 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
         setIsSubmitting(true);
         try {
             await createCategory.mutateAsync({ name: formData.name.trim() });
-            setFormData({ name: '' });
+            setFormData({ name: '', imageUrl: '' });
             setErrors({});
             onSuccess();
         } catch (error: any) {
@@ -72,7 +91,7 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
     }, [formData, validateForm, createCategory, onSuccess]);
 
     const handleCancel = useCallback(() => {
-        setFormData({ name: '' });
+        setFormData({ name: '', imageUrl: '' });
         setErrors({});
         setIsSubmitting(false);
         onCancel();
@@ -194,6 +213,16 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
                                             {errors.name}
                                         </motion.p>
                                     )}
+                                </div>
+
+                                {/* Image Upload */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-300">Hình ảnh *</label>
+                                    {formData.imageUrl && (
+                                        <img src={formData.imageUrl} alt="preview" className="h-24 w-24 object-cover rounded-lg mb-2" />
+                                    )}
+                                    <input type="file" accept="image/*" onChange={(e) => handleUploadImage(e.target.files)} disabled={uploadingImage || isSubmitting} className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300" />
+                                    {errors.imageUrl && <p className="text-red-400 text-sm">{errors.imageUrl}</p>}
                                 </div>
 
                                 {/* Action Buttons */}

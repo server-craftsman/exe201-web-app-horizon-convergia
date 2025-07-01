@@ -14,4 +14,12 @@ export interface ProductResponse {
     sellerId: string;
     categoryId: string;
     imageUrls?: string[];
+    engineCapacity?: number;
+    fuelType?: string;
+    mileage?: number;
+    color?: string;
+    accessoryType?: string;
+    size?: string;
+    sparePartType?: string;
+    vehicleCompatible?: string;
 }
