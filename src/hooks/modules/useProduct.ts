@@ -16,7 +16,11 @@ export const useProduct = () => {
         refetch: refetchProducts
     } = useQuery({
         queryKey: ['products'],
-        queryFn: () => ProductService.getProducts(),
+        queryFn: () => ProductService.getProducts({
+            categoryId: '',
+            sortField: 'createdAt',
+            ascending: false
+        }),
         select: (data) => data.data.data as ProductResponse[],
         staleTime: 5 * 60 * 1000, // 5 minutes
     });

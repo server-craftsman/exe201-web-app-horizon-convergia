@@ -7,9 +7,19 @@ export interface CreateProduct {
     location: string;
     condition: string;
     quantity: number;
-    sellerId: string;
+    sellerId?: string | null;
     categoryId: string;
     imageUrls?: string[];
+    videoUrl?: string;
+    // detailed specifications
+    engineCapacity?: number;
+    fuelType?: string;
+    mileage?: number;
+    color?: string;
+    accessoryType?: string;
+    size?: string;
+    sparePartType?: string;
+    vehicleCompatible?: string;
 }
 
 export interface UpdateProduct {
@@ -23,6 +33,20 @@ export interface UpdateProduct {
     quantity?: number;
     categoryId?: string;
     imageUrls?: string[];
+    engineCapacity?: number;
+    fuelType?: string;
+    mileage?: number;
+    color?: string;
+    accessoryType?: string;
+    size?: string;
+    sparePartType?: string;
+    vehicleCompatible?: string;
+}
+
+export interface FilterProduct {
+    categoryId: string;
+    sortField: string;
+    ascending: boolean;
 }
 
 export interface SendProductPayment {

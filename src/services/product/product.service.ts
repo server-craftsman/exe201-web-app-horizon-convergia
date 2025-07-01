@@ -5,6 +5,7 @@ import type {
     CreateProduct,
     SendProductPayment,
     UpdateProduct,
+    FilterProduct
     // VerifyProduct,
     // ActivateProduct,
     // DeleteProduct
@@ -14,7 +15,7 @@ import type { ProductResponse } from "../../types/product/Product.res.type";
 export const ProductService = {
     // Create product by seller
     createProductBySeller(params: CreateProduct) {
-        const url = API_PATH.PRODUCT.CREATE_PRODUCT_BY_SELLER(params.sellerId);
+        const url = API_PATH.PRODUCT.CREATE_PRODUCT_BY_SELLER(params.sellerId || '');
         return BaseService.post<ApiResponse<ProductResponse>>({
             url: url,
             payload: params
@@ -30,9 +31,13 @@ export const ProductService = {
     },
 
     // Get all products
-    getProducts() {
+    getProducts(params: FilterProduct) {
+        const queryParams = new URLSearchParams();
+        if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+        if (params.sortField) queryParams.append('sortField', params.sortField);
+        if (params.ascending !== undefined) queryParams.append('ascending', params.ascending.toString());
         return BaseService.get<ApiResponse<ProductResponse[]>>({
-            url: API_PATH.PRODUCT.GET_ALL_PRODUCTS
+            url: `${API_PATH.PRODUCT.GET_ALL_PRODUCTS}?${queryParams.toString()}`,
         });
     },
 

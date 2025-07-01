@@ -169,6 +169,13 @@ axiosInstance.interceptors.request.use(
         //     }
         // }
 
+        // Some backend endpoints reject a Content-Type header on requests without a body (GET/DELETE…)
+        // Remove it to prevent 415 Unsupported Media Type responses
+        const method = config.method?.toLowerCase();
+        if (method === "get" || method === "delete") {
+            delete (config.headers as any)["content-type"];
+        }
+
         store.dispatch(toggleLoading(true)); // Show loading
         return config as InternalAxiosRequestConfig;
     },

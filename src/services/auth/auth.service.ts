@@ -1,6 +1,6 @@
 import { BaseService } from "@app/api/base.service.ts";
 import type { ApiResponse } from "../../app/interface/apiResponse.interface";
-import type { LoginRequest, ResetPasswordRequest } from "../../types/user/User.req.type";
+import type { LoginRequest, ResetPasswordRequest, UpdateUserRequest } from "../../types/user/User.req.type";
 import type { UserResponse, UserInfo } from "../../types/user/User.res.type";
 import { API_PATH } from "../../consts/api.path.const";
 import { UserRole } from "@app/enums";
@@ -48,7 +48,7 @@ export const AuthService = {
         return hasToken && hasRole;
     },
 
-    updateUserInfo(user: UserInfo) {
+    updateUserInfo(user: UpdateUserRequest) {
         return BaseService.put<UserInfo>({
             url: API_PATH.USER.UPDATE_USER_PROFILE.replace(":id", user.id?.toString() || ""),
             payload: user

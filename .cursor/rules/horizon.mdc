@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 Rule Name: horizon.mdc
 Description: Guidelines & architecture conventions for the Horizon Convergia web-app (buy/sell used motorbikes & accessories)

@@ -24,3 +24,13 @@ export interface ResetPasswordRequest {
     newPassword: string;
     token: string;
 }
+
+export interface UpdateUserRequest {
+    id: string,
+    name: string,
+    email: string,
+    phoneNumber: string,
+    address: string,
+    avatarUrl: string,
+    dob: Date,
+}
