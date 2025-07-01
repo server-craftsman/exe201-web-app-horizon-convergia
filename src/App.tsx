@@ -7,6 +7,7 @@ import RunRoutes from "./routes/run";
 import ScrollTopButton from "./components/common/ScrollTopButton.com";
 import { QueryProvider } from "./providers/QueryProvider";
 import StagewiseToolbar from "./components/common/StagewiseToolbar";
+import TwentyFirstToolbar from "./components/common/TwentyFirstToolbar";
 
 export const App = () => {
   const isLoading = useSelector((state: any) => state.loading);
@@ -22,6 +23,8 @@ export const App = () => {
         <ToastContainer />
         {/* Stagewise Toolbar - Development Only */}
         <StagewiseToolbar />
+        {/* 21st.dev Toolbar - Development Only */}
+        <TwentyFirstToolbar />
       </QueryProvider>
     </>
   );

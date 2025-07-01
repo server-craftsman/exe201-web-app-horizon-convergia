@@ -27,6 +27,8 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
+    "@21st-extension/react": "^0.5.6",
+    "@21st-extension/toolbar-react": "^0.5.6",
     "@eslint/js": "^9.25.0",
     "@stagewise-plugins/react": "^0.4.9",
     "@stagewise/toolbar-react": "^0.4.9",
