@@ -11,6 +11,7 @@ export interface UserResponse {
     role: UserRole;
     expiredAt?: string;
 }
+
 export interface UserInfo {
     id: number | null;
     name: string | null;
@@ -22,4 +23,27 @@ export interface UserInfo {
     status: string | null;
     role: UserRole | null;
     dob: string | null;
+}
+
+export interface UserSearchItem {
+    id: string;
+    name: string;
+    email: string;
+    phoneNumber: string;
+    avatarUrl: string | null;
+    status: number;
+    role: number;
+}
+
+export interface UserSearchResponse {
+    items: UserSearchItem[];
+    totalRecords: number;
+    pageIndex: number;
+    pageSize: number;
+}
+
+export interface UserSearchParams {
+    keyword?: string; // Optional nhưng sẽ được set thành "all" nếu không có giá trị
+    pageIndex?: number;
+    pageSize?: number;
 }

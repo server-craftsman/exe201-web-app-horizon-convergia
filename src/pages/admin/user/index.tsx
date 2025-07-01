@@ -1,9 +1,8 @@
-import React from 'react'
+import React from 'react';
+import { DisplayCom } from '@components/admin/user/Display';
 
 const UserManagementPage: React.FC = () => {
-  return (
-    <div>UserManagementPage</div>
-  )
-}
+  return <DisplayCom />;
+};
 
 export default UserManagementPage;
