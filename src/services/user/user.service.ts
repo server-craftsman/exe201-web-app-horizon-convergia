@@ -34,5 +34,12 @@ export const UserSerice = {
         return BaseService.get<ApiResponse<UserSearchResponse>>({
             url: `${API_PATH.USER.SEARCH_USERS}?${queryParams.toString()}`
         });
+    },
+
+    adminCreateUser(params: RegisterRequest) {
+        return BaseService.post<ApiResponse<UserInfo>>({
+            url: API_PATH.USER.ADMIN_CREATE,
+            payload: params
+        });
     }
 }
