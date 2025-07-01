@@ -12,7 +12,7 @@ export interface RegisterRequest {
     phoneNumber: string,
     address: string,
     gender: Gender,
-    dob: string,
+    dob: Date,
     role?: UserRoleInteger,
     shopName?: string,
     shopDescription?: string,
