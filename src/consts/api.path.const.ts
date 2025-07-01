@@ -15,7 +15,8 @@ export const API_PATH = {
         GET_USER_PROFILE: "/user/profile",
         UPDATE_USER_PROFILE: "/Users/update/:id",
         CHANGE_PASSWORD: "/user/password/change",
-        SEARCH_USERS: "/Users/search"
+        SEARCH_USERS: "/Users/search",
+        ADMIN_CREATE: "/Users/admin-create"
     },
     PRODUCT: {
         CREATE_PRODUCT: "/Products",

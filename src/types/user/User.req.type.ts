@@ -6,18 +6,17 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-    name: string | null,
+    name: string,
     email: string,
     password: string,
-    phoneNumber: number | undefined,
-    address: string | undefined,
+    phoneNumber: string,
+    address: string,
     gender: Gender,
-    dob: Date | undefined,
+    dob: string,
     role?: UserRoleInteger,
     shopName?: string,
     shopDescription?: string,
     businessType?: string,
-
 }
 
 export interface ResetPasswordRequest {

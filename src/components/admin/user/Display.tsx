@@ -5,6 +5,7 @@ import type { UserSearchItem } from '../../../types/user/User.res.type';
 import { motion } from 'framer-motion';
 import { helpers } from "@utils/index.ts";
 import type { UserSearchAllParams } from "@services/user/user.service.ts";
+import { AddUserModal } from './Create';
 
 export const DisplayCom = () => {
     const [users, setUsers] = useState<UserSearchItem[]>([]);
@@ -13,6 +14,7 @@ export const DisplayCom = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalRecords, setTotalRecords] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+    const [openAddUser, setOpenAddUser] = useState(false);
 
     const { searchUsers } = useUser();
     const searchUsersRef = useRef(searchUsers);
@@ -74,9 +76,9 @@ export const DisplayCom = () => {
     const getRoleLabel = (role: number) => {
         switch (role) {
             case 0: return 'Admin';
-            case 1: return 'Buyer';
-            case 2: return 'Seller';
-            case 3: return 'Shipper';
+            case 1: return 'Seller';
+            case 2: return 'Shipper';
+            case 3: return 'Buyer';
             default: return 'Unknown';
         }
     };
@@ -102,14 +104,28 @@ export const DisplayCom = () => {
     const getRoleColor = (role: number) => {
         switch (role) {
             case 0: return 'bg-purple-500/20 text-purple-400';
-            case 1: return 'bg-blue-500/20 text-blue-400';
-            case 2: return 'bg-amber-500/20 text-amber-400';
-            case 3: return 'bg-green-500/20 text-green-400';
+            case 1: return 'bg-amber-500/20 text-amber-400';
+            case 2: return 'bg-green-500/20 text-green-400';
+            case 3: return 'bg-blue-500/20 text-blue-400';
             default: return 'bg-gray-500/20 text-gray-400';
         }
     };
 
     const totalPages = Math.ceil(totalRecords / pageSize);
+
+    // Thêm hàm để thêm user mới vào danh sách
+    const handleAddUser = (newUser: Partial<UserSearchItem> & { id: string; email: string; role: number }) => {
+        setUsers(prev => [{
+            id: newUser.id,
+            name: newUser.name || '',
+            email: newUser.email,
+            phoneNumber: newUser.phoneNumber || '',
+            avatarUrl: null,
+            status: 0, // mặc định là Active
+            role: newUser.role,
+        }, ...prev]);
+        setTotalRecords(prev => prev + 1);
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 rounded-lg shadow-lg">
@@ -129,8 +145,25 @@ export const DisplayCom = () => {
                                 Quản lý tài khoản người dùng trong hệ thống
                             </p>
                         </div>
+                        <button
+                            onClick={() => setOpenAddUser(true)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold shadow hover:from-amber-600 hover:to-amber-700 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Thêm người dùng
+                        </button>
                     </div>
                 </motion.div>
+
+                {/* Add User Modal */}
+                <AddUserModal
+                    open={openAddUser}
+                    onCancel={() => setOpenAddUser(false)}
+                    onSuccess={() => setOpenAddUser(false)}
+                    onAddUser={handleAddUser}
+                />
 
                 {/* Search and Stats */}
                 <motion.div
