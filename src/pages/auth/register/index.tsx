@@ -158,10 +158,10 @@ const RegisterPage: React.FC = () => {
     }
 
     register.mutate({
-      name: formData.name?.trim() || null,
+      name: formData.name?.trim() || '',
       email: formData.email.trim(),
       password: formData.password.trim(),
-      phoneNumber: formData.phoneNumber,
+      phoneNumber: formData.phoneNumber.toString(),
       address: fullAddress || '',
       gender: formData.gender,
       dob: formData.dob ? new Date(formData.dob) : new Date(),

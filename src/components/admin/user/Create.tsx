@@ -19,7 +19,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
     phoneNumber: '',
     address: '',
     gender: 0,
-    dob: '',
+    dob: new Date(),
     role: 3,
     shopName: '',
     shopDescription: '',
@@ -68,7 +68,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, dob: e.target.value }));
+    setFormData(prev => ({ ...prev, dob: new Date(e.target.value) }));
     if (errors.dob) setErrors(prev => ({ ...prev, dob: '' }));
   };
 
@@ -89,7 +89,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
         shopDescription: formData.shopDescription || '',
         businessType: formData.businessType || '',
       };
-      const res = await UserSerice.adminCreateUser(payload);
+      const res = await UserSerice.adminCreateUser(payload as unknown as RegisterRequest);
       helpers.notificationMessage('Tạo người dùng thành công!', 'success');
       if (onAddUser) {
         const userData = res?.data?.data || {};
@@ -102,7 +102,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
         });
       }
       setFormData({
-        name: '', email: '', password: '', phoneNumber: '', address: '', gender: 0, dob: '', role: 3, shopName: '', shopDescription: '', businessType: ''
+        name: '', email: '', password: '', phoneNumber: '', address: '', gender: 0, dob: new Date(), role: 3, shopName: '', shopDescription: '', businessType: ''
       });
       setErrors({});
       onSuccess();
@@ -116,7 +116,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
 
   const handleCancel = () => {
     setFormData({
-      name: '', email: '', password: '', phoneNumber: '', address: '', gender: 0, dob: '', role: 3, shopName: '', shopDescription: '', businessType: ''
+      name: '', email: '', password: '', phoneNumber: '', address: '', gender: 0, dob: new Date(), role: 3, shopName: '', shopDescription: '', businessType: ''
     });
     setErrors({});
     setIsSubmitting(false);
@@ -229,7 +229,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-300">Ngày sinh <span className="text-red-400">*</span></label>
-                    <input type="date" name="dob" value={formData.dob} onChange={handleDateChange} className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-200 ${errors.dob ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-700 focus:border-amber-500 focus:ring-amber-500/20'}`} disabled={isSubmitting} />
+                    <input type="date" name="dob" value={formData.dob.toISOString().split('T')[0]} onChange={handleDateChange} className={`w-full px-4 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-200 ${errors.dob ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-700 focus:border-amber-500 focus:ring-amber-500/20'}`} disabled={isSubmitting} />
                     {errors.dob && <p className="text-red-400 text-xs">{errors.dob}</p>}
                   </div>
                   <div className="space-y-2">
