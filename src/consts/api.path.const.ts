@@ -19,6 +19,7 @@ export const API_PATH = {
         ADMIN_CREATE: "/Users/admin-create",
         DELETE_USER: (id: string) => `/Users/${id}`,
         GET_USER_BY_ID: (id: string) => `/Users/${id}`,
+        UPDATE_USER: (id: string) => `/Users/update/${id}`,
     },
     PRODUCT: {
         CREATE_PRODUCT: "/Products",

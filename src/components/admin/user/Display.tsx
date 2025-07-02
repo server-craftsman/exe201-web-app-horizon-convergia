@@ -9,6 +9,7 @@ import { AddUserModal } from './Create';
 import { UserSerice } from '@services/user/user.service';
 import { DeleteUser } from './Delete';
 import { Detail } from './Detail';
+import { UpdateUserModal } from './Update';
 
 export const DisplayCom = () => {
     const [users, setUsers] = useState<UserSearchItem[]>([]);
@@ -19,6 +20,7 @@ export const DisplayCom = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [openAddUser, setOpenAddUser] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [openUpdateUserId, setOpenUpdateUserId] = useState<string | null>(null);
 
     const { searchUsers } = useUser();
     const searchUsersRef = useRef(searchUsers);
@@ -140,6 +142,10 @@ export const DisplayCom = () => {
         } catch (error) {
             helpers.notificationMessage('Block người dùng thất bại!', 'error');
         }
+    };
+
+    const handleUpdateUserSuccess = (updatedUser: UserSearchItem) => {
+        setUsers(prev => prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
     };
 
     const blockedCount = users.filter(u => u.status === 2).length;
@@ -370,6 +376,7 @@ export const DisplayCom = () => {
                                                         <button
                                                             className="p-2 text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all duration-200"
                                                             title="Chỉnh sửa"
+                                                            onClick={() => setOpenUpdateUserId(user.id)}
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -441,6 +448,15 @@ export const DisplayCom = () => {
                         </>
                     )}
                 </motion.div>
+                {/* Update User Modal */}
+                {openUpdateUserId && (
+                    <UpdateUserModal
+                        user={users.find(u => u.id === openUpdateUserId)!}
+                        open={!!openUpdateUserId}
+                        onClose={() => setOpenUpdateUserId(null)}
+                        onSuccess={handleUpdateUserSuccess}
+                    />
+                )}
             </div>
         </div>
     );
