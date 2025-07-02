@@ -44,5 +44,12 @@ export const UserSerice = {
         return BaseService.get<ApiResponse<UserInfo>>({
             url: API_PATH.USER.GET_USER_BY_ID(id)
         });
+    },
+
+    updateUser(id: string, data: any) {
+        return BaseService.put<ApiResponse<any>>({
+            url: API_PATH.USER.UPDATE_USER(id),
+            payload: data
+        });
     }
 }

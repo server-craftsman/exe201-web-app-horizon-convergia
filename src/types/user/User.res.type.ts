@@ -39,6 +39,8 @@ export interface UserSearchItem {
     avatarUrl: string | null;
     status: number;
     role: number;
+    address?: string;
+    dob?: string;
     isDeleted?: boolean;
 }
 
