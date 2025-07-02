@@ -38,5 +38,11 @@ export const UserSerice = {
         return BaseService.remove<ApiResponse<any>>({
             url: API_PATH.USER.DELETE_USER(id)
         });
+    },
+
+    getUserById(id: string) {
+        return BaseService.get<ApiResponse<UserInfo>>({
+            url: API_PATH.USER.GET_USER_BY_ID(id)
+        });
     }
 }

@@ -13,16 +13,22 @@ export interface UserResponse {
 }
 
 export interface UserInfo {
-    id: number | null;
+    id: string;
     name: string | null;
     email: string | null;
-    phoneNumber: number | null;
+    phoneNumber: string | null;
     address: string | null;
-    gender: string | null;
+    gender: number | null;
     avatarUrl: string | null;
-    status: string | null;
+    status: number | null;
     role: UserRole | null;
     dob: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+    shopName?: string;
+    shopDescription?: string;
+    businessType?: string;
+    isVerified?: boolean;
 }
 
 export interface UserSearchItem {

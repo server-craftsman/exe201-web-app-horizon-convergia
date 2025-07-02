@@ -8,6 +8,7 @@ import type { UserSearchAllParams } from '../../../types/user/User.req.type';
 import { AddUserModal } from './Create';
 import { UserSerice } from '@services/user/user.service';
 import { DeleteUser } from './Delete';
+import { Detail } from './Detail';
 
 export const DisplayCom = () => {
     const [users, setUsers] = useState<UserSearchItem[]>([]);
@@ -17,6 +18,7 @@ export const DisplayCom = () => {
     const [totalRecords, setTotalRecords] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [openAddUser, setOpenAddUser] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
     const { searchUsers } = useUser();
     const searchUsersRef = useRef(searchUsers);
@@ -142,6 +144,10 @@ export const DisplayCom = () => {
 
     const blockedCount = users.filter(u => u.status === 2).length;
     const activeCount = users.filter(u => u.status === 0).length;
+
+    if (selectedUserId) {
+        return <Detail userId={selectedUserId} onBack={() => setSelectedUserId(null)} />;
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 rounded-lg shadow-lg">
@@ -354,6 +360,7 @@ export const DisplayCom = () => {
                                                         <button
                                                             className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-200"
                                                             title="Xem chi tiết"
+                                                            onClick={() => setSelectedUserId(user.id)}
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
