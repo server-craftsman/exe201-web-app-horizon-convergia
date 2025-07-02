@@ -33,6 +33,7 @@ export interface UserSearchItem {
     avatarUrl: string | null;
     status: number;
     role: number;
+    isDeleted?: boolean;
 }
 
 export interface UserSearchResponse {

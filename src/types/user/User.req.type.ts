@@ -33,3 +33,13 @@ export interface UpdateUserRequest {
     avatarUrl: string,
     dob: Date,
 }
+
+export type UserSearchAllParams = Partial<import('./User.res.type').UserSearchParams> & {
+    pageIndex: number;
+    pageSize: number;
+    sortBy?: string;
+    sortOrder?: string;
+    role?: number;
+    status?: number;
+    keyword?: string;
+};

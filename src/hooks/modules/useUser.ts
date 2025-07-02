@@ -1,5 +1,5 @@
 import { UserSerice } from "@services/user/user.service.ts";
-import type { UserSearchAllParams } from "@services/user/user.service.ts";
+import type { UserSearchAllParams } from '../../types/user/User.req.type';
 import { useMutation } from "@tanstack/react-query";
 
 // @ts-ignore
