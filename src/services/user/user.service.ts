@@ -1,18 +1,9 @@
 import {BaseService} from "../../app/api/base.service.ts";
 import type {ApiResponse} from "../../app/interface/apiResponse.interface.ts";
 import type {RegisterRequest} from "../../types/user/User.req.type.ts";
-import type {UserInfo, UserSearchResponse, UserSearchParams} from "../../types/user/User.res.type.ts";
+import type {UserInfo, UserSearchResponse} from "../../types/user/User.res.type.ts";
 import {API_PATH} from "../../consts/api.path.const.ts";
-
-export type UserSearchAllParams = Partial<UserSearchParams> & {
-    pageIndex: number;
-    pageSize: number;
-    sortBy?: string;
-    sortOrder?: string;
-    role?: number;
-    status?: number;
-    keyword?: string;
-};
+import type { UserSearchAllParams } from '../../types/user/User.req.type';
 
 export const UserSerice = {
     register(params: RegisterRequest)  {
@@ -40,6 +31,18 @@ export const UserSerice = {
         return BaseService.post<ApiResponse<UserInfo>>({
             url: API_PATH.USER.ADMIN_CREATE,
             payload: params
+        });
+    },
+
+    deleteUser(id: string) {
+        return BaseService.remove<ApiResponse<any>>({
+            url: API_PATH.USER.DELETE_USER(id)
+        });
+    },
+
+    getUserById(id: string) {
+        return BaseService.get<ApiResponse<UserInfo>>({
+            url: API_PATH.USER.GET_USER_BY_ID(id)
         });
     }
 }
