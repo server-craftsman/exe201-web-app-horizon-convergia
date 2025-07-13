@@ -17,6 +17,9 @@ export interface RegisterRequest {
     shopName?: string,
     shopDescription?: string,
     businessType?: string,
+    bankName?: string,
+    bankAccountNumber?: string,
+    bankAccountHolder?: string
 }
 
 export interface ResetPasswordRequest {

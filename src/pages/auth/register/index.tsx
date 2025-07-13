@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTER_URL } from '../../../consts/router.path.const';
 import { useVietnamAddress, useUser } from '../../../hooks';
+import { useBank } from '../../../hooks/other/useBank';
 import { helpers } from '../../../utils';
 import { Gender, UserRoleInteger } from "../../../app/enums";
 import CourseraEditor from '../../../components/common/CourseraEditor';
+import Select from 'react-select';
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +27,10 @@ const RegisterPage: React.FC = () => {
     agreeTerms: false,
     provinceCode: '',
     districtCode: '',
-    wardCode: ''
+    wardCode: '',
+    bankName: '',
+    bankAccountNumber: '',
+    bankAccountHolder: '',
   });
 
   const [selectedProvince, setSelectedProvince] = useState('');
@@ -36,6 +41,7 @@ const RegisterPage: React.FC = () => {
 
   const { register } = useUser();
   const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
+  const { banks, isLoading: isLoadingBanks } = useBank();
   const districts = getDistricts(formData.provinceCode);
   const wards = getWards(formData.districtCode);
 
@@ -155,6 +161,18 @@ const RegisterPage: React.FC = () => {
         helpers.notificationMessage("Vui lòng nhập loại hình kinh doanh", "error");
         return;
       }
+      if (!formData.bankName.trim()) {
+        helpers.notificationMessage("Vui lòng chọn ngân hàng", "error");
+        return;
+      }
+      if (!formData.bankAccountNumber.trim()) {
+        helpers.notificationMessage("Vui lòng nhập số tài khoản ngân hàng", "error");
+        return;
+      }
+      if (!formData.bankAccountHolder.trim()) {
+        helpers.notificationMessage("Vui lòng nhập tên chủ tài khoản ngân hàng", "error");
+        return;
+      }
     }
 
     register.mutate({
@@ -170,6 +188,9 @@ const RegisterPage: React.FC = () => {
         shopName: formData.shopName.trim(),
         shopDescription: formData.shopDescription.trim(),
         businessType: formData.businessType.trim(),
+        bankName: formData.bankName.trim(),
+        bankAccountNumber: formData.bankAccountNumber.trim(),
+        bankAccountHolder: formData.bankAccountHolder.trim(),
       })
     });
   };
@@ -189,6 +210,21 @@ const RegisterPage: React.FC = () => {
     if (passwordStrength === 3) return 'Tốt';
     return 'Mạnh';
   };
+
+  // Helper for react-select options
+  const getBankOptions = (banks: Array<{ code: string; name: string; logo?: string }>) =>
+    banks.map((bank) => ({
+      value: bank.code,
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {bank.logo && (
+            <img src={bank.logo} alt={bank.name} style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
+          )}
+          <span>{bank.name}</span>
+        </div>
+      ),
+      bank,
+    }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -730,74 +766,181 @@ const RegisterPage: React.FC = () => {
                 transition={{ duration: 0.3 }}
                 className="space-y-6 border border-amber-500/30 rounded-lg p-4 bg-amber-500/5"
               >
-                <div className="flex items-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-amber-400">Thông tin cửa hàng</h3>
-                </div>
+                <React.Fragment>
+                  <div className="flex items-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <h3 className="text-lg font-medium text-amber-400">Thông tin cửa hàng</h3>
+                  </div>
+
+                  <div>
+                    <label htmlFor="shopName" className="block text-sm font-medium text-gray-200">
+                      Tên cửa hàng <span className="text-red-400">*</span>
+                    </label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="shopName"
+                        name="shopName"
+                        type="text"
+                        required
+                        value={formData.shopName}
+                        onChange={handleChange}
+                        className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                        placeholder="Nhập tên cửa hàng của bạn"
+                      />
+                      <div className="absolute left-3 top-3.5 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="shopDescription" className="block text-sm font-medium text-gray-200">
+                      Mô tả cửa hàng <span className="text-red-400">*</span>
+                    </label>
+                    <div className="mt-1">
+                      <CourseraEditor
+                        id="shopDescription"
+                        value={formData.shopDescription}
+                        onChange={handleEditorChange}
+                        placeholder="Mô tả về cửa hàng, sản phẩm và dịch vụ của bạn..."
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="businessType" className="block text-sm font-medium text-gray-200">
+                      Loại hình kinh doanh <span className="text-red-400">*</span>
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="businessType"
+                        name="businessType"
+                        required
+                        value={formData.businessType}
+                        onChange={handleChange}
+                        className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="">Chọn loại hình kinh doanh</option>
+                        <option value="motorcycle-parts">Phụ tùng xe máy</option>
+                        <option value="motorcycle-accessories">Phụ kiện xe máy</option>
+                        <option value="motorcycle-maintenance">Bảo dưỡng sửa chữa</option>
+                        <option value="motorcycle-sales">Mua bán xe máy</option>
+                        <option value="motorcycle-rental">Cho thuê xe máy</option>
+                        <option value="other">Khác</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="bankName" className="block text-sm font-medium text-gray-200">
+                      Tên ngân hàng <span className="text-red-400">*</span>
+                    </label>
+                    <div className="mt-1">
+                      <Select
+                        inputId="bankName"
+                        name="bankName"
+                        options={getBankOptions(banks)}
+                        value={getBankOptions(banks).find((opt: { value: string }) => opt.value === formData.bankName) || null}
+                        onChange={option => setFormData({ ...formData, bankName: option?.value || '' })}
+                        isLoading={isLoadingBanks}
+                        placeholder={isLoadingBanks ? 'Đang tải danh sách ngân hàng...' : 'Chọn ngân hàng'}
+                        classNamePrefix="react-select"
+                        styles={{
+                          option: (provided) => ({ ...provided, display: 'flex', alignItems: 'center', gap: 8 }),
+                          singleValue: (provided) => ({ ...provided, display: 'flex', alignItems: 'center', gap: 8 }),
+                        }}
+                        isClearable
+                        noOptionsMessage={() => 'Không tìm thấy ngân hàng'}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bank Preview */}
+                  {formData.bankName && !isLoadingBanks && (
+                    <div className="mt-2 p-3 bg-gray-800/30 border border-gray-700 rounded-lg">
+                      {(() => {
+                        const selectedBank = banks?.find(bank => bank.code === formData.bankName);
+                        return selectedBank ? (
+                          <div className="flex items-center space-x-3">
+                            {selectedBank.logo ? (
+                              <img
+                                src={selectedBank.logo}
+                                alt={selectedBank.name}
+                                className="w-8 h-8 object-contain rounded"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : (
+                              <div className="w-8 h-8 bg-gray-600 rounded flex items-center justify-center text-sm text-gray-300 font-bold">
+                                {selectedBank.code?.slice(0, 2) || 'NH'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-gray-200">{selectedBank.name}</p>
+                              <p className="text-xs text-gray-400">Mã: {selectedBank.code}</p>
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
+                </React.Fragment>
 
                 <div>
-                  <label htmlFor="shopName" className="block text-sm font-medium text-gray-200">
-                    Tên cửa hàng <span className="text-red-400">*</span>
+                  <label htmlFor="bankAccountNumber" className="block text-sm font-medium text-gray-200">
+                    Số tài khoản ngân hàng <span className="text-red-400">*</span>
                   </label>
                   <div className="mt-1 relative">
                     <input
-                      id="shopName"
-                      name="shopName"
+                      id="bankAccountNumber"
+                      name="bankAccountNumber"
                       type="text"
                       required
-                      value={formData.shopName}
+                      value={formData.bankAccountNumber}
                       onChange={handleChange}
                       className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                      placeholder="Nhập tên cửa hàng của bạn"
+                      placeholder="Nhập số tài khoản ngân hàng"
                     />
                     <div className="absolute left-3 top-3.5 text-gray-400">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2zm-5-3a1 1 0 11-2 0 1 1 0 012 0zm-4 0a1 1 0 11-2 0 1 1 0 012 0z" />
                       </svg>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="shopDescription" className="block text-sm font-medium text-gray-200">
-                    Mô tả cửa hàng <span className="text-red-400">*</span>
+                  <label htmlFor="bankAccountHolder" className="block text-sm font-medium text-gray-200">
+                    Chủ tài khoản ngân hàng <span className="text-red-400">*</span>
                   </label>
-                  <div className="mt-1">
-                    <CourseraEditor
-                      id="shopDescription"
-                      value={formData.shopDescription}
-                      onChange={handleEditorChange}
-                      placeholder="Mô tả về cửa hàng, sản phẩm và dịch vụ của bạn..."
-                      className="w-full"
+                  <div className="mt-1 relative">
+                    <input
+                      id="bankAccountHolder"
+                      name="bankAccountHolder"
+                      type="text"
+                      required
+                      value={formData.bankAccountHolder}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
+                      placeholder="Nhập tên chủ tài khoản ngân hàng"
                     />
+                    <div className="absolute left-3 top-3.5 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="businessType" className="block text-sm font-medium text-gray-200">
-                    Loại hình kinh doanh <span className="text-red-400">*</span>
-                  </label>
-                  <div className="mt-1">
-                    <select
-                      id="businessType"
-                      name="businessType"
-                      required
-                      value={formData.businessType}
-                      onChange={handleChange}
-                      className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
-                    >
-                      <option value="">Chọn loại hình kinh doanh</option>
-                      <option value="motorcycle-parts">Phụ tùng xe máy</option>
-                      <option value="motorcycle-accessories">Phụ kiện xe máy</option>
-                      <option value="motorcycle-maintenance">Bảo dưỡng sửa chữa</option>
-                      <option value="motorcycle-sales">Mua bán xe máy</option>
-                      <option value="motorcycle-rental">Cho thuê xe máy</option>
-                      <option value="other">Khác</option>
-                    </select>
-                  </div>
-                </div>
+
               </motion.div>
             )}
 
@@ -873,6 +1016,18 @@ const RegisterPage: React.FC = () => {
                     <span className="text-blue-300">{formData.shopName}</span>
                   </div>
                 )}
+                {formData.role === UserRoleInteger.SELLER && formData.bankName && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Ngân hàng:</span>
+                    <span className="text-blue-300">{formData.bankName}</span>
+                  </div>
+                )}
+                {formData.role === UserRoleInteger.SELLER && formData.bankAccountNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Số tài khoản:</span>
+                    <span className="text-blue-300">{formData.bankAccountNumber}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -936,8 +1091,8 @@ const RegisterPage: React.FC = () => {
             </div>
           </div>
         </motion.div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
