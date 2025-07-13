@@ -28,6 +28,9 @@ export interface UserInfo {
     shopName?: string;
     shopDescription?: string;
     businessType?: string;
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankAccountHolder?: string;
     isVerified?: boolean;
 }
 

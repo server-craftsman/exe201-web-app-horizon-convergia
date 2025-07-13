@@ -47,6 +47,8 @@ export interface FilterProduct {
     categoryId: string;
     sortField: string;
     ascending: boolean;
+    pageNumber?: number;
+    pageSize?: number;
 }
 
 export interface SendProductPayment {

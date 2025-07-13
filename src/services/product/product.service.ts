@@ -42,10 +42,16 @@ export const ProductService = {
     },
 
     // Get unverified-unpaid products (main endpoint for DisplayProducts)
-    getProductUnverified() {
+    getProductUnverified(sellerId: string, params: FilterProduct) {
+        const queryParams = new URLSearchParams();
+        if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+        if (params.sortField) queryParams.append('sortField', params.sortField);
+        if (params.ascending !== undefined) queryParams.append('ascending', params.ascending.toString());
+        if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
+        if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
         return BaseService.get<ProductResponse[]>({
-            url: API_PATH.PRODUCT.GET_ALL_PRODUCTS_UNVERIFIED,
-            isLoading: false // Disable global loading for this query
+            url: `${API_PATH.PRODUCT.GET_ALL_PRODUCTS_UNVERIFIED(sellerId)}?${queryParams.toString()}`,
+            
         });
     },
 

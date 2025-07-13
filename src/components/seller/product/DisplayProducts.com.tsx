@@ -5,15 +5,12 @@ import { ROUTER_URL } from '@consts/router.path.const';
 
 const Products: React.FC = () => {
     const {
-        unverifiedProducts,
-        isLoadingUnverifiedProducts,
-        unverifiedProductsError,
-        refetchUnverifiedProducts,
-        sendProductPayment,
-        isSendingPayment,
-        getProductsBySeller,
+        useUnverifiedProductsBySeller,
+        filterProductsBySeller,
         getStatusText,
-        getStatusColor
+        getStatusColor,
+        sendProductPayment,
+        isSendingPayment
     } = useProduct();
     const [sellerId, setSellerId] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -36,15 +33,11 @@ const Products: React.FC = () => {
         }
     }, []);
 
-    // Force refetch when component mounts or seller ID changes
-    useEffect(() => {
-        if (sellerId) {
-            refetchUnverifiedProducts();
-        }
-    }, [sellerId, refetchUnverifiedProducts]);
+    // Use the new hook to get unverified/unpaid products for this seller
+    const { data: unverifiedProducts, isLoading, error: unverifiedProductsError, refetch } = useUnverifiedProductsBySeller(sellerId);
 
-    // Filter unverified products by seller using the utility function
-    const sellerUnverifiedProducts: ProductResponse[] = sellerId && unverifiedProducts ? getProductsBySeller(sellerId) : [];
+    // Filter unverified products by seller using the utility function (if needed)
+    const sellerUnverifiedProducts: ProductResponse[] = unverifiedProducts ? filterProductsBySeller(unverifiedProducts, sellerId) : [];
 
     // Handle send payment
     const handleSendPayment = (productId: string) => {
@@ -55,7 +48,7 @@ const Products: React.FC = () => {
     };
 
     // Show loading state
-    if (isLoadingUnverifiedProducts) {
+    if (isLoading) {
         return (
             <div className="p-6 text-center">
                 <div className="text-white flex items-center justify-center space-x-2">
@@ -87,7 +80,7 @@ const Products: React.FC = () => {
             <div className="p-6 text-center">
                 <div className="text-red-400 mb-4">Có lỗi xảy ra khi tải sản phẩm chưa thanh toán</div>
                 <button
-                    onClick={() => refetchUnverifiedProducts()}
+                    onClick={() => refetch()}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                     Thử lại
@@ -106,7 +99,7 @@ const Products: React.FC = () => {
                     </p>
                 </div>
                 <button
-                    onClick={() => refetchUnverifiedProducts()}
+                    onClick={() => refetch()}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                 >
                     <span>🔄</span>
