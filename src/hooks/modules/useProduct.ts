@@ -28,14 +28,22 @@ export const useProduct = () => {
     // Remove the broken unverifiedProducts query (it references undefined sellerId)
     // Instead, provide a hook to fetch unverified products by sellerId
 
-    // Get unverified products by sellerId
-    const useUnverifiedProductsBySeller = (sellerId: string) => {
+    // Get unverified products by sellerId, hỗ trợ filter
+    const useUnverifiedProductsBySeller = (sellerId: string, filter?: {
+        categoryId?: string;
+        sortField?: string;
+        ascending?: boolean;
+        pageNumber?: number;
+        pageSize?: number;
+    }) => {
         return useQuery({
-            queryKey: ['products', 'unverified-unpaid', sellerId],
+            queryKey: ['products', 'unverified-unpaid', sellerId, filter],
             queryFn: () => ProductService.getProductUnverified(sellerId, {
-                categoryId: '',
-                sortField: 'createdAt',
-                ascending: false
+                categoryId: filter?.categoryId || '',
+                sortField: filter?.sortField || 'createdAt',
+                ascending: filter?.ascending ?? false,
+                pageNumber: filter?.pageNumber,
+                pageSize: filter?.pageSize,
             }),
             select: (data) => data.data as ProductResponse[],
             enabled: !!sellerId,

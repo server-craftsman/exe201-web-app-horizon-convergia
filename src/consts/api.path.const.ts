@@ -27,7 +27,7 @@ export const API_PATH = {
         // GET_PRODUCTS_BY_SELLER: (sellerId: string) => `/Products/seller/${sellerId}`,
         VERIFY_PRODUCT_BY_ADMIN: (id: string) => `/Products/verify/${id}`,
         ACTIVATE_PRODUCT: (productId: string) => `/Products/activate/${productId}`,
-        SEND_PRODUCT_PAYMENT: (productId: string) => `/Products/send-payment-link/${productId}`,
+        SEND_PRODUCT_PAYMENT: '/Products/send-payment-link',
         GET_ALL_PRODUCTS: "/Products",
         GET_ALL_PRODUCTS_UNVERIFIED: (sellerId: string) => `/Products/unverified-unpaid/${sellerId}`,
         GET_PRODUCT_BY_ID: (id: string) => `/Products/${id}`,

@@ -53,7 +53,7 @@ export interface FilterProduct {
 
 export interface SendProductPayment {
     productId: string;
-    returnUrl: string;
+    // returnUrl: string;
 }
 
 export interface VerifyProduct {
