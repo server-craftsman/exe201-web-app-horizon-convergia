@@ -26,7 +26,7 @@ export const API_PATH = {
         ACTIVATE_PRODUCT: (productId: string) => `/Products/activate/${productId}`,
         SEND_PRODUCT_PAYMENT: (productId: string) => `/Products/send-payment-link/${productId}`,
         GET_ALL_PRODUCTS: "/Products",
-        GET_ALL_PRODUCTS_UNVERIFIED: "/Products/unverified-unpaid",
+        GET_ALL_PRODUCTS_UNVERIFIED: (sellerId: string) => `/Products/unverified-unpaid/${sellerId}`,
         GET_PRODUCT_BY_ID: (id: string) => `/Products/${id}`,
         UPDATE_PRODUCT: (id: string) => `/Products/${id}`,
         DELETE_PRODUCT: (id: string) => `/Products/${id}`
