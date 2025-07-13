@@ -47,11 +47,13 @@ export interface FilterProduct {
     categoryId: string;
     sortField: string;
     ascending: boolean;
+    pageNumber?: number;
+    pageSize?: number;
 }
 
 export interface SendProductPayment {
     productId: string;
-    returnUrl: string;
+    // returnUrl: string;
 }
 
 export interface VerifyProduct {

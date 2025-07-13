@@ -9,7 +9,7 @@ import { ROUTER_URL } from "@consts/router.path.const.ts";
 import { UserRole } from "@app/enums";
 
 export const useAuth = () => {
-    const { getItem, clearStorage  } = useLocalStorage();
+    const { getItem, clearStorage } = useLocalStorage();
 
     const getCurrentRole = (): UserRole | null => {
         const role = getItem("role");
@@ -94,7 +94,8 @@ export const useAuth = () => {
         onSuccess: () => {
             helpers.notificationMessage("Đăng xuất thành công!", "success");
             clearStorage();
-            window.location.href = ROUTER_URL.AUTH.LOGIN;},
+            window.location.href = ROUTER_URL.AUTH.LOGIN;
+        },
         onError: (error: any) => {
             console.error('Logout error:', error);
         }

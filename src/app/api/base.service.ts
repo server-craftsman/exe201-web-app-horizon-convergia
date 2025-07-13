@@ -210,9 +210,9 @@ axiosInstance.interceptors.response.use(
                     break;
                 case HTTP_STATUS.NOT_FOUND:
                     helpers.notificationMessage("Trang bạn đang tìm kiếm không tồn tại.", "error");
-                    // setTimeout(() => {
-                    //   window.location.href = ROUTER_URL.LOGIN;
-                    // }, 2000);
+                    setTimeout(() => {
+                        window.location.href = ROUTER_URL.AUTH.LOGIN;
+                    }, 2000);
                     break;
                 case HTTP_STATUS.INTERNAL_SERVER_ERROR:
                     helpers.notificationMessage("Lỗi máy chủ. Vui lòng thử lại sau.", "error");

@@ -25,20 +25,33 @@ export const useProduct = () => {
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
-    // Get unverified products query (main endpoint for unverified-unpaid)
-    const {
-        data: unverifiedProducts,
-        isLoading: isLoadingUnverifiedProducts,
-        error: unverifiedProductsError,
-        refetch: refetchUnverifiedProducts
-    } = useQuery({
-        queryKey: ['products', 'unverified-unpaid'],
-        queryFn: () => ProductService.getProductUnverified(),
-        select: (data) => data.data as ProductResponse[],
-        staleTime: 2 * 60 * 1000, // 2 minutes (shorter cache for payment status)
-        refetchOnMount: true, // Override global config to ensure it fetches on mount
-        refetchOnWindowFocus: false,
-    });
+    // Remove the broken unverifiedProducts query (it references undefined sellerId)
+    // Instead, provide a hook to fetch unverified products by sellerId
+
+    // Get unverified products by sellerId, hỗ trợ filter
+    const useUnverifiedProductsBySeller = (sellerId: string, filter?: {
+        categoryId?: string;
+        sortField?: string;
+        ascending?: boolean;
+        pageNumber?: number;
+        pageSize?: number;
+    }) => {
+        return useQuery({
+            queryKey: ['products', 'unverified-unpaid', sellerId, filter],
+            queryFn: () => ProductService.getProductUnverified(sellerId, {
+                categoryId: filter?.categoryId || '',
+                sortField: filter?.sortField || 'createdAt',
+                ascending: filter?.ascending ?? false,
+                pageNumber: filter?.pageNumber,
+                pageSize: filter?.pageSize,
+            }),
+            select: (data) => data.data as ProductResponse[],
+            enabled: !!sellerId,
+            staleTime: 2 * 60 * 1000, // 2 minutes
+            refetchOnMount: true,
+            refetchOnWindowFocus: false,
+        });
+    };
 
     // Get product by ID query
     const useProductById = (id: string) => {
@@ -189,16 +202,18 @@ export const useProduct = () => {
     });
 
     // Utility functions for filtering
-    const getProductsBySeller = (sellerId: string): ProductResponse[] => {
-        return unverifiedProducts ? ProductService.filterProductsBySeller(unverifiedProducts, sellerId) : [];
-    };
+    // Remove getProductsBySeller, getProductsByStatus, getProductsByVerification referencing unverifiedProducts
+    // If needed, these should be implemented as pure functions taking products as argument
 
-    const getProductsByStatus = (status: number): ProductResponse[] => {
-        return unverifiedProducts ? ProductService.filterProductsByStatus(unverifiedProducts, status) : [];
+    // Example: (leave as pure functions for consumers to use)
+    const filterProductsBySeller = (products: ProductResponse[], sellerId: string): ProductResponse[] => {
+        return ProductService.filterProductsBySeller(products, sellerId);
     };
-
-    const getProductsByVerification = (isVerified: boolean): ProductResponse[] => {
-        return unverifiedProducts ? ProductService.filterProductsByVerification(unverifiedProducts, isVerified) : [];
+    const filterProductsByStatus = (products: ProductResponse[], status: number): ProductResponse[] => {
+        return ProductService.filterProductsByStatus(products, status);
+    };
+    const filterProductsByVerification = (products: ProductResponse[], isVerified: boolean): ProductResponse[] => {
+        return ProductService.filterProductsByVerification(products, isVerified);
     };
 
     return {
@@ -208,11 +223,10 @@ export const useProduct = () => {
         productsError,
         refetchProducts,
 
-        // Unverified products data (main data source)
-        unverifiedProducts,
-        isLoadingUnverifiedProducts,
-        unverifiedProductsError,
-        refetchUnverifiedProducts,
+        // Remove unverifiedProducts, isLoadingUnverifiedProducts, unverifiedProductsError, refetchUnverifiedProducts from return
+
+        // Add the new hook
+        useUnverifiedProductsBySeller,
 
         // Create product by seller
         createProductBySeller: createProductBySellerMutation.mutate,
@@ -258,9 +272,14 @@ export const useProduct = () => {
 
         // Utilities
         useProductById,
-        getProductsBySeller,
-        getProductsByStatus,
-        getProductsByVerification,
+        // getProductsBySeller, // This line is removed
+        // getProductsByStatus, // This line is removed
+        // getProductsByVerification, // This line is removed
+
+        // Filtering utilities (pure functions)
+        filterProductsBySeller,
+        filterProductsByStatus,
+        filterProductsByVerification,
 
         // File upload
         uploadFile: uploadFileMutation.mutate,
