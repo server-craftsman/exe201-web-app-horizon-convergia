@@ -123,7 +123,7 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
                 ...currentUser,
                 name: formData.name,
                 email: formData.email,
-                phoneNumber: formData.phoneNumber ? parseInt(formData.phoneNumber) : null,
+                phoneNumber: formData.phoneNumber || null,
                 address: formData.address,
                 avatarUrl: formData.avatarUrl,
                 dob: formData.dob.toISOString(),
