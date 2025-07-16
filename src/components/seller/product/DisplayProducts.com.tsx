@@ -150,8 +150,8 @@ const Products: React.FC = () => {
                         </select>
                     </div>
                     <div className="flex justify-end">
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center space-x-2"
                         >
                             <span>🔍</span>
@@ -254,23 +254,24 @@ const Products: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {sellerUnverifiedProducts.map((product: ProductResponse) => (
                             <div key={product.id} className="bg-gray-800 rounded-lg p-4 border border-yellow-600 hover:border-yellow-500 transition-colors">
-                                {/* Product Image */}
-                                <div className="relative mb-3">
-                                    {product.imageUrls && product.imageUrls.length > 0 ? (
-                                        <img
-                                            src={product.imageUrls[0]}
-                                            alt={`${product.brand} ${product.model}`}
-                                            className="w-full h-40 object-cover rounded-lg"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-40 bg-gray-700 rounded-lg flex items-center justify-center">
-                                            <span className="text-gray-400 text-4xl">📸</span>
-                                        </div>
-                                    )}
-                                    <div className="absolute top-2 right-2 bg-yellow-600 text-yellow-100 text-xs px-2 py-1 rounded">
-                                        {getStatusText(product.status)}
+                                {/* Product Images */}
+                                {product.imageUrls && product.imageUrls.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-2 mb-3">
+                                        {product.imageUrls.map((url, idx) => (
+                                            <img
+                                                key={idx}
+                                                src={url}
+                                                alt={`img-${idx}`}
+                                                className="w-full h-24 object-cover rounded-lg border border-gray-700 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                                onClick={() => window.open(url, '_blank')}
+                                            />
+                                        ))}
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="w-full h-24 bg-gray-700 rounded-lg flex items-center justify-center mb-3">
+                                        <span className="text-gray-400 text-4xl">📸</span>
+                                    </div>
+                                )}
 
                                 <div className="mb-3">
                                     <h3 className="text-lg font-semibold text-white mb-1">

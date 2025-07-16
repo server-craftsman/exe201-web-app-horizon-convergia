@@ -13,7 +13,7 @@ export interface ProductResponse {
     createdAt: string;
     sellerId: string;
     categoryId: string;
-    imageUrls?: string[];
+    imageUrls: string[];
     engineCapacity?: number;
     fuelType?: string;
     mileage?: number;
