@@ -111,7 +111,7 @@ export const BaseService = {
         try {
             const url = await upload.handleUploadFile(file, type);
             if (url) {
-                helpers.notificationMessage(`${type} uploaded successfully`);
+                helpers.notificationMessage(`File tải lên thành công`);
                 return url;
             } else {
                 throw new Error("Upload failed");

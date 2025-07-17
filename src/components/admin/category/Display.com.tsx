@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCategory } from "@hooks/modules/useCategory";
 // @ts-ignore
 import type { ICategory } from '@types/category/Category.res.type';
@@ -6,6 +6,31 @@ import { CreateCom } from './Create.com.tsx';
 import { UpdateCom } from './Update.com.tsx';
 import { motion } from 'framer-motion';
 import { helpers } from "@utils/index.ts";
+import SearchCommon from '../../common/SearchCommon.com';
+
+// StatsCard component
+interface StatsCardProps {
+    label: string;
+    value: string | number;
+    icon: React.ReactNode;
+    iconBg: string;
+    iconColor: string;
+    tooltip?: string;
+}
+const StatsCard = ({ label, value, icon, iconBg, iconColor, tooltip }: StatsCardProps) => (
+    <div
+        className="flex flex-col justify-between bg-gray-800/50 border border-gray-700 rounded-lg px-5 py-3 min-w-[140px] hover:border-amber-400 transition-all duration-200 cursor-default group items-center"
+        title={tooltip || label}
+    >
+        <span className="text-gray-400 text-sm mb-2 whitespace-nowrap">{label}</span>
+        <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-white">{value}</span>
+            <span className={`w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center`}>
+                <span className={iconColor}>{icon}</span>
+            </span>
+        </div>
+    </div>
+);
 
 export const DisplayCom = () => {
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -13,13 +38,16 @@ export const DisplayCom = () => {
     const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
+    // Change default viewMode to 'table'
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+    const [isSearching, setIsSearching] = useState(false);
 
     const {
         getCategorys,
         createCategory,
         updateCategory,
-        deleteCategory
+        deleteCategory,
+        getCategoriesByName
     } = useCategory();
 
     const fetchCategories = useCallback(async () => {
@@ -31,6 +59,22 @@ export const DisplayCom = () => {
             setCategories([]);
         }
     }, [getCategorys]);
+
+    const handleSearch = async () => {
+        if (!searchTerm) {
+            fetchCategories();
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const filtered = await getCategoriesByName.mutateAsync(searchTerm);
+            setCategories(filtered || []);
+        } catch (error) {
+            // fallback: do nothing
+        } finally {
+            setIsSearching(false);
+        }
+    };
 
     useEffect(() => {
         fetchCategories();
@@ -58,9 +102,9 @@ export const DisplayCom = () => {
         }
     }, [deleteCategory, fetchCategories]);
 
-    const filteredCategories = categories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Remove auto search: do not filter as user types
+    // Only update categories when handleSearch is called
+    // Remove filteredCategories, use categories directly for display
 
     return (
         <div className="min-h-screen p-6 rounded-lg">
@@ -81,6 +125,63 @@ export const DisplayCom = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             {/* Nút chuyển đổi Table/Grid */}
+
+                            <button
+                                onClick={() => setIsCreateModalVisible(true)}
+                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Tạo Danh Mục
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+
+                <div className="flex gap-3 mb-6 items-stretch">
+                    <StatsCard
+                        label="Tổng danh mục"
+                        value={categories.length}
+                        iconBg="bg-amber-500/20"
+                        iconColor="text-amber-400"
+                        icon={
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                        }
+                        tooltip="Tổng số danh mục trong hệ thống"
+                    />
+                    <StatsCard
+                        label="Kết quả tìm kiếm"
+                        value={searchTerm ? categories.length : '—'}
+                        iconBg="bg-blue-500/20"
+                        iconColor="text-blue-400"
+                        icon={
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                        }
+                        tooltip="Số danh mục khớp với tìm kiếm"
+                    />
+                </div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="mb-6"
+                >
+                    <div className="flex flex-col md:flex-row gap-4 mb-6 items-stretch">
+                        {/* Search */}
+                        <div className="flex-1 flex items-center gap-2">
+                            <SearchCommon
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                onSearch={handleSearch}
+                                loading={isSearching}
+                                placeholder="Tìm kiếm danh mục..."
+                            />
                             <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
                                 <button
                                     onClick={() => setViewMode('table')}
@@ -107,77 +208,14 @@ export const DisplayCom = () => {
                                     </svg>
                                 </button>
                             </div>
-                            <button
-                                onClick={() => setIsCreateModalVisible(true)}
-                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Tạo Danh Mục
-                            </button>
                         </div>
+                        {/* Stats */}
                     </div>
                 </motion.div>
 
-                {/* Search and Stats */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="mb-6"
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                        {/* Search */}
-                        <div className="md:col-span-2">
-                            <div className="relative">
-                                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="Tìm kiếm danh mục..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                                />
-                            </div>
-                        </div>
 
-                        {/* Stats Cards */}
-                        <div className="flex gap-1">
-                            {/* Tổng danh mục */}
-                            <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg flex items-center gap-1 flex-1 min-w-0">
-                                <div className="flex flex-col justify-between flex-2 min-w-0">
-                                    <p className="text-gray-400 text-sm whitespace-nowrap mb-2">Tổng danh mục</p>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-2xl font-bold text-white">{categories.length}</span>
-                                        <span className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                                            <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                            </svg>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Kết quả tìm kiếm */}
-                            <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4 flex items-center gap-1 flex-1 min-w-0">
-                                <div className="flex flex-col justify-between flex-1 min-w-0">
-                                    <p className="text-gray-400 text-sm whitespace-nowrap mb-2">Kết quả tìm kiếm</p>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-2xl font-bold text-white">{filteredCategories.length}</span>
-                                        <span className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
+
 
                 {/* Categories Grid */}
                 <motion.div
@@ -185,7 +223,7 @@ export const DisplayCom = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    {filteredCategories.length === 0 ? (
+                    {categories.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,7 +260,7 @@ export const DisplayCom = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-700">
-                                        {filteredCategories.map((category) => (
+                                        {categories.map((category) => (
                                             <tr key={category.id} className="hover:bg-gray-700/30 transition-colors">
                                                 <td className="px-4 py-3">
                                                     {category.imageUrl ? (
@@ -280,7 +318,7 @@ export const DisplayCom = () => {
                     ) : (
                         // Grid view giữ nguyên như cũ
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredCategories.map((category, index) => (
+                            {categories.map((category, index) => (
                                 <motion.div
                                     key={category.id}
                                     initial={{ opacity: 0, y: 20 }}

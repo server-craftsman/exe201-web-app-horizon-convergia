@@ -6,6 +6,7 @@ import { useCategory } from '@hooks/modules/useCategory';
 import { useProduct } from '@hooks/modules/useProduct';
 // @ts-ignore
 import type { ICategory } from '@types/category/Category.res.type';
+import SearchCommon from '../../common/SearchCommon.com';
 
 interface DisplayProductsAdminProps {
     onEdit: (product: ProductResponse) => void;
@@ -31,6 +32,11 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
     // Categories for filter dropdown
     const [categories, setCategories] = useState<ICategory[]>([]);
 
+    // Add local state for filter inputs
+    const [pendingSearchTerm, setPendingSearchTerm] = useState('');
+    const [pendingStatusFilter, setPendingStatusFilter] = useState<number | 'all'>('all');
+    const [pendingCategoryFilter, setPendingCategoryFilter] = useState<string | 'all'>('all');
+
     const {
         getCategorys,
     } = useCategory();
@@ -55,6 +61,21 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
             setCategories([]);
         }
     }, [getCategorys]);
+
+    // When user clicks 'Tra Cứu', update the actual filter states
+    const handleApplyFilters = () => {
+        setSearchTerm(pendingSearchTerm);
+        setStatusFilter(pendingStatusFilter);
+        setCategoryFilter(pendingCategoryFilter);
+        setPageNumber(1); // Optionally reset to first page
+    };
+
+    // Sync pending values with actual filter state on mount/refresh
+    useEffect(() => {
+        setPendingSearchTerm(searchTerm);
+        setPendingStatusFilter(statusFilter);
+        setPendingCategoryFilter(categoryFilter);
+    }, [searchTerm, statusFilter, categoryFilter]);
 
     useEffect(() => {
         fetchCategories();
@@ -181,7 +202,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
     );
 
     return (
-        <div className="min-h-screen p-6 rounded-lg">
+        <div className="min-h-screen p-2 rounded-lg">
             <div className="max-w-7xl mx-auto">
 
                 {/* -------------------------------  HEADER  ------------------------------ */}
@@ -192,57 +213,14 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                 >
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <h1 className="text-3xl font-bold text-white">
+                            {/* <h1 className="text-3xl font-bold text-white">
                                 Quản Lý Sản Phẩm
-                            </h1>
-                            <span className="text-gray-400">
-                                ({filteredProducts.length} sản phẩm)
-                            </span>
+                            </h1> */}
 
-                            {selectedProductIds.length > 0 && (
-                                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium">
-                                    {selectedProductIds.length} đã chọn
-                                </span>
-                            )}
                         </div>
-
-                        <button
-                            onClick={() => refetch()}
-                            className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-md font-semibold shadow hover:shadow-md transition-all duration-200 text-sm"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582M20 20v-5h-.581M5 9A7 7 0 0119 15M19 15a7 7 0 01-14 0" />
-                            </svg>
-                            Làm mới
-                        </button>
 
                         {/* View Mode Toggle */}
-                        <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
-                            <button
-                                onClick={() => setViewMode('table')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'table'
-                                    ? 'bg-amber-500 text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                    }`}
-                                title="Xem dạng bảng"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid'
-                                    ? 'bg-amber-500 text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                    }`}
-                                title="Xem dạng lưới"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                </svg>
-                            </button>
-                        </div>
+
                     </div>
                 </motion.div>
 
@@ -255,56 +233,84 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                 >
                     {/* bulk-select */}
                     {onBulkSelect && (
-                        <div className="flex items-center space-x-4">
-                            <label className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-3 md:gap-5 bg-gray-800/60 rounded-xl px-4 py-2 shadow border border-gray-700">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
                                 <input
                                     type="checkbox"
                                     checked={isAllSelected}
-                                    ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
-                                    onChange={(e) => handleSelectAll(e.target.checked)}
-                                    className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-700 rounded bg-gray-800"
+                                    ref={el => { if (el) el.indeterminate = isIndeterminate; }}
+                                    onChange={e => handleSelectAll(e.target.checked)}
+                                    className="h-5 w-5 accent-amber-500 border-gray-600 rounded focus:ring-2 focus:ring-amber-400 transition"
                                 />
-                                <span className="text-sm font-medium text-gray-300">
-                                    Chọn tất cả ({filteredProducts.length})
+                                <span className="text-base font-semibold text-gray-100">
+                                    Chọn tất cả
+                                </span>
+                                <span className="text-xs text-gray-400 font-normal">
+                                    ({filteredProducts.length} sản phẩm)
                                 </span>
                             </label>
-
                             {selectedProductIds.length > 0 && (
-                                <button
-                                    onClick={() => { setSelectedProductIds([]); onBulkSelect([]); }}
-                                    className="text-sm text-gray-400 hover:text-gray-200"
-                                >
-                                    Bỏ chọn tất cả
-                                </button>
+                                <span className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-semibold">
+                                        {selectedProductIds.length} đã chọn
+                                    </span>
+                                    <button
+                                        onClick={() => { setSelectedProductIds([]); onBulkSelect?.([]); }}
+                                        className="text-xs text-gray-400 hover:text-amber-400 transition underline underline-offset-2"
+                                    >
+                                        Bỏ chọn tất cả
+                                    </button>
+                                </span>
                             )}
+
+                            <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
+                                <button
+                                    onClick={() => setViewMode('table')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'table'
+                                        ? 'bg-amber-500 text-white shadow-lg'
+                                        : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        }`}
+                                    title="Xem dạng bảng"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid'
+                                        ? 'bg-amber-500 text-white shadow-lg'
+                                        : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        }`}
+                                    title="Xem dạng lưới"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     )}
 
                     {/* filters */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 md:gap-6 mb-6">
                         {/* search */}
-                        <div>
+                        <div className="flex flex-col">
                             <label className="block text-sm font-medium text-gray-400 mb-2">Tìm kiếm</label>
-                            <div className="relative">
-                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="Tìm theo thương hiệu, model, mô tả..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                                />
-                            </div>
+                            <SearchCommon
+                                value={pendingSearchTerm}
+                                onChange={e => setPendingSearchTerm(e.target.value)}
+                                onSearch={handleApplyFilters}
+                                placeholder="Tìm theo thương hiệu, model, mô tả..."
+                            />
                         </div>
 
                         {/* status */}
-                        <div>
+                        <div className="flex flex-col">
                             <label className="block text-sm font-medium text-gray-400 mb-2">Trạng thái</label>
                             <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                value={pendingStatusFilter}
+                                onChange={e => setPendingStatusFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                                 className="w-full px-3 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                             >
                                 <option value="all">Tất cả trạng thái</option>
@@ -315,11 +321,11 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                         </div>
 
                         {/* category */}
-                        <div>
+                        <div className="flex flex-col">
                             <label className="block text-sm font-medium text-gray-400 mb-2">Danh mục</label>
                             <select
-                                value={categoryFilter}
-                                onChange={(e) => setCategoryFilter(e.target.value)}
+                                value={pendingCategoryFilter}
+                                onChange={e => setPendingCategoryFilter(e.target.value)}
                                 className="w-full px-3 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                             >
                                 <option value="all">Tất cả danh mục</option>

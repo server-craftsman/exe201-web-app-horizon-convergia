@@ -5,8 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 // @ts-ignore
 import type { CreateCategory } from "@types/category/Category.req.type";
 // @ts-ignore
-import type {ICategory} from "@types/category/Category.res.type";
-import {helpers} from "@utils/index";
+import type { ICategory } from "@types/category/Category.res.type";
+import { helpers } from "@utils/index";
 
 export const useCategory = () => {
     const queryClient = useQueryClient();
@@ -67,11 +67,28 @@ export const useCategory = () => {
         }
     });
 
+    // Add getCategoriesByName for filtering by name (client-side fallback)
+    const getCategoriesByName = useMutation({
+        // This currently fetches all and expects client-side filtering. Replace with backend filter if available.
+        mutationFn: async (name: string) => {
+            const res = await CategoryService.getCategories();
+            const all = Array.isArray(res) ? res : (res?.data || []);
+            return all.filter((cat: any) => cat.name.toLowerCase().includes(name.toLowerCase()));
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+        },
+        onError: (error: any) => {
+            console.error('Get categories by name error:', error);
+        }
+    });
+
     return {
         getCategorys,
         getCategory,
         createCategory,
         updateCategory,
         deleteCategory,
+        getCategoriesByName, // new
     };
 };

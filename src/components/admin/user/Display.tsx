@@ -10,9 +10,11 @@ import { UserSerice } from '@services/user/user.service';
 import { DeleteUser } from './Delete';
 import { Detail } from './Detail';
 import { UpdateUserModal } from './Update';
+import SearchCommon from '../../common/SearchCommon.com';
 
 export const DisplayCom = () => {
     const [users, setUsers] = useState<UserSearchItem[]>([]);
+    const [searchInput, setSearchInput] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -64,11 +66,6 @@ export const DisplayCom = () => {
         fetchData();
         return () => { isMounted = false; };
     }, [searchTerm, currentPage, pageSize]);
-
-    const handleSearch = (value: string) => {
-        setSearchTerm(value);
-        setCurrentPage(1); // Reset về trang đầu khi tìm kiếm
-    };
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -202,29 +199,12 @@ export const DisplayCom = () => {
                 >
                     {/* Search Row */}
                     <div className="mb-6">
-                        <div className="relative">
-                            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm người dùng theo tên, email..."
-                                value={searchTerm}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => handleSearch('')}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-all duration-200"
-                                    title="Xóa tìm kiếm"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            )}
-                        </div>
+                        <SearchCommon
+                            value={searchInput}
+                            onChange={e => setSearchInput(e.target.value)}
+                            onSearch={() => { setSearchTerm(searchInput); setCurrentPage(1); }}
+                            placeholder="Tìm kiếm người dùng theo tên, email..."
+                        />
                     </div>
                     {/* Stats Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -425,8 +405,8 @@ export const DisplayCom = () => {
                                                         key={page}
                                                         onClick={() => handlePageChange(page)}
                                                         className={`px-3 py-1 rounded-lg transition-colors ${currentPage === page
-                                                                ? 'bg-amber-500 text-white'
-                                                                : 'bg-gray-800 border border-gray-700 text-white hover:border-amber-500'
+                                                            ? 'bg-amber-500 text-white'
+                                                            : 'bg-gray-800 border border-gray-700 text-white hover:border-amber-500'
                                                             }`}
                                                     >
                                                         {page}
