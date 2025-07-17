@@ -14,9 +14,15 @@ export const CategoryService = {
         });
     },
 
-    getCategories() {
+    getCategories(name?: string) {
+        let url = API_PATH.CATEGORY.GET_ALL;
+        if (name) {
+            // Append query param for name filter
+            const params = new URLSearchParams({ name });
+            url += `?${params.toString()}`;
+        }
         return BaseService.get<CategoryResponse[]>({
-            url: API_PATH.CATEGORY.GET_ALL
+            url: url
         });
     },
     getCategory(id: string) {

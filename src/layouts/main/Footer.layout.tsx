@@ -26,9 +26,9 @@ const FooterLayout: React.FC = () => {
           <div>
             <h3 className="text-lg font-bold mb-4 text-amber-400 tracking-wide">HỖ TRỢ KHÁCH HÀNG</h3>
             <div className="mb-5 space-y-2">
-              <p className="text-sm">Hotline: <span className="text-amber-400 font-medium">1900 636 135</span></p>
+              {/* <p className="text-sm">Hotline: <span className="text-amber-400 font-medium">1900 636 135</span></p> */}
               <p className="text-xs text-gray-400">(8:00 - 21:00)</p>
-              <p className="text-sm">Email: chuahoangphaptrunguongfake@gmail.com</p>
+              <p className="text-sm">Email: huyit2003@gmail.com</p>
             </div>
             <div className="space-y-3">
               <p className="text-sm hover:text-amber-400 cursor-pointer transition-colors duration-300 flex items-center">
@@ -106,7 +106,9 @@ const FooterLayout: React.FC = () => {
         </div>
         
         <div className="border-t border-gray-800 mt-8 pt-6 text-center text-xs text-gray-500">
-          <p className="mb-2">© 2023 Horizon Convergia. Tất cả các quyền được bảo lưu.</p>
+          <p className="mb-2">
+            © {new Date().getFullYear()} Horizon Convergia. Tất cả các quyền được bảo lưu.
+          </p>
           <p className="text-amber-500/70">Điểm đến tin cậy của những người yêu xe máy</p>
         </div>
       </div>

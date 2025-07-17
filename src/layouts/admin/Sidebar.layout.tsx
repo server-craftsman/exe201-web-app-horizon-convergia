@@ -144,59 +144,57 @@ const SidebarLayout: React.FC = () => {
                 </svg>
             </button>
             {/* Logo and User Info */}
-            <div className={`p-4 flex flex-col justify-start items-start ${collapsed ? 'px-2' : ''}`}>
+            <div className={`p-3 flex flex-col justify-start items-start ${collapsed ? 'px-1' : ''}`}>
                 <Link
                     to={ROUTER_URL.COMMON.HOME}
-                    className={`flex items-start w-full group transition-all duration-300 justify-start`}
+                    className={`flex items-center w-full group transition-all duration-300 justify-center`}
                 >
-
                     <img
                         src={logo}
                         alt="Logo"
                         className={`
-                                object-contain
-                                ${collapsed ? 'w-12 h-12' : 'w-20 h-12'}
-                                transition-all duration-300
-                                block
-                            `}
+                            object-contain
+                            ${collapsed ? 'w-10 h-10' : 'w-16 h-10'}
+                            transition-all duration-300
+                            block
+                        `}
                         style={{
                             margin: '0 auto',
                             display: 'block',
-                            maxHeight: collapsed ? 32 : 48,
+                            maxHeight: collapsed ? 32 : 40,
                             maxWidth: collapsed ? 32 : 64,
                         }}
                     />
-
                 </Link>
                 {user && (
-                    <div className={`mt-4 flex items-start ${collapsed ? 'flex-col space-x-0 space-y-1' : 'space-x-3'} bg-gray-700/40 rounded-lg p-2 w-full justify-start transition-all duration-300`}>
+                    <div className={`mt-3 flex items-center ${collapsed ? 'flex-col space-x-0 space-y-1' : 'space-x-2'} bg-gray-700/40 rounded-lg p-1.5 w-full justify-start transition-all duration-300`}>
                         {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt="avatar" className="w-10 h-10 rounded-full" />
+                            <img src={user.avatarUrl} alt="avatar" className="w-9 h-9 rounded-full" />
                         ) : (
-                            <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-gray-900 font-bold">
+                            <div className="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-gray-900 font-bold text-base">
                                 {user.name?.[0] || user.email?.[0]}
                             </div>
                         )}
                         {!collapsed && (
-                            <div>
-                                <div className="font-semibold">{user.name}</div>
-                                <div className="text-xs text-gray-300">{user.email}</div>
+                            <div className="flex flex-col justify-center">
+                                <div className="font-semibold leading-tight text-base">{user.name}</div>
+                                <div className="text-xs text-gray-300 leading-tight">{user.email}</div>
                             </div>
                         )}
                     </div>
                 )}
             </div>
             {/* Menu */}
-            <nav className={`mt-8 flex-1 rounded-lg flex flex-col gap-1 ${collapsed ? 'items-center' : ''}`}>
+            <nav className={`mt-1 flex-1 px-4 py-4 rounded-lg flex flex-col gap-0.5 ${collapsed ? 'items-center' : ''}`}>
                 {menuItems.map((item, idx) =>
                     item.path ? (
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`group flex items-center ${collapsed ? 'justify-center' : ''} px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors rounded-lg relative ${location.pathname === item.path ? 'bg-gray-700 text-white border-l-4 border-amber-400' : ''}`}
+                            className={`group flex items-center ${collapsed ? 'justify-center' : ''} px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors rounded-lg relative ${location.pathname === item.path ? 'bg-gray-700 text-white border-l-4 border-amber-400' : ''}`}
                         >
-                            <span className="mr-3 flex-shrink-0">{item.icon}</span>
-                            {!collapsed && item.label}
+                            <span className="mr-2 flex-shrink-0">{item.icon}</span>
+                            {!collapsed && <span className="text-sm">{item.label}</span>}
                             {collapsed && (
                                 <span className="absolute left-full ml-2 w-max opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-lg pointer-events-none transition-opacity duration-200 z-30">
                                     {item.label}
@@ -204,7 +202,7 @@ const SidebarLayout: React.FC = () => {
                             )}
                         </Link>
                     ) : (
-                        <div key={idx} className={`my-2 w-full ${collapsed ? 'w-8' : ''}`}>{item.icon}</div>
+                        <div key={idx} className={`my-1 w-full ${collapsed ? 'w-8' : ''}`}>{item.icon}</div>
                     )
                 )}
             </nav>

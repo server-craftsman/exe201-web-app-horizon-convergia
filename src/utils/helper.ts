@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import type { ToastOptions } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-export const formatDate = (date: Date, format: string = DATE_FORMAT.YYYYMMDD) => {
+export const formatDate = (date: Date, format: string = DATE_FORMAT.MMDDYYYY) => {
     const d = new Date(date);
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");

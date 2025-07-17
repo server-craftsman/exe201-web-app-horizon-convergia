@@ -20,6 +20,8 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
     const [isSubmitting, setIsSubmitting] = useState(false);
     const nameInputRef = useRef<HTMLInputElement>(null);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const dropzoneRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (open && nameInputRef.current) {
@@ -66,6 +68,36 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
             setErrors(prev => ({ ...prev, imageUrl: 'Tải ảnh thất bại' }));
         }
         setUploadingImage(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isSubmitting || uploadingImage) return;
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            await handleFileValidationAndUpload(files[0]);
+        }
+    };
+
+    const handleFileValidationAndUpload = async (file: File) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            setErrors(prev => ({ ...prev, imageUrl: 'Chỉ hỗ trợ JPG, PNG, WEBP' }));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setErrors(prev => ({ ...prev, imageUrl: 'Dung lượng tối đa 5MB' }));
+            return;
+        }
+        setErrors(prev => ({ ...prev, imageUrl: '' }));
+        await handleUploadImage({ 0: file, length: 1 } as any);
+    };
+
+    const handleDropzoneClick = () => {
+        if (!isSubmitting && !uploadingImage && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
     };
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -217,13 +249,76 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
 
                                 {/* Image Upload */}
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-300">Hình ảnh *</label>
-                                    {formData.imageUrl && (
-                                        <img src={formData.imageUrl} alt="preview" className="h-24 w-24 object-cover rounded-lg mb-2" />
-                                    )}
-                                    <input type="file" accept="image/*" onChange={(e) => handleUploadImage(e.target.files)} disabled={uploadingImage || isSubmitting} className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300" />
-                                    {errors.imageUrl && <p className="text-red-400 text-sm">{errors.imageUrl}</p>}
+                                    <label className="block text-sm font-medium text-gray-300">Hình Ảnh Danh Mục</label>
+                                    <div
+                                        ref={dropzoneRef}
+                                        className={`relative group flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition-all duration-200 cursor-pointer bg-gray-800/80 hover:border-amber-400 ${formData.imageUrl ? 'py-4' : 'py-12'} ${uploadingImage ? 'opacity-70 pointer-events-none' : ''}`}
+                                        onClick={handleDropzoneClick}
+                                        onDragOver={e => { e.preventDefault(); e.stopPropagation(); dropzoneRef.current?.classList.add('border-amber-400'); }}
+                                        onDragLeave={e => { e.preventDefault(); e.stopPropagation(); dropzoneRef.current?.classList.remove('border-amber-400'); }}
+                                        onDrop={handleDrop}
+                                        tabIndex={0}
+                                        aria-label="Kéo thả hoặc nhấp để tải lên"
+                                    >
+                                        {formData.imageUrl ? (
+                                            <div className="relative flex flex-col items-center">
+                                                <img src={formData.imageUrl} alt="preview" className="h-32 w-32 object-cover rounded-lg border-2 border-amber-400 shadow transition-all duration-200" />
+                                                <button
+                                                    type="button"
+                                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow focus:outline-none focus:ring-2 focus:ring-red-400"
+                                                    onClick={e => { e.stopPropagation(); setFormData(prev => ({ ...prev, imageUrl: '' })); }}
+                                                    tabIndex={0}
+                                                    aria-label="Xoá ảnh"
+                                                    disabled={uploadingImage || isSubmitting}
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                {uploadingImage && (
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
+                                                        <svg className="w-8 h-8 animate-spin text-amber-400" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5V19a2 2 0 002 2h14a2 2 0 002-2v-2.5M16 3.13a4 4 0 010 7.75M12 7v6m0 0l-2-2m2 2l2-2" />
+                                                </svg>
+                                                <p className="text-lg text-gray-300 font-medium mb-1">Kéo thả hoặc nhấp để tải lên</p>
+                                                <p className="text-gray-400 text-sm mb-4">Hỗ trợ JPG, PNG hoặc WEBP (tối đa 5MB mỗi ảnh)</p>
+                                                <button
+                                                    type="button"
+                                                    className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-semibold shadow transition-all duration-200"
+                                                    onClick={e => { e.stopPropagation(); handleDropzoneClick(); }}
+                                                    disabled={uploadingImage || isSubmitting}
+                                                >
+                                                    Chọn Ảnh
+                                                </button>
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    onChange={e => { if (e.target.files && e.target.files[0]) handleFileValidationAndUpload(e.target.files[0]); }}
+                                                    disabled={uploadingImage || isSubmitting}
+                                                    className="hidden"
+                                                />
+                                                {uploadingImage && (
+                                                    <svg className="w-6 h-6 animate-spin text-amber-400 mt-4" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                    {errors.imageUrl && <p className="text-red-400 text-sm mt-1">{errors.imageUrl}</p>}
                                 </div>
+
 
                                 {/* Action Buttons */}
                                 <div className="flex items-center gap-3 pt-4">
