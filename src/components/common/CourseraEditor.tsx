@@ -9,6 +9,10 @@ interface CourseraEditorProps {
     id?: string;
 }
 
+const COLORS = [
+    '#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#6366f1', '#a21caf', '#000000', '#ffffff', '#d1d5db', '#fbbf24', '#f87171', '#34d399', '#60a5fa', '#818cf8', '#f472b6', '#f3f4f6'
+];
+
 const CourseraEditor: React.FC<CourseraEditorProps> = ({
     value,
     onChange,
@@ -24,6 +28,37 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
         italic: false,
         underline: false
     });
+    const [showColorPicker, setShowColorPicker] = useState(false);
+    const [colorAnchor, setColorAnchor] = useState<HTMLButtonElement | null>(null);
+    const colorPickerRef = useRef<HTMLDivElement>(null);
+    // Lưu selection khi mở bảng màu
+    const [savedSelection, setSavedSelection] = useState<Range | null>(null);
+
+    const saveSelection = () => {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            setSavedSelection(sel.getRangeAt(0));
+        }
+    };
+    const restoreSelection = () => {
+        const sel = window.getSelection();
+        if (sel && savedSelection) {
+            sel.removeAllRanges();
+            sel.addRange(savedSelection);
+        }
+    };
+
+    // Đóng bảng màu khi click ra ngoài
+    useEffect(() => {
+        if (!showColorPicker) return;
+        const handleClick = (e: MouseEvent) => {
+            if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+                setShowColorPicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [showColorPicker]);
 
     // Add custom styles to document head
     useEffect(() => {
@@ -189,6 +224,25 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
         };
     }, [handleSelectionChange]);
 
+    // Handle paste: strip style/background
+    const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const clipboardData = e.clipboardData || (window as any).clipboardData;
+        let html = clipboardData.getData('text/html');
+        let text = clipboardData.getData('text/plain');
+
+        if (html) {
+            // Xóa mọi inline style, background, font, v.v.
+            html = html.replace(/ style="[^"]*"/g, '');
+            html = html.replace(/<span[^>]*>/g, '<span>');
+            html = html.replace(/<font[^>]*>/g, '<font>');
+            html = html.replace(/<([a-z]+)[^>]*>/g, '<$1>');
+            document.execCommand('insertHTML', false, html);
+        } else if (text) {
+            document.execCommand('insertText', false, text);
+        }
+    }, []);
+
     const toolbarButtons = [
         {
             command: 'bold',
@@ -207,6 +261,17 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
             icon: 'U',
             title: 'Underline (Ctrl+U)',
             isActive: currentFormats.underline
+        },
+        {
+            command: 'foreColor',
+            icon: <span style={{ color: '#f59e0b' }}>A</span>,
+            title: 'Màu chữ',
+            isActive: false,
+            onClick: (e: any) => {
+                setShowColorPicker((v) => !v);
+                setColorAnchor(e.currentTarget);
+                saveSelection();
+            }
         },
         {
             command: 'insertUnorderedList',
@@ -231,7 +296,50 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
                     execCommand('createLink', url);
                 }
             }
-        }
+        },
+        // New features:
+        {
+            command: 'undo',
+            icon: '↺',
+            title: 'Undo',
+            isActive: false,
+            onClick: () => execCommand('undo')
+        },
+        {
+            command: 'redo',
+            icon: '↻',
+            title: 'Redo',
+            isActive: false,
+            onClick: () => execCommand('redo')
+        },
+        {
+            command: 'formatBlock',
+            icon: '<>',
+            title: 'Code Block',
+            isActive: false,
+            onClick: () => execCommand('formatBlock', 'pre')
+        },
+        {
+            command: 'blockquote',
+            icon: '❝',
+            title: 'Blockquote',
+            isActive: false,
+            onClick: () => execCommand('formatBlock', 'blockquote')
+        },
+        {
+            command: 'removeFormat',
+            icon: 'Tx',
+            title: 'Clear Formatting',
+            isActive: false,
+            onClick: () => execCommand('removeFormat')
+        },
+        {
+            command: 'insertHorizontalRule',
+            icon: '―',
+            title: 'Horizontal Line',
+            isActive: false,
+            onClick: () => execCommand('insertHorizontalRule')
+        },
     ];
 
     return (
@@ -244,25 +352,48 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
         transition-all duration-200
         ${isActive ? 'border-amber-500/50 bg-gray-800/70' : ''}
       `}>
-                {toolbarButtons.map((button) => (
-                    <button
-                        key={button.command}
-                        type="button"
-                        onClick={button.onClick || (() => execCommand(button.command))}
-                        title={button.title}
-                        className={`
+                {toolbarButtons.map((button, idx) => (
+                    <span key={button.command || idx} className="relative">
+                        <button
+                            type="button"
+                            onClick={button.onClick || (() => execCommand(button.command))}
+                            title={button.title}
+                            className={`
               px-2 py-1 rounded text-sm font-medium
               transition-all duration-150
               hover:bg-gray-700/50
               ${button.isActive
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                                : 'text-gray-300 border border-transparent'
-                            }
+                                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                    : 'text-gray-300 border border-transparent'
+                                }
             `}
-                        disabled={disabled}
-                    >
-                        {button.icon}
-                    </button>
+                            disabled={disabled}
+                        >
+                            {button.icon}
+                        </button>
+                        {/* Color picker dropdown */}
+                        {button.command === 'foreColor' && showColorPicker && (
+                            <div
+                                ref={colorPickerRef}
+                                className="absolute z-50 mt-2 left-0 bg-gray-800 border border-gray-700 rounded shadow-lg p-2 flex flex-wrap gap-1 w-48"
+                            >
+                                {COLORS.map((color) => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        className="w-6 h-6 rounded-full border-2 border-gray-600 hover:border-amber-500 focus:outline-none"
+                                        style={{ backgroundColor: color }}
+                                        onClick={() => {
+                                            editorRef.current?.focus();
+                                            restoreSelection();
+                                            execCommand('foreColor', color);
+                                            setShowColorPicker(false);
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </span>
                 ))}
 
                 {/* Format dropdown */}
@@ -290,6 +421,7 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 className={`
           min-h-[120px] max-h-[300px] overflow-y-auto
           border border-gray-600 rounded-b-lg

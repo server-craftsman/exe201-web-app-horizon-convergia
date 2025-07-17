@@ -9,21 +9,26 @@ export const useProduct = () => {
     const queryClient = useQueryClient();
 
     // Get all products query
-    const {
-        data: products,
-        isLoading: isLoadingProducts,
-        error: productsError,
-        refetch: refetchProducts
-    } = useQuery({
-        queryKey: ['products'],
-        queryFn: () => ProductService.getProducts({
-            categoryId: '',
-            sortField: 'createdAt',
-            ascending: false
-        }),
-        select: (data) => data.data.data as ProductResponse[],
-        staleTime: 5 * 60 * 1000, // 5 minutes
-    });
+    const useProducts = ({
+        categoryId = '',
+        sortField = 'createdAt',
+        ascending = false,
+        pageNumber = 1,
+        pageSize = 10
+    } = {}) => {
+        return useQuery({
+            queryKey: ['products', categoryId, sortField, ascending, pageNumber, pageSize],
+            queryFn: () => ProductService.getProducts({
+                categoryId,
+                sortField,
+                ascending,
+                pageNumber,
+                pageSize
+            }),
+            select: (data) => data.data as ProductResponse[],
+            staleTime: 5 * 60 * 1000, // 5 minutes
+        });
+    };
 
     // Remove the broken unverifiedProducts query (it references undefined sellerId)
     // Instead, provide a hook to fetch unverified products by sellerId
@@ -111,7 +116,8 @@ export const useProduct = () => {
 
     // Create product by admin mutation
     const createProductByAdminMutation = useMutation({
-        mutationFn: (productData: CreateProduct) => ProductService.createProductByAdmin(productData),
+        mutationFn: ({ adminId, productData }: { adminId: string; productData: CreateProduct }) =>
+            ProductService.createProductByAdmin(adminId, productData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['products', 'unverified-unpaid'] });
@@ -218,10 +224,10 @@ export const useProduct = () => {
 
     return {
         // Products data
-        products,
-        isLoadingProducts,
-        productsError,
-        refetchProducts,
+        useProducts,
+        isLoadingProducts: useProducts().isLoading, // This will be undefined as useProducts is a hook
+        productsError: useProducts().error, // This will be undefined
+        refetchProducts: useProducts().refetch, // This will be undefined
 
         // Remove unverifiedProducts, isLoadingUnverifiedProducts, unverifiedProductsError, refetchUnverifiedProducts from return
 

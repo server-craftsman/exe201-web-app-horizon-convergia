@@ -8,16 +8,18 @@ const ProductListByCategoryId: React.FC = () => {
     const { categoryId } = useParams<{ categoryId: string }>();
 
     const {
-        products,
+        useProducts,
         isLoadingProducts,
         productsError,
     } = useProduct();
 
+    const { data: products = [] } = useProducts();
+
     // Filter products by the desired category ID (case-sensitive match)
     const filteredProducts = useMemo(() => {
-        if (!categoryId || !products) return [];
-        return (products as any[]).filter(
-            (product) => product.categoryId === categoryId || product.category?.id === categoryId
+        if (!categoryId) return [];
+        return products.filter(
+            (product) => product.categoryId === categoryId
         );
     }, [products, categoryId]);
 

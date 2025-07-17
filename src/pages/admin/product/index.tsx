@@ -20,6 +20,7 @@ const ProductManagementPage: React.FC = () => {
 
     // Modal handlers
     const openModal = (type: ModalType, product?: ProductResponse) => {
+        console.log('Opening modal:', type, product);
         setActiveModal(type);
         if (product) {
             setSelectedProduct(product);
@@ -58,9 +59,9 @@ const ProductManagementPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+        <div className="min-h-screen ">
             {/* Header */}
-            <div className="bg-gray-900/70 backdrop-blur-lg border-b border-gray-700">
+            <div className="backdrop-blur-lg border-b border-gray-700">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-6">
                         <div>
@@ -112,7 +113,7 @@ const ProductManagementPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <motion.div
                         whileHover={{ scale: 1.02 }}
-                        className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg"
+                        className=" backdrop-blur-lg border border-gray-700 rounded-lg"
                     >
                         <div className="p-5">
                             <div className="flex items-center">

@@ -156,7 +156,7 @@ export const DisplayCom = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 rounded-lg shadow-lg">
+        <div className="min-h-screen p-6 rounded-lg">
             <div className="max-w-7xl mx-auto">
                 {/* Header Section */}
                 <motion.div
@@ -242,7 +242,7 @@ export const DisplayCom = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -424,11 +424,10 @@ export const DisplayCom = () => {
                                                     <button
                                                         key={page}
                                                         onClick={() => handlePageChange(page)}
-                                                        className={`px-3 py-1 rounded-lg transition-colors ${
-                                                            currentPage === page
+                                                        className={`px-3 py-1 rounded-lg transition-colors ${currentPage === page
                                                                 ? 'bg-amber-500 text-white'
                                                                 : 'bg-gray-800 border border-gray-700 text-white hover:border-amber-500'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {page}
                                                     </button>
