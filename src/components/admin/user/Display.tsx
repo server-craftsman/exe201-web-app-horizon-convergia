@@ -11,6 +11,7 @@ import { DeleteUser } from './Delete';
 import { Detail } from './Detail';
 import { UpdateUserModal } from './Update';
 import SearchCommon from '../../common/SearchCommon.com';
+import { memo } from 'react';
 
 export const DisplayCom = () => {
     const [users, setUsers] = useState<UserSearchItem[]>([]);
@@ -23,6 +24,8 @@ export const DisplayCom = () => {
     const [openAddUser, setOpenAddUser] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [openUpdateUserId, setOpenUpdateUserId] = useState<string | null>(null);
+    const [roleFilter, setRoleFilter] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('');
 
     const { searchUsers } = useUser();
     const searchUsersRef = useRef(searchUsers);
@@ -46,6 +49,12 @@ export const DisplayCom = () => {
                 if (searchTerm.trim() !== '') {
                     params.keyword = searchTerm.trim();
                 }
+                if (roleFilter !== '') {
+                    params.role = Number(roleFilter);
+                }
+                if (statusFilter !== '') {
+                    params.status = Number(statusFilter);
+                }
                 const response = await searchUsersRef.current.mutateAsync(params);
                 if (!isMounted) return;
                 if (response.data.isSuccess) {
@@ -65,7 +74,7 @@ export const DisplayCom = () => {
         };
         fetchData();
         return () => { isMounted = false; };
-    }, [searchTerm, currentPage, pageSize]);
+    }, [searchTerm, currentPage, pageSize, roleFilter, statusFilter]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -152,6 +161,9 @@ export const DisplayCom = () => {
         return <Detail userId={selectedUserId} onBack={() => setSelectedUserId(null)} />;
     }
 
+    // Memo hóa AddUserModal để tránh re-render không cần thiết
+    const MemoAddUserModal = memo(AddUserModal);
+
     return (
         <div className="min-h-screen p-6 rounded-lg">
             <div className="max-w-7xl mx-auto">
@@ -182,13 +194,15 @@ export const DisplayCom = () => {
                     </div>
                 </motion.div>
 
-                {/* Add User Modal */}
-                <AddUserModal
+                {/* Add User Modal - render ngoài motion.div để tránh re-render, lazy mount */}
+                {openAddUser && (
+                  <MemoAddUserModal
                     open={openAddUser}
                     onCancel={() => setOpenAddUser(false)}
                     onSuccess={() => setOpenAddUser(false)}
                     onAddUser={handleAddUser}
-                />
+                  />
+                )}
 
                 {/* Search and Stats */}
                 <motion.div
@@ -198,59 +212,73 @@ export const DisplayCom = () => {
                     className="mb-6"
                 >
                     {/* Search Row */}
-                    <div className="mb-6">
+                    <div className="mb-6 flex flex-col md:flex-row md:items-center md:gap-4 gap-2">
                         <SearchCommon
                             value={searchInput}
                             onChange={e => setSearchInput(e.target.value)}
                             onSearch={() => { setSearchTerm(searchInput); setCurrentPage(1); }}
                             placeholder="Tìm kiếm người dùng theo tên, email..."
                         />
+                        {/* Filter by Role */}
+                        <select
+                            value={roleFilter}
+                            onChange={e => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500"
+                        >
+                            <option value="">Tất cả vai trò</option>
+                            <option value="0">Admin</option>
+                            <option value="1">Seller</option>
+                            <option value="2">Shipper</option>
+                            <option value="3">Buyer</option>
+                        </select>
+                        {/* Filter by Status */}
+                        <select
+                            value={statusFilter}
+                            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500"
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="0">Active</option>
+                            <option value="1">Inactive</option>
+                            <option value="2">Blocked</option>
+                        </select>
                     </div>
                     {/* Stats Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Tổng người dùng */}
-                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-400 text-sm">Tổng người dùng</p>
-                                    <p className="text-2xl font-bold text-white">{totalRecords}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-400 text-sm">Đang hoạt động</p>
-                                    <p className="text-2xl font-bold text-white">{activeCount}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Đã bị block */}
-                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-400 text-sm">Đã bị block</p>
-                                    <p className="text-2xl font-bold text-white">{blockedCount}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0m12.728 0L5.636 18.364" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div className="w-full flex flex-col md:flex-row gap-2 mb-6">
+  <div className="flex-1 min-w-0 bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-3 flex items-center justify-between">
+    <div>
+      <p className="text-gray-400 text-xs">Tổng người dùng</p>
+      <p className="text-2xl font-extrabold text-white">{totalRecords}</p>
+    </div>
+    <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+      </svg>
+    </div>
+  </div>
+  <div className="flex-1 min-w-0 bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-3 flex items-center justify-between">
+    <div>
+      <p className="text-gray-400 text-xs">Đang hoạt động</p>
+      <p className="text-2xl font-extrabold text-white">{activeCount}</p>
+    </div>
+    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+  </div>
+  <div className="flex-1 min-w-0 bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-3 flex items-center justify-between">
+    <div>
+      <p className="text-gray-400 text-xs">Đã bị block</p>
+      <p className="text-2xl font-extrabold text-white">{blockedCount}</p>
+    </div>
+    <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
+      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0m12.728 0L5.636 18.364" />
+      </svg>
+    </div>
+  </div>
+</div>
                 </motion.div>
 
                 {/* Users Table */}
@@ -353,7 +381,7 @@ export const DisplayCom = () => {
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                             </svg>
                                                         </button>
-                                                        <button
+                                                        {/* <button
                                                             className="p-2 text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all duration-200"
                                                             title="Chỉnh sửa"
                                                             onClick={() => setOpenUpdateUserId(user.id)}
@@ -361,7 +389,7 @@ export const DisplayCom = () => {
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                             </svg>
-                                                        </button>
+                                                        </button> */}
                                                         <DeleteUser userId={user.id} onBlock={handleBlockUser} disabled={user.status === 2} />
                                                     </div>
                                                 </td>
