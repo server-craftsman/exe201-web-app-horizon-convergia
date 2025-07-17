@@ -96,7 +96,7 @@ const LoginPage: React.FC = () => {
           className="bg-white/10 backdrop-blur-lg py-8 px-4 sm:px-10 rounded-xl shadow-2xl border border-white/10"
         >
           <div className="mb-6 text-center">
-            <h2 className="text-2xl font-extrabold text-white">Đăng Nhập</h2>
+            <h2 className="text-2xl font-bold text-white">Đăng Nhập</h2>
             <p className="mt-2 text-sm text-gray-300">
               Hoặc{' '}
               <Link to={ROUTER_URL.AUTH.SIGN_UP} className="font-medium text-amber-400 hover:text-amber-300 transition-colors">
@@ -181,7 +181,7 @@ const LoginPage: React.FC = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-gray-900 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors duration-300"
               >
                 Đăng nhập
               </motion.button>

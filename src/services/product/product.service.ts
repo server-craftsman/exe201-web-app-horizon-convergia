@@ -23,9 +23,9 @@ export const ProductService = {
     },
 
     // Create product by admin
-    createProductByAdmin(params: CreateProduct) {
+    createProductByAdmin(adminId: string, params: CreateProduct) {
         return BaseService.post<ApiResponse<ProductResponse>>({
-            url: API_PATH.PRODUCT.CREATE_PRODUCT,
+            url: API_PATH.PRODUCT.CREATE_PRODUCT(adminId),
             payload: params
         });
     },
@@ -36,7 +36,9 @@ export const ProductService = {
         if (params.categoryId) queryParams.append('categoryId', params.categoryId);
         if (params.sortField) queryParams.append('sortField', params.sortField);
         if (params.ascending !== undefined) queryParams.append('ascending', params.ascending.toString());
-        return BaseService.get<ApiResponse<ProductResponse[]>>({
+        if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
+        if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+        return BaseService.get<ProductResponse[]>({
             url: `${API_PATH.PRODUCT.GET_ALL_PRODUCTS}?${queryParams.toString()}`,
         });
     },

@@ -13,6 +13,7 @@ export const DisplayCom = () => {
     const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
 
     const {
         getCategorys,
@@ -62,7 +63,7 @@ export const DisplayCom = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 rounded-lg shadow-lg">
+        <div className="min-h-screen p-6 rounded-lg">
             <div className="max-w-7xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
@@ -78,15 +79,44 @@ export const DisplayCom = () => {
                                 Quản lý các danh mục sản phẩm của hệ thống
                             </p>
                         </div>
-                        <button
-                            onClick={() => setIsCreateModalVisible(true)}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Tạo Danh Mục
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {/* Nút chuyển đổi Table/Grid */}
+                            <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
+                                <button
+                                    onClick={() => setViewMode('table')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'table'
+                                        ? 'bg-amber-500 text-white shadow-lg'
+                                        : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        }`}
+                                    title="Xem dạng bảng"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid'
+                                        ? 'bg-amber-500 text-white shadow-lg'
+                                        : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        }`}
+                                    title="Xem dạng lưới"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => setIsCreateModalVisible(true)}
+                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Tạo Danh Mục
+                            </button>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -115,30 +145,34 @@ export const DisplayCom = () => {
                         </div>
 
                         {/* Stats Cards */}
-                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-400 text-sm">Tổng danh mục</p>
-                                    <p className="text-2xl font-bold text-white">{categories.length}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                    </svg>
+                        <div className="flex gap-1">
+                            {/* Tổng danh mục */}
+                            <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg flex items-center gap-1 flex-1 min-w-0">
+                                <div className="flex flex-col justify-between flex-2 min-w-0">
+                                    <p className="text-gray-400 text-sm whitespace-nowrap mb-2">Tổng danh mục</p>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-2xl font-bold text-white">{categories.length}</span>
+                                        <span className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                            </svg>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-400 text-sm">Kết quả tìm kiếm</p>
-                                    <p className="text-2xl font-bold text-white">{filteredCategories.length}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
+                            {/* Kết quả tìm kiếm */}
+                            <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-lg p-4 flex items-center gap-1 flex-1 min-w-0">
+                                <div className="flex flex-col justify-between flex-1 min-w-0">
+                                    <p className="text-gray-400 text-sm whitespace-nowrap mb-2">Kết quả tìm kiếm</p>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-2xl font-bold text-white">{filteredCategories.length}</span>
+                                        <span className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -173,7 +207,78 @@ export const DisplayCom = () => {
                                 </button>
                             )}
                         </div>
+                    ) : viewMode === 'table' ? (
+                        // Table View
+                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-800 border-b border-gray-700">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ảnh</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tên danh mục</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ngày tạo</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-700">
+                                        {filteredCategories.map((category) => (
+                                            <tr key={category.id} className="hover:bg-gray-700/30 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    {category.imageUrl ? (
+                                                        <img
+                                                            src={category.imageUrl}
+                                                            alt={category.name}
+                                                            className="w-12 h-12 object-cover rounded-lg border border-gray-700"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+                                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-white font-semibold">{category.name}</td>
+                                                <td className="px-4 py-3 text-gray-400">{helpers.formatDate(category.createdAt)}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
+                                                        Hoạt động
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedCategory(category);
+                                                                setIsUpdateModalVisible(true);
+                                                            }}
+                                                            className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all duration-200"
+                                                            title="Chỉnh sửa"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(category.id, category.name)}
+                                                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                                                            title="Xóa"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     ) : (
+                        // Grid view giữ nguyên như cũ
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {filteredCategories.map((category, index) => (
                                 <motion.div

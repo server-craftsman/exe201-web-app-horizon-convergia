@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ProductService } from '../../../services/product/product.service';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
-import { useQuery } from '@tanstack/react-query';
+import { ProductStatus } from '../../../app/enums/productStatus.enum';
 import { useCategory } from '@hooks/modules/useCategory';
+import { useProduct } from '@hooks/modules/useProduct';
 // @ts-ignore
 import type { ICategory } from '@types/category/Category.res.type';
 
@@ -24,6 +24,9 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
     const [statusFilter, setStatusFilter] = useState<number | 'all'>('all');
     const [categoryFilter, setCategoryFilter] = useState<string | 'all'>('all');
     const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
     // Categories for filter dropdown
     const [categories, setCategories] = useState<ICategory[]>([]);
@@ -31,6 +34,17 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
     const {
         getCategorys,
     } = useCategory();
+
+    const { useProducts } = useProduct();
+
+    // Handle edit button click - use existing product data
+    const handleEditClick = (product: ProductResponse) => {
+        console.log('Edit button clicked for product:', product);
+        console.log('Product ID:', product.id);
+        console.log('Product brand:', product.brand);
+        console.log('Product model:', product.model);
+        onEdit(product);
+    };
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -46,25 +60,31 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
         fetchCategories();
     }, []);
 
-    // Fetch products using React Query
+    // Fetch products using the custom hook
     const {
-        data: productsResponse,
+        data: products,
         isLoading,
         error,
         refetch
-    } = useQuery({
-        queryKey: ['admin-products', refreshTrigger],
-        queryFn: () => ProductService.getProducts({
-            categoryId: categoryFilter,
-            sortField: 'createdAt',
-            ascending: false
-        })
+    } = useProducts({
+        categoryId: categoryFilter === 'all' ? '' : categoryFilter,
+        sortField: 'createdAt',
+        ascending: false,
+        pageNumber,
+        pageSize
     });
 
-    const products: ProductResponse[] = Array.isArray(productsResponse?.data) ? productsResponse.data : [];
+    // Refetch when refreshTrigger changes
+    useEffect(() => {
+        if (refreshTrigger) {
+            refetch();
+        }
+    }, [refreshTrigger, refetch]);
+
+    const productsList: ProductResponse[] = products || [];
 
     // Filter products based on search and filters
-    const filteredProducts = products.filter((product: ProductResponse) => {
+    const filteredProducts = productsList.filter((product: ProductResponse) => {
         const matchesSearch =
             product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,22 +121,13 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
         onBulkSelect?.(selectedProducts);
     };
 
-    const getStatusBadge = (status: number) => {
-        const statusConfig = {
-            0: { text: 'Nháp', color: 'bg-gray-500' },
-            1: { text: 'Chờ duyệt', color: 'bg-yellow-500' },
-            2: { text: 'Chờ thanh toán', color: 'bg-orange-500' },
-            3: { text: 'Đã thanh toán', color: 'bg-green-500' },
-            4: { text: 'Đã duyệt', color: 'bg-blue-500' },
-            5: { text: 'Từ chối', color: 'bg-red-500' }
-        };
-
-        const config = statusConfig[status as keyof typeof statusConfig] || statusConfig[0];
-        return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${config.color}`}>
-                {config.text}
-            </span>
-        );
+    const getStatusText = (status: ProductStatus) => {
+        switch (status) {
+            case ProductStatus.Active: return 'Đang hoạt động';
+            case ProductStatus.OutOfStock: return 'Hết hàng';
+            case ProductStatus.Suspended: return 'Tạm ngưng';
+            default: return 'Không xác định';
+        }
     };
 
     const getCategoryName = (categoryId: string) => {
@@ -160,8 +171,17 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
     const isAllSelected = filteredProducts.length > 0 && selectedProductIds.length === filteredProducts.length;
     const isIndeterminate = selectedProductIds.length > 0 && selectedProductIds.length < filteredProducts.length;
 
+    // Helper to wrap html with enforced white color
+    const renderHtmlWhite = (html: string) => (
+        <span
+            style={{ color: '#fff' }}
+            // eslint-disable-next-line react/no-danger
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 rounded-lg shadow-lg">
+        <div className="min-h-screen p-6 rounded-lg">
             <div className="max-w-7xl mx-auto">
 
                 {/* -------------------------------  HEADER  ------------------------------ */}
@@ -188,13 +208,41 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
 
                         <button
                             onClick={() => refetch()}
-                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                            className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-md font-semibold shadow hover:shadow-md transition-all duration-200 text-sm"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h4m2 0h10a1 1 0 011 1v16a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582M20 20v-5h-.581M5 9A7 7 0 0119 15M19 15a7 7 0 01-14 0" />
                             </svg>
                             Làm mới
                         </button>
+
+                        {/* View Mode Toggle */}
+                        <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1">
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'table'
+                                    ? 'bg-amber-500 text-white shadow-lg'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                    }`}
+                                title="Xem dạng bảng"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid'
+                                    ? 'bg-amber-500 text-white shadow-lg'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                    }`}
+                                title="Xem dạng lưới"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -256,16 +304,13 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                             <label className="block text-sm font-medium text-gray-400 mb-2">Trạng thái</label>
                             <select
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                                onChange={(e) => setStatusFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                                 className="w-full px-3 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                             >
                                 <option value="all">Tất cả trạng thái</option>
-                                <option value={0}>Nháp</option>
-                                <option value={1}>Chờ duyệt</option>
-                                <option value={2}>Chờ thanh toán</option>
-                                <option value={3}>Đã thanh toán</option>
-                                <option value={4}>Đã duyệt</option>
-                                <option value={5}>Từ chối</option>
+                                <option value={ProductStatus.Active}>Đang hoạt động</option>
+                                <option value={ProductStatus.OutOfStock}>Hết hàng</option>
+                                <option value={ProductStatus.Suspended}>Tạm ngưng</option>
                             </select>
                         </div>
 
@@ -286,7 +331,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                     </div>
                 </motion.div>
 
-                {/* ---------------------------  GRID  --------------------------- */}
+                {/* ---------------------------  CONTENT VIEW  --------------------------- */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -303,7 +348,159 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                             <h3 className="text-xl font-semibold text-white mb-2">Không có sản phẩm</h3>
                             <p className="text-gray-400">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
                         </div>
+                    ) : viewMode === 'table' ? (
+                        /* Table View */
+                        <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-800/50 backdrop-blur-lg border border-gray-700/50">
+                                        <tr>
+                                            {onBulkSelect && (
+                                                <th className="px-4 py-3 text-left">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isAllSelected}
+                                                        ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
+                                                        onChange={(e) => handleSelectAll(e.target.checked)}
+                                                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-700 rounded bg-gray-800"
+                                                    />
+                                                </th>
+                                            )}
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Hình ảnh
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Thông tin
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Giá
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Trạng thái
+                                            </th>
+                                            {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Danh mục
+                                            </th> */}
+                                            {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Ngày tạo
+                                            </th> */}
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                                Thao tác
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-700">
+                                        {filteredProducts.map((product, index) => (
+                                            <motion.tr
+                                                key={product.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className="hover:bg-gray-700/30 transition-colors"
+                                            >
+                                                {onBulkSelect && (
+                                                    <td className="px-4 py-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedProductIds.includes(product.id)}
+                                                            onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                                                            className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-700 rounded bg-gray-800"
+                                                        />
+                                                    </td>
+                                                )}
+                                                <td className="px-4 py-3">
+                                                    {product.imageUrls && product.imageUrls.length > 0 ? (
+                                                        <img
+                                                            src={product.imageUrls[0]}
+                                                            alt="Ảnh đại diện"
+                                                            className="w-14 h-14 object-cover rounded border-2 border-amber-500 shadow cursor-pointer hover:scale-110 transition-transform"
+                                                            title="Xem ảnh lớn"
+                                                            onClick={() => window.open(product.imageUrls[0], '_blank')}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-14 h-14 bg-gray-700 rounded border border-gray-600 flex items-center justify-center">
+                                                            <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M9 14h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-white mb-1">
+                                                            {product.brand} {product.model}
+                                                        </h4>
+                                                        <p className="text-xs text-gray-400 mb-1">
+                                                            Năm: {product.year} | Tình trạng: {product.condition}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">
+                                                            Số lượng: {product.quantity} | Địa điểm: {product.location}
+                                                        </p>
+                                                        <div
+                                                            className="text-xs text-gray-300 mt-1 line-clamp-2 max-w-xs"
+                                                            style={{ color: '#fff' }}
+                                                        >
+                                                            {renderHtmlWhite(product.description)}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className="text-lg font-bold text-amber-500">
+                                                        {formatPrice(product.price)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-row items-center gap-1">
+                                                        <span className="px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-600 whitespace-nowrap">
+                                                            {getStatusText(product.status)}
+                                                        </span>
+                                                        {/* {product.isVerified && (
+                                                            <span className="px-2 py-0.5 rounded-full text-xs font-medium text-white bg-green-600 whitespace-nowrap">
+                                                                Đã xác minh
+                                                            </span>
+                                                        )} */}
+                                                    </div>
+                                                </td>
+                                                {/* <td className="px-4 py-3">
+                                                    <span className="text-sm text-gray-300">
+                                                        {getCategoryName(product.categoryId)}
+                                                    </span>
+                                                </td> */}
+                                                {/* <td className="px-4 py-3">
+                                                    <span className="text-sm text-gray-400">
+                                                        {formatDate(product.createdAt)}
+                                                    </span>
+                                                </td> */}
+                                                <td className="px-4 py-3">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleEditClick(product)}
+                                                            className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                                                            title="Chỉnh sửa"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M12 7.5l6.364 6.364m-2.828-8.485a2 2 0 112.828 2.828L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => onDelete(product)}
+                                                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                            title="Xoá"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </motion.tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     ) : (
+                        /* Grid View (existing code) */
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {filteredProducts.map((product, index) => (
                                 <motion.div
@@ -328,7 +525,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                                     {/* edit / delete */}
                                     <div className="absolute top-3 right-3 flex gap-2 z-10">
                                         <button
-                                            onClick={() => onEdit(product)}
+                                            onClick={() => handleEditClick(product)}
                                             className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
                                             title="Chỉnh sửa"
                                         >
@@ -347,31 +544,37 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                                         </button>
                                     </div>
 
-                                    {/* image */}
-                                    <div className="h-40 bg-gray-700 rounded-lg overflow-hidden mb-4">
-                                        {product.imageUrls?.[0] ? (
-                                            <img
-                                                src={product.imageUrls[0]}
-                                                alt={`${product.brand} ${product.model}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M9 14h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                        )}
-                                    </div>
+                                    {/* images */}
+                                    {product.imageUrls && product.imageUrls.length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-2 mb-4">
+                                            {product.imageUrls.map((url, idx) => (
+                                                <img
+                                                    key={idx}
+                                                    src={url}
+                                                    alt={`img-${idx}`}
+                                                    className="w-full h-32 object-cover rounded-lg border border-gray-700 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                                    onClick={() => window.open(url, '_blank')}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="h-40 bg-gray-700 rounded-lg flex items-center justify-center mb-4">
+                                            <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M9 14h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                    )}
 
                                     {/* status / verified */}
-                                    <div className="flex gap-2 mb-3">
-                                        {getStatusBadge(product.status)}
-                                        {product.isVerified && (
-                                            <span className="px-2 py-0.5 rounded-full text-xs font-medium text-white bg-green-600">
+                                    <div className="absolute top-3 right-3 flex gap-2 z-10">
+                                        <span className="px-2 py-1 rounded-full text-xs font-medium text-white bg-gray-600">
+                                            {getStatusText(product.status)}
+                                        </span>
+                                        {/* {product.isVerified && (
+                                            <span className="px-2 py-0.5 rounded-full text-xs font-medium text-white bg-green-600 ml-1">
                                                 Đã xác minh
                                             </span>
-                                        )}
+                                        )} */}
                                     </div>
 
                                     {/* info */}
@@ -391,14 +594,51 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                                         <p><span className="font-medium">Ngày tạo:</span> {formatDate(product.createdAt)}</p>
                                     </div>
 
-                                    <p className="text-sm text-gray-300 line-clamp-2">
-                                        {product.description}
-                                    </p>
+                                    <div
+                                        className="text-sm text-gray-300 line-clamp-2"
+                                        style={{ color: '#fff' }}
+                                    >
+                                        {renderHtmlWhite(product.description)}
+                                    </div>
                                 </motion.div>
                             ))}
                         </div>
                     )}
                 </motion.div>
+
+                {/* Pagination controls (add after the grid) */}
+                <div className="flex justify-center mt-8 gap-2">
+                    <button
+                        onClick={() => setPageNumber(1)}
+                        disabled={pageNumber === 1}
+                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                    >«</button>
+                    <button
+                        onClick={() => setPageNumber(pageNumber - 1)}
+                        disabled={pageNumber === 1}
+                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                    >‹</button>
+                    <span className="px-4 py-1 bg-gray-800 text-white rounded">Trang {pageNumber}</span>
+                    <button
+                        onClick={() => setPageNumber(pageNumber + 1)}
+                        disabled={productsList.length < pageSize}
+                        className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                    >›</button>
+                </div>
+
+                {/* Optional: page size selector */}
+                <div className="flex justify-center mt-2">
+                    <label className="text-gray-400 mr-2">Số sản phẩm/trang:</label>
+                    <select
+                        value={pageSize}
+                        onChange={e => { setPageSize(Number(e.target.value)); setPageNumber(1); }}
+                        className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1"
+                    >
+                        {[5, 10, 20, 50].map(size => (
+                            <option key={size} value={size}>{size}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
         </div>
     );

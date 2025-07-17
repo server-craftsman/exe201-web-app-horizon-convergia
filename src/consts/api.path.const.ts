@@ -22,7 +22,7 @@ export const API_PATH = {
         UPDATE_USER: (id: string) => `/Users/update/${id}`,
     },
     PRODUCT: {
-        CREATE_PRODUCT: "/Products",
+        CREATE_PRODUCT: (adminId: string) => `/Products/admin/${adminId}`,
         CREATE_PRODUCT_BY_SELLER: (sellerId: string) => `/Products/${sellerId}`,
         // GET_PRODUCTS_BY_SELLER: (sellerId: string) => `/Products/seller/${sellerId}`,
         VERIFY_PRODUCT_BY_ADMIN: (id: string) => `/Products/verify/${id}`,
