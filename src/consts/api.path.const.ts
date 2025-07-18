@@ -37,6 +37,7 @@ export const API_PATH = {
     CATEGORY: {
         CREATE: "/Categories/",
         GET_ALL: "/Categories",
+        GET_SUB_CATEGORIES: (parentId: string) => `/Categories/sub-categories/${parentId}`,
         GET_BY_ID: (id: string) => `/Categories/${id}`,
         UPDATE: (id: string) => `/Categories/${id}`,
         DELETE: (id: string) => `/Categories/${id}`

@@ -11,12 +11,14 @@ interface UpdateComProps {
     onCancel: () => void;
     onSuccess: () => void;
     updateCategory: any;
+    categories: ICategory[];
 }
 
-export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updateCategory }: UpdateComProps) => {
+export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updateCategory, categories }: UpdateComProps) => {
     const [formData, setFormData] = useState({
         name: '',
-        imageUrl: ''
+        imageUrl: '',
+        parentCategoryId: null as string | null
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +30,11 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
     // Load category data when modal opens
     useEffect(() => {
         if (open && category) {
-            setFormData({ name: category.name || '', imageUrl: (category as any).imageUrl || '' });
+            setFormData({
+                name: category.name || '',
+                imageUrl: (category as any).imageUrl || '',
+                parentCategoryId: category.parentCategoryId || null
+            });
             setErrors({});
             if (nameInputRef.current) {
                 nameInputRef.current.focus();
@@ -47,10 +53,6 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
             newErrors.name = 'Tên danh mục không được vượt quá 50 ký tự';
         }
 
-        if (!formData.imageUrl) {
-            newErrors.imageUrl = 'Vui lòng tải lên hình ảnh danh mục';
-        }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     }, [formData]);
@@ -60,6 +62,14 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
         setFormData(prev => ({ ...prev, [name]: value }));
 
         // Clear error when user starts typing
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    }, [errors]);
+
+    const handleSelectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value || null }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -113,7 +123,7 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
         if (!validateForm()) return;
 
         // Check if there are any changes
-        if (category && formData.name.trim() === category.name && formData.imageUrl === (category as any).imageUrl) {
+        if (category && formData.name.trim() === category.name && formData.imageUrl === (category as any).imageUrl && formData.parentCategoryId === category.parentCategoryId) {
             setErrors({ submit: 'Không có thay đổi nào để cập nhật' });
             return;
         }
@@ -124,10 +134,11 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
                 id: recordId,
                 params: {
                     name: formData.name.trim(),
-                    imageUrl: formData.imageUrl
+                    imageUrl: formData.imageUrl,
+                    parentCategoryId: formData.parentCategoryId
                 }
             });
-            setFormData({ name: '', imageUrl: '' });
+            setFormData({ name: '', imageUrl: '', parentCategoryId: null });
             setErrors({});
             onSuccess();
         } catch (error: any) {
@@ -142,7 +153,7 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
     }, [formData, validateForm, updateCategory, recordId, category, onSuccess]);
 
     const handleCancel = useCallback(() => {
-        setFormData({ name: '', imageUrl: '' });
+        setFormData({ name: '', imageUrl: '', parentCategoryId: null });
         setErrors({});
         setIsSubmitting(false);
         onCancel();
@@ -154,7 +165,7 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
         }
     }, [handleCancel]);
 
-    const hasChanges = category && (formData.name.trim() !== category.name || formData.imageUrl !== (category as any).imageUrl);
+    const hasChanges = category && (formData.name.trim() !== category.name || formData.imageUrl !== (category as any).imageUrl || formData.parentCategoryId !== category.parentCategoryId);
 
     return (
         <AnimatePresence>
@@ -298,9 +309,36 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
                                     )}
                                 </div>
 
+                                {/* Parent Category Selector */}
+                                <div className="space-y-2">
+                                    <label htmlFor="parentCategoryId" className="block text-sm font-medium text-gray-300">
+                                        Danh mục cha
+                                    </label>
+                                    <select
+                                        id="parentCategoryId"
+                                        name="parentCategoryId"
+                                        value={formData.parentCategoryId || ''}
+                                        onChange={handleSelectChange}
+                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
+                                        disabled={isSubmitting}
+                                    >
+                                        <option value="">-- Chọn danh mục cha (để trống nếu là gốc) --</option>
+                                        {categories.filter(c => c.id !== category?.id).map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {category && category.parentCategoryId && (
+                                        <p className="text-gray-500 text-xs">
+                                            Cha hiện tại: <span className="text-gray-400">{categories.find(c => c.id === category.parentCategoryId)?.name || 'Không rõ'}</span>
+                                        </p>
+                                    )}
+                                </div>
+
                                 {/* Image Upload */}
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-300">Hình Ảnh Danh Mục</label>
+                                    <label className="block text-sm font-medium text-gray-300">Hình Ảnh Danh Mục <span className="text-gray-400 text-xs">(không bắt buộc)</span></label>
                                     <div
                                         ref={dropzoneRef}
                                         className={`relative group flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition-all duration-200 cursor-pointer bg-gray-800/80 hover:border-blue-500 ${formData.imageUrl ? 'py-4' : 'py-12'} ${uploadingImage ? 'opacity-70 pointer-events-none' : ''}`}

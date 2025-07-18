@@ -7,6 +7,7 @@ import { useProduct } from '@hooks/modules/useProduct';
 // @ts-ignore
 import type { ICategory } from '@types/category/Category.res.type';
 import SearchCommon from '../../common/SearchCommon.com';
+import { DisplayDetailComponent } from "./DisplayDetail.com";
 
 interface DisplayProductsAdminProps {
     onEdit: (product: ProductResponse) => void;
@@ -28,6 +29,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+    const [selectedProductIdForDetail, setSelectedProductIdForDetail] = useState<string | null>(null);
 
     // Categories for filter dropdown
     const [categories, setCategories] = useState<ICategory[]>([]);
@@ -433,7 +435,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div>
-                                                        <h4 className="text-sm font-semibold text-white mb-1">
+                                                        <h4 className="text-sm font-semibold text-white mb-1 hover:text-amber-400 cursor-pointer" onClick={() => setSelectedProductIdForDetail(product.id)}>
                                                             {product.brand} {product.model}
                                                         </h4>
                                                         <p className="text-xs text-gray-400 mb-1">
@@ -479,6 +481,16 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                                                 </td> */}
                                                 <td className="px-4 py-3">
                                                     <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => setSelectedProductIdForDetail(product.id)}
+                                                            className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
+                                                            title="Xem chi tiết"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                        </button>
                                                         <button
                                                             onClick={() => handleEditClick(product)}
                                                             className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
@@ -530,6 +542,16 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
 
                                     {/* edit / delete */}
                                     <div className="absolute top-3 right-3 flex gap-2 z-10">
+                                        <button
+                                            onClick={() => setSelectedProductIdForDetail(product.id)}
+                                            className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
+                                            title="Xem chi tiết"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
                                         <button
                                             onClick={() => handleEditClick(product)}
                                             className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
@@ -611,6 +633,12 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
                         </div>
                     )}
                 </motion.div>
+
+                <DisplayDetailComponent
+                    productId={selectedProductIdForDetail}
+                    onClose={() => setSelectedProductIdForDetail(null)}
+                    categories={categories}
+                />
 
                 {/* Pagination controls (add after the grid) */}
                 <div className="flex justify-center mt-8 gap-2">

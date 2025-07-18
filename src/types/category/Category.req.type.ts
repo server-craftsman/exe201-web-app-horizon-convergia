@@ -1,4 +1,5 @@
 export interface CreateCategory {
     name: string;
     imageUrl: string;
+    parentCategoryId: string | null;
 }
