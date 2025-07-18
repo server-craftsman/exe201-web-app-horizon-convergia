@@ -7,6 +7,7 @@ import { UpdateCom } from './Update.com.tsx';
 import { motion } from 'framer-motion';
 import { helpers } from "@utils/index.ts";
 import SearchCommon from '../../common/SearchCommon.com';
+import { DeleteCom } from "./Delete.com.tsx";
 
 // StatsCard component
 interface StatsCardProps {
@@ -35,6 +36,7 @@ const StatsCard = ({ label, value, icon, iconBg, iconColor, tooltip }: StatsCard
 export const DisplayCom = () => {
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<ICategory | null>(null);
     const [categories, setCategories] = useState<ICategory[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -83,24 +85,30 @@ export const DisplayCom = () => {
     const handleCreateSuccess = useCallback(() => {
         setIsCreateModalVisible(false);
         fetchCategories();
-    }, []);
+    }, [fetchCategories]);
 
     const handleUpdateSuccess = useCallback(() => {
         setIsUpdateModalVisible(false);
         setSelectedCategory(null);
         fetchCategories();
+    }, [fetchCategories]);
+
+    const handleDelete = useCallback((category: ICategory) => {
+        setSelectedCategory(category);
+        setIsDeleteModalVisible(true);
     }, []);
 
-    const handleDelete = useCallback(async (id: string, name: string) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa danh mục "${name}"?`)) {
-            try {
-                await deleteCategory.mutateAsync(id);
-                fetchCategories();
-            } catch (error) {
-                console.error('Delete error:', error);
-            }
-        }
-    }, [deleteCategory, fetchCategories]);
+    const handleDeleteSuccess = useCallback(() => {
+        setIsDeleteModalVisible(false);
+        setSelectedCategory(null);
+        fetchCategories();
+    }, [fetchCategories]);
+
+    const getParentCategoryName = (parentCategoryId: string | null) => {
+        if (!parentCategoryId) return 'Không có';
+        const parent = categories.find(c => c.id === parentCategoryId);
+        return parent ? parent.name : 'Không rõ';
+    };
 
     // Remove auto search: do not filter as user types
     // Only update categories when handleSearch is called
@@ -254,6 +262,7 @@ export const DisplayCom = () => {
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ảnh</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Tên danh mục</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Danh mục cha</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Ngày tạo</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Trạng thái</th>
                                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Thao tác</th>
@@ -278,6 +287,7 @@ export const DisplayCom = () => {
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-white font-semibold">{category.name}</td>
+                                                <td className="px-4 py-3 text-gray-300">{getParentCategoryName(category.parentCategoryId)}</td>
                                                 <td className="px-4 py-3 text-gray-400">{helpers.formatDate(category.createdAt)}</td>
                                                 <td className="px-4 py-3">
                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
@@ -299,7 +309,7 @@ export const DisplayCom = () => {
                                                             </svg>
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(category.id, category.name)}
+                                                            onClick={() => handleDelete(category)}
                                                             className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
                                                             title="Xóa"
                                                         >
@@ -354,7 +364,7 @@ export const DisplayCom = () => {
                                                 </svg>
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(category.id, category.name)}
+                                                onClick={() => handleDelete(category)}
                                                 className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
                                                 title="Xóa"
                                             >
@@ -368,6 +378,9 @@ export const DisplayCom = () => {
                                     <h3 className="text-lg font-semibold text-white mb-2 truncate" title={category.name}>
                                         {category.name}
                                     </h3>
+                                    <p className="text-gray-300 text-sm">
+                                        Cha: {getParentCategoryName(category.parentCategoryId)}
+                                    </p>
 
                                     <p className="text-gray-400 text-sm mb-4">
                                         Ngày tạo: {helpers.formatDate(category.createdAt)}
@@ -394,6 +407,7 @@ export const DisplayCom = () => {
                 onCancel={() => setIsCreateModalVisible(false)}
                 onSuccess={handleCreateSuccess}
                 createCategory={createCategory as any}
+                categories={categories}
             />
 
             {selectedCategory && (
@@ -407,6 +421,22 @@ export const DisplayCom = () => {
                     }}
                     onSuccess={handleUpdateSuccess}
                     updateCategory={updateCategory as any}
+                    categories={categories}
+                />
+            )}
+
+            {selectedCategory && (
+                <DeleteCom
+                    visible={isDeleteModalVisible}
+                    category={selectedCategory}
+                    categoryId={selectedCategory.id}
+                    onClose={() => {
+                        setIsDeleteModalVisible(false);
+                        setSelectedCategory(null);
+                    }}
+                    onSuccess={handleDeleteSuccess}
+                    deleteCategory={deleteCategory as any}
+                    parentCategoryName={getParentCategoryName(selectedCategory.parentCategoryId)}
                 />
             )}
         </div>

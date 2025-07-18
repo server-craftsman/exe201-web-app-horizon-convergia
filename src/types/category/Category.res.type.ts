@@ -3,6 +3,7 @@ export interface ICategory {
     name: string;
     imageUrl: string;
     description?: string;
+    parentCategoryId: string | null;
     createdAt: Date;
     updatedAt: Date;
     isDeleted?: boolean;

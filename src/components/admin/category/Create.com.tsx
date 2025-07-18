@@ -9,12 +9,14 @@ interface CreateComProps {
     onCancel: () => void;
     onSuccess: () => void;
     createCategory: any;
+    categories: ICategory[];
 }
 
-export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateComProps) => {
+export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categories }: CreateComProps) => {
     const [formData, setFormData] = useState({
         name: '',
-        imageUrl: ''
+        imageUrl: '',
+        parentCategoryId: null as string | null
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,9 +42,7 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
             newErrors.name = 'Tên danh mục không được vượt quá 50 ký tự';
         }
 
-        if (!formData.imageUrl) {
-            newErrors.imageUrl = 'Vui lòng tải lên hình ảnh danh mục';
-        }
+        // No imageUrl required validation (file upload is optional)
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -53,6 +53,14 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
         setFormData(prev => ({ ...prev, [name]: value }));
 
         // Clear error when user starts typing
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    }, [errors]);
+
+    const handleSelectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value || null }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -107,8 +115,12 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
 
         setIsSubmitting(true);
         try {
-            await createCategory.mutateAsync({ name: formData.name.trim(), imageUrl: formData.imageUrl });
-            setFormData({ name: '', imageUrl: '' });
+            await createCategory.mutateAsync({
+                name: formData.name.trim(),
+                imageUrl: formData.imageUrl,
+                parentCategoryId: formData.parentCategoryId
+            });
+            setFormData({ name: '', imageUrl: '', parentCategoryId: null });
             setErrors({});
             onSuccess();
         } catch (error: any) {
@@ -123,7 +135,7 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
     }, [formData, validateForm, createCategory, onSuccess]);
 
     const handleCancel = useCallback(() => {
-        setFormData({ name: '', imageUrl: '' });
+        setFormData({ name: '', imageUrl: '', parentCategoryId: null });
         setErrors({});
         setIsSubmitting(false);
         onCancel();
@@ -247,9 +259,33 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory }: CreateC
                                     )}
                                 </div>
 
+                                {/* Parent Category Selector */}
+                                <div className="space-y-2">
+                                    <label htmlFor="parentCategoryId" className="block text-sm font-medium text-gray-300">
+                                        Danh mục cha
+                                    </label>
+                                    <select
+                                        id="parentCategoryId"
+                                        name="parentCategoryId"
+                                        value={formData.parentCategoryId || ''}
+                                        onChange={handleSelectChange}
+                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-amber-500 focus:ring-amber-500/20 transition-all duration-200"
+                                        disabled={isSubmitting}
+                                    >
+                                        <option value="">-- Chọn danh mục cha (để trống nếu là gốc) --</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 {/* Image Upload */}
                                 <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-300">Hình Ảnh Danh Mục</label>
+                                    <label className="block text-sm font-medium text-gray-300">
+                                        Hình Ảnh Danh Mục <span className="text-gray-400 text-xs">(không bắt buộc)</span>
+                                    </label>
                                     <div
                                         ref={dropzoneRef}
                                         className={`relative group flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 transition-all duration-200 cursor-pointer bg-gray-800/80 hover:border-amber-400 ${formData.imageUrl ? 'py-4' : 'py-12'} ${uploadingImage ? 'opacity-70 pointer-events-none' : ''}`}

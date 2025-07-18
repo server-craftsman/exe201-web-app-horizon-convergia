@@ -14,6 +14,12 @@ export const CategoryService = {
         });
     },
 
+    getSubCategories(parentId: string) {
+        return BaseService.get<ApiResponse<CategoryResponse[]>>({
+            url: API_PATH.CATEGORY.GET_SUB_CATEGORIES(parentId)
+        });
+    },
+
     getCategories(name?: string) {
         let url = API_PATH.CATEGORY.GET_ALL;
         if (name) {

@@ -10,9 +10,10 @@ interface DeleteComProps {
     onClose: () => void;
     onSuccess: () => void;
     deleteCategory: any;
+    parentCategoryName: string;
 }
 
-export const DeleteCom = ({ visible, category, categoryId, onClose, onSuccess, deleteCategory }: DeleteComProps) => {
+export const DeleteCom = ({ visible, category, categoryId, onClose, onSuccess, deleteCategory, parentCategoryName }: DeleteComProps) => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState<string>('');
 
@@ -136,6 +137,9 @@ export const DeleteCom = ({ visible, category, categoryId, onClose, onSuccess, d
                                             <div className="flex-1">
                                                 <h4 className="text-white font-medium">{category.name}</h4>
                                                 <p className="text-gray-400 text-sm">ID: {category.id.slice(0, 8)}...</p>
+                                                <p className="text-gray-400 text-sm">
+                                                    Danh mục cha: <span className="text-gray-300">{parentCategoryName}</span>
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
