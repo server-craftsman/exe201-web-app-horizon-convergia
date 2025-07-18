@@ -1,70 +1,68 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-
-// Dữ liệu mẫu cho xe máy nổi bật
-const featuredMotorcycles = [
-  {
-    id: 1,
-    name: 'Honda CBR1000RR-R Fireblade',
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '799,000,000',
-    specs: {
-      engine: '1000cc',
-      power: '214 HP',
-      speed: '299 km/h',
-      weight: '201 kg'
-    },
-    color: 'from-red-500 to-red-700'
-  },
-  {
-    id: 2,
-    name: 'Ducati Panigale V4',
-    image: 'https://images.unsplash.com/photo-1558981852-426c6c22a060?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '950,000,000',
-    specs: {
-      engine: '1103cc',
-      power: '221 HP',
-      speed: '305 km/h',
-      weight: '195 kg'
-    },
-    color: 'from-red-600 to-red-800'
-  },
-  {
-    id: 3,
-    name: 'Kawasaki Ninja ZX-10R',
-    image: 'https://images.unsplash.com/photo-1622185135505-2d795003994a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '729,000,000',
-    specs: {
-      engine: '998cc',
-      power: '200 HP',
-      speed: '300 km/h',
-      weight: '207 kg'
-    },
-    color: 'from-green-500 to-green-700'
-  },
-  {
-    id: 4,
-    name: 'BMW S1000RR',
-    image: 'https://images.unsplash.com/photo-1547549082-6bc09f2049ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '859,000,000',
-    specs: {
-      engine: '999cc',
-      power: '205 HP',
-      speed: '302 km/h',
-      weight: '197 kg'
-    },
-    color: 'from-blue-500 to-blue-700'
-  }
-];
+import { useProduct } from '@hooks/modules/useProduct';
+import { Link } from 'react-router-dom';
+import { ROUTER_URL } from '@consts/router.path.const';
 
 const FeaturedMotorcycles: React.FC = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  
+  const { useProducts } = useProduct();
+
+  // Fetch featured products (verified and status 0)
+  const { data: products = [], isLoading } = useProducts({
+    sortField: 'createdAt',
+    ascending: false,
+    pageNumber: 1,
+    pageSize: 4 // Only show 4 featured products
+  });
+
+  // Filter verified products for featured display
+  const featuredProducts = products.filter(product =>
+    product.isVerified && (product.status === 0 || product.status === 3 || product.status === 4)
+  ).slice(0, 4);
+
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  // Auto-rotate featured products
+  React.useEffect(() => {
+    if (featuredProducts.length > 0) {
+      const interval = setInterval(() => {
+        setActiveIndex(prev => (prev + 1) % featuredProducts.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [featuredProducts.length]);
+
+  if (isLoading) {
+    return (
+      <section id="featured" className="py-20 bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-white">Đang tải sản phẩm nổi bật...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (featuredProducts.length === 0) {
+    return (
+      <section id="featured" className="py-20 bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p className="text-gray-400">Chưa có sản phẩm nổi bật nào.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const currentProduct = featuredProducts[activeIndex];
+
   return (
     <section id="featured" className="py-20 bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -73,7 +71,7 @@ const FeaturedMotorcycles: React.FC = () => {
           >
             Xe Máy <span className="text-amber-500">Nổi Bật</span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -83,13 +81,13 @@ const FeaturedMotorcycles: React.FC = () => {
             Khám phá những mẫu xe cao cấp nhất, được thiết kế dành riêng cho những người đam mê tốc độ và đẳng cấp
           </motion.p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
           {/* Danh sách xe bên trái */}
           <div className="lg:col-span-1 space-y-4">
-            {featuredMotorcycles.map((bike, index) => (
+            {featuredProducts.map((product, index) => (
               <motion.div
-                key={bike.id}
+                key={product.id}
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -97,16 +95,22 @@ const FeaturedMotorcycles: React.FC = () => {
                 className={`p-4 rounded-lg cursor-pointer transition-all duration-300 ${activeIndex === index ? 'bg-gradient-to-r from-amber-500/20 to-transparent border-l-4 border-amber-500' : 'hover:bg-gray-800'}`}
                 onClick={() => setActiveIndex(index)}
               >
-                <h3 className={`font-bold ${activeIndex === index ? 'text-amber-400' : 'text-white'}`}>{bike.name}</h3>
-                <p className="text-gray-400 text-sm mt-1">{bike.specs.engine} | {bike.specs.power}</p>
-                <p className={`font-medium mt-2 ${activeIndex === index ? 'text-amber-400' : 'text-gray-300'}`}>{bike.price} VND</p>
+                <h3 className={`font-bold ${activeIndex === index ? 'text-amber-400' : 'text-white'}`}>
+                  {product.brand} {product.model}
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">
+                  {product.engineCapacity}cc | {product.condition}
+                </p>
+                <p className={`font-medium mt-2 ${activeIndex === index ? 'text-amber-400' : 'text-gray-300'}`}>
+                  {product.price.toLocaleString('vi-VN')} ₫
+                </p>
               </motion.div>
             ))}
           </div>
-          
+
           {/* Hiển thị xe được chọn ở giữa */}
           <div className="lg:col-span-3 relative">
-            <motion.div 
+            <motion.div
               key={activeIndex}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -114,23 +118,29 @@ const FeaturedMotorcycles: React.FC = () => {
               transition={{ duration: 0.5 }}
               className="relative rounded-3xl overflow-hidden aspect-[16/9]"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${featuredMotorcycles[activeIndex].color} opacity-10`}></div>
-              <img 
-                src={featuredMotorcycles[activeIndex].image} 
-                alt={featuredMotorcycles[activeIndex].name}
-                className="w-full h-full object-cover rounded-3xl" 
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-gray-900/50"></div>
+              <img
+                src={currentProduct.imageUrls && currentProduct.imageUrls.length > 0
+                  ? currentProduct.imageUrls[0]
+                  : 'https://via.placeholder.com/800x450?text=No+Image'
+                }
+                alt={`${currentProduct.brand} ${currentProduct.model}`}
+                className="w-full h-full object-cover rounded-3xl"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://via.placeholder.com/800x450?text=No+Image';
+                }}
               />
-              
+
               {/* Ring lệch tâm trang trí */}
               <div className="absolute -bottom-24 -right-24 w-64 h-64 border-4 border-amber-500/30 rounded-full"></div>
               <div className="absolute -top-16 -left-16 w-40 h-40 border-2 border-amber-500/20 rounded-full"></div>
-              
+
               {/* Badge giá */}
               <div className="absolute top-6 right-6 bg-gradient-to-r from-amber-500 to-amber-400 px-4 py-2 rounded-lg shadow-lg">
-                <p className="text-gray-900 font-bold">{featuredMotorcycles[activeIndex].price} VND</p>
+                <p className="text-gray-900 font-bold">{currentProduct.price.toLocaleString('vi-VN')} ₫</p>
               </div>
             </motion.div>
-            
+
             {/* Specifications overlay at bottom */}
             <motion.div
               key={`specs-${activeIndex}`}
@@ -143,24 +153,24 @@ const FeaturedMotorcycles: React.FC = () => {
               <div className="grid grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-amber-400 font-medium">Động cơ</p>
-                  <p className="text-white font-bold">{featuredMotorcycles[activeIndex].specs.engine}</p>
+                  <p className="text-white font-bold">{currentProduct.engineCapacity}cc</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-amber-400 font-medium">Công suất</p>
-                  <p className="text-white font-bold">{featuredMotorcycles[activeIndex].specs.power}</p>
+                  <p className="text-amber-400 font-medium">Năm sản xuất</p>
+                  <p className="text-white font-bold">{currentProduct.year}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-amber-400 font-medium">Tốc độ tối đa</p>
-                  <p className="text-white font-bold">{featuredMotorcycles[activeIndex].specs.speed}</p>
+                  <p className="text-amber-400 font-medium">Tình trạng</p>
+                  <p className="text-white font-bold">{currentProduct.condition}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-amber-400 font-medium">Trọng lượng</p>
-                  <p className="text-white font-bold">{featuredMotorcycles[activeIndex].specs.weight}</p>
+                  <p className="text-amber-400 font-medium">Màu sắc</p>
+                  <p className="text-white font-bold">{currentProduct.color}</p>
                 </div>
               </div>
             </motion.div>
           </div>
-          
+
           {/* Action panel bên phải */}
           <div className="lg:col-span-1 flex flex-col space-y-6">
             <motion.div
@@ -170,26 +180,38 @@ const FeaturedMotorcycles: React.FC = () => {
               viewport={{ once: true }}
               className="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-xl border border-gray-700"
             >
-              <h3 className="text-xl font-bold text-white mb-4">{featuredMotorcycles[activeIndex].name}</h3>
-              <p className="text-gray-400 mb-6">Mẫu xe cao cấp với thiết kế khí động học và công nghệ tiên tiến, mang đến trải nghiệm lái xe tuyệt vời.</p>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-gray-900 font-bold shadow-lg hover:shadow-amber-500/20 transition-all mb-3"
+              <h3 className="text-xl font-bold text-white mb-4">
+                {currentProduct.brand} {currentProduct.model}
+              </h3>
+              <div
+                className="text-gray-400 mb-6"
+                dangerouslySetInnerHTML={{
+                  __html: currentProduct.description.replace(/<!--.*?-->/g, '').substring(0, 150) + '...'
+                }}
+              />
+
+              <Link
+                to={`${ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID}/${currentProduct.categoryId}`}
+                className="block w-full"
               >
-                Đặt Hàng Ngay
-              </motion.button>
-              
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-gray-900 font-bold shadow-lg hover:shadow-amber-500/20 transition-all mb-3"
+                >
+                  Xem Chi Tiết
+                </motion.button>
+              </Link>
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="w-full py-3 bg-white/10 border border-white/20 backdrop-blur-sm rounded-lg text-white font-medium hover:bg-white/20 transition-all"
               >
-                Xem Chi Tiết
+                Liên Hệ Tư Vấn
               </motion.button>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -205,14 +227,16 @@ const FeaturedMotorcycles: React.FC = () => {
                 </div>
                 <h3 className="text-white font-bold">Ưu đãi đặc biệt</h3>
               </div>
-              <p className="text-gray-400 text-sm">Giảm ngay 5% khi thanh toán trước 100% giá trị xe và tặng thêm gói phụ kiện trị giá 20 triệu đồng.</p>
+              <p className="text-gray-400 text-sm">
+                Miễn phí giao xe tận nơi và bảo dưỡng định kỳ trong năm đầu tiên.
+              </p>
             </motion.div>
           </div>
         </div>
-        
+
         {/* Navigation dots */}
         <div className="flex justify-center mt-10 space-x-2">
-          {featuredMotorcycles.map((_, index) => (
+          {featuredProducts.map((_, index) => (
             <motion.button
               key={index}
               type="button"

@@ -1,121 +1,11 @@
 import React, { useState } from 'react';
-import MotorcycleCard, { type MotorcycleType } from './MotorcycleCard.com';
+import { useProduct } from '@hooks/modules/useProduct';
+import { Link } from 'react-router-dom';
+import { ROUTER_URL } from '@consts/router.path.const';
+import { motion } from 'framer-motion';
 
-// Dữ liệu mẫu cho danh sách xe máy
-const motorcyclesData: MotorcycleType[] = [
-  {
-    id: 1,
-    name: 'Honda CBR1000RR-R Fireblade',
-    brand: 'Honda',
-    image: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '799,000,000',
-    specs: {
-      engine: '1000cc',
-      power: '214 HP',
-      speed: '299 km/h',
-      weight: '201 kg'
-    },
-    isNew: true,
-    isFeatured: true
-  },
-  {
-    id: 2,
-    name: 'Ducati Panigale V4',
-    brand: 'Ducati',
-    image: 'https://images.unsplash.com/photo-1558981852-426c6c22a060?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '950,000,000',
-    specs: {
-      engine: '1103cc',
-      power: '221 HP',
-      speed: '305 km/h',
-      weight: '195 kg'
-    },
-    discount: 5
-  },
-  {
-    id: 3,
-    name: 'Kawasaki Ninja ZX-10R',
-    brand: 'Kawasaki',
-    image: 'https://images.unsplash.com/photo-1622185135505-2d795003994a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '729,000,000',
-    specs: {
-      engine: '998cc',
-      power: '200 HP',
-      speed: '300 km/h',
-      weight: '207 kg'
-    },
-    isFeatured: true
-  },
-  {
-    id: 4,
-    name: 'BMW S1000RR',
-    brand: 'BMW',
-    image: 'https://images.unsplash.com/photo-1547549082-6bc09f2049ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '859,000,000',
-    specs: {
-      engine: '999cc',
-      power: '205 HP',
-      speed: '302 km/h',
-      weight: '197 kg'
-    },
-    isNew: true
-  },
-  {
-    id: 5,
-    name: 'Yamaha YZF-R1',
-    brand: 'Yamaha',
-    image: 'https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-    price: '789,000,000',
-    specs: {
-      engine: '998cc',
-      power: '198 HP',
-      speed: '299 km/h',
-      weight: '199 kg'
-    },
-    discount: 8
-  },
-  {
-    id: 6,
-    name: 'Triumph Street Triple RS',
-    brand: 'Triumph',
-    image: 'https://triumph-saigon.com/wp-content/uploads/2021/10/street-triple-765-rs-step-carousel-2-1410x793-1.jpg',
-    price: '450,000,000',
-    specs: {
-      engine: '765cc',
-      power: '121 HP',
-      speed: '258 km/h',
-      weight: '168 kg'
-    },
-    isFeatured: true
-  },
-  {
-    id: 7,
-    name: 'Harley-Davidson Road King',
-    brand: 'Harley-Davidson',
-    image: 'https://images.ctfassets.net/5vy1mse9fkav/5B23fhAuNkfUUt8wW7E5Or/a2ccc40ceaee24239a1a535fa74a6afa/2025-road-king-special-kf1-slc-1_1_.jpg',
-    price: '843,000,000',
-    specs: {
-      engine: '1746cc',
-      power: '87 HP',
-      speed: '180 km/h',
-      weight: '372 kg'
-    }
-  },
-  {
-    id: 8,
-    name: 'KTM 1290 Super Duke R',
-    brand: 'KTM',
-    image: 'https://autobike.com.vn/wp-content/uploads/2023/03/ktm-11290-super-duke-r-xemay24g-anhdaidien-3.jpg',
-    price: '659,000,000',
-    specs: {
-      engine: '1301cc',
-      power: '180 HP',
-      speed: '270 km/h',
-      weight: '189 kg'
-    },
-    isNew: true
-  }
-];
+// Import ProductResponse type
+import type { ProductResponse } from '../../../types/product/Product.res.type';
 
 const sortOptions = [
   { id: 'newest', label: 'Mới nhất' },
@@ -130,98 +20,110 @@ interface MotorcycleListProps {
 }
 
 const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
+  const { useProducts } = useProduct();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('newest');
   const itemsPerPage = 6;
 
+  // Fetch products
+  const { data: allProducts = [], isLoading, error } = useProducts({
+    sortField: 'createdAt',
+    ascending: false,
+    pageNumber: 1,
+    pageSize: 100 // Get more products for filtering
+  });
+
+  // Filter verified products
+  const verifiedProducts = allProducts.filter(product =>
+    product.isVerified && (product.status === 0 || product.status === 3 || product.status === 4)
+  );
+
   // Filtering function
-  const filterMotorcycles = (motorcycles: MotorcycleType[]) => {
+  const filterMotorcycles = (motorcycles: ProductResponse[]) => {
     if (!filters || Object.keys(filters).length === 0) {
       return motorcycles;
     }
 
     return motorcycles.filter(motorcycle => {
       let match = true;
-      
+
       // Filter by brand
       if (filters.brands && filters.brands.length > 0) {
         match = match && filters.brands.includes(motorcycle.brand);
       }
-      
+
+      // Filter by categories
+      if (filters.categories && filters.categories.length > 0) {
+        match = match && filters.categories.includes(motorcycle.categoryId);
+      }
+
       // Filter by price range
       if (filters.priceRange) {
-        const price = parseInt(motorcycle.price.replace(/,/g, ''));
-        match = match && price >= filters.priceRange[0] && price <= filters.priceRange[1];
-      }
-      
-      // Filter by features
-      if (filters.features) {
-        if (filters.features.isNew && !motorcycle.isNew) {
-          match = false;
-        }
-        if (filters.features.isFeatured && !motorcycle.isFeatured) {
-          match = false;
-        }
-        if (filters.features.hasDiscount && !motorcycle.discount) {
-          match = false;
+        const price = motorcycle.price;
+        match = match && price >= filters.priceRange.min;
+        if (filters.priceRange.max !== null) {
+          match = match && price <= filters.priceRange.max;
         }
       }
 
       // Filter by engine size (cc)
-      if (filters.engineSize && filters.engineSize.length > 0) {
-        const engineCc = parseInt(motorcycle.specs.engine.replace('cc', ''));
+      if (filters.engineTypes && filters.engineTypes.length > 0) {
+        const engineCc = motorcycle.engineCapacity || 0;
         let engineMatch = false;
-        
-        filters.engineSize.forEach((range: string) => {
-          if (range === '1000+' && engineCc >= 1000) {
-            engineMatch = true;
-          } else if (range === '600-1000' && engineCc >= 600 && engineCc < 1000) {
-            engineMatch = true;
-          } else if (range === '400-600' && engineCc >= 400 && engineCc < 600) {
-            engineMatch = true;
-          } else if (range === '<400' && engineCc < 400) {
-            engineMatch = true;
+
+        filters.engineTypes.forEach((engineTypeId: number) => {
+          switch (engineTypeId) {
+            case 1: // 100cc - 175cc
+              if (engineCc >= 100 && engineCc <= 175) engineMatch = true;
+              break;
+            case 2: // 175cc - 400cc
+              if (engineCc > 175 && engineCc <= 400) engineMatch = true;
+              break;
+            case 3: // 400cc - 750cc
+              if (engineCc > 400 && engineCc <= 750) engineMatch = true;
+              break;
+            case 4: // 750cc - 1000cc
+              if (engineCc > 750 && engineCc <= 1000) engineMatch = true;
+              break;
+            case 5: // Trên 1000cc
+              if (engineCc > 1000) engineMatch = true;
+              break;
           }
         });
-        
+
         match = match && engineMatch;
       }
-      
+
       return match;
     });
   };
 
   // Apply filtering
-  const filteredMotorcycles = filterMotorcycles(motorcyclesData);
+  const filteredMotorcycles = filterMotorcycles(verifiedProducts);
 
   // Sorting function
-  const sortMotorcycles = (sortType: string, data: MotorcycleType[]) => {
+  const sortMotorcycles = (sortType: string, data: ProductResponse[]) => {
     let sortedData = [...data];
-    
+
     switch (sortType) {
       case 'price_asc':
-        sortedData.sort((a, b) => 
-          parseInt(a.price.replace(/,/g, '')) - parseInt(b.price.replace(/,/g, ''))
-        );
+        sortedData.sort((a, b) => a.price - b.price);
         break;
       case 'price_desc':
-        sortedData.sort((a, b) => 
-          parseInt(b.price.replace(/,/g, '')) - parseInt(a.price.replace(/,/g, ''))
-        );
+        sortedData.sort((a, b) => b.price - a.price);
         break;
       case 'name_asc':
-        sortedData.sort((a, b) => a.name.localeCompare(b.name));
+        sortedData.sort((a, b) => `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`));
         break;
       case 'name_desc':
-        sortedData.sort((a, b) => b.name.localeCompare(a.name));
+        sortedData.sort((a, b) => `${b.brand} ${b.model}`.localeCompare(`${a.brand} ${a.model}`));
         break;
       case 'newest':
       default:
-        // Assuming id represents the newest items (higher id = newer)
-        sortedData.sort((a, b) => b.id - a.id);
+        sortedData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
     }
-    
+
     return sortedData;
   };
 
@@ -241,6 +143,30 @@ const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
+  if (isLoading) {
+    return (
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-8">
+            <p className="text-white">Đang tải sản phẩm...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-8">
+            <p className="text-red-400">Có lỗi xảy ra khi tải sản phẩm.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-10">
       <div className="container mx-auto px-4">
@@ -251,7 +177,7 @@ const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
               Hiển thị {sortedMotorcycles.length > 0 ? indexOfFirstItem + 1 : 0}-{Math.min(indexOfLastItem, sortedMotorcycles.length)} trong {sortedMotorcycles.length} sản phẩm
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center mt-4 md:mt-0 space-y-2 sm:space-y-0 sm:space-x-4">
             <div className="flex items-center">
               <label htmlFor="sort-by" className="text-white mr-2 whitespace-nowrap">Sắp xếp theo:</label>
@@ -266,26 +192,121 @@ const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
                 ))}
               </select>
             </div>
-            
-            <div className="flex space-x-2">
-              <button className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-              </button>
-              <button className="bg-amber-500 text-gray-900 p-2 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
 
         {/* Product grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {currentItems.map((motorcycle) => (
-            <MotorcycleCard key={motorcycle.id} motorcycle={motorcycle} />
+            <motion.div
+              key={motorcycle.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              whileHover={{ y: -10 }}
+              className="bg-gray-800 rounded-xl overflow-hidden shadow-lg group relative"
+            >
+              {/* Badges */}
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                <div className="bg-amber-500 text-gray-900 text-xs px-2 py-1 rounded font-medium">
+                  {motorcycle.condition}
+                </div>
+                <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded font-medium">
+                  {motorcycle.year}
+                </div>
+              </div>
+
+              {/* Favorite button */}
+              <motion.button
+                className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </motion.button>
+
+              {/* Image */}
+              <div className="h-48 overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent opacity-30 z-0"></div>
+
+                <img
+                  src={motorcycle.imageUrls && motorcycle.imageUrls.length > 0
+                    ? motorcycle.imageUrls[0]
+                    : 'https://via.placeholder.com/400x200?text=No+Image'
+                  }
+                  alt={`${motorcycle.brand} ${motorcycle.model}`}
+                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://via.placeholder.com/400x200?text=No+Image';
+                  }}
+                />
+
+                {/* Brand badge */}
+                <div className="absolute bottom-4 left-4 bg-white/10 backdrop-blur-sm px-2 py-1 rounded text-white text-xs font-medium">
+                  {motorcycle.brand}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 relative">
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">
+                  {motorcycle.brand} {motorcycle.model}
+                </h3>
+
+                {/* Specs */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span className="text-gray-400 text-sm">{motorcycle.engineCapacity}cc</span>
+                  </div>
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-gray-400 text-sm">{motorcycle.year}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-gray-400 text-sm">{motorcycle.location}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
+                    </svg>
+                    <span className="text-gray-400 text-sm">{motorcycle.color}</span>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gray-700 my-4"></div>
+
+                {/* Price and action */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-amber-400 font-bold text-xl">
+                      {motorcycle.price.toLocaleString('vi-VN')} ₫
+                    </p>
+                  </div>
+                  <Link to={`${ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID}/${motorcycle.categoryId}`}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-sm font-bold text-gray-900 hover:shadow-lg hover:shadow-amber-500/20 transition-all"
+                    >
+                      Chi tiết
+                    </motion.button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
 
@@ -313,7 +334,7 @@ const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              
+
               {[...Array(totalPages)].map((_, index) => (
                 <button
                   key={index + 1}
@@ -323,7 +344,7 @@ const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
                   {index + 1}
                 </button>
               ))}
-              
+
               <button
                 onClick={() => paginate(Math.min(currentPage + 1, totalPages))}
                 disabled={currentPage === totalPages}

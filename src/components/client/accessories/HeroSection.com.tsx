@@ -1,14 +1,33 @@
 // src/components/client/accessories/HeroSection.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useProduct } from '@hooks/modules/useProduct';
+import { Link } from 'react-router-dom';
 
 const HeroSection: React.FC = () => {
+  const { useProducts } = useProduct();
+
+  // Get accessory product count for display
+  const { data: products = [] } = useProducts({
+    pageNumber: 1,
+    pageSize: 100
+  });
+
+  // Filter verified accessory products
+  const accessoryProducts = products.filter(product =>
+    product.isVerified &&
+    (product.status === 0 || product.status === 3 || product.status === 4) &&
+    product.accessoryType // This field indicates it's an accessory
+  );
+
+  const verifiedAccessoryCount = accessoryProducts.length;
+
   return (
     <section className="relative h-[500px] overflow-hidden bg-gray-900">
       {/* Background Image with overlay gradient */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ 
+        style={{
           backgroundImage: "url('https://images.unsplash.com/photo-1558980394-0a06c4631733?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')",
         }}
       >
@@ -49,16 +68,20 @@ const HeroSection: React.FC = () => {
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               Nâng Tầm <span className="text-amber-500">Trải Nghiệm</span> Với Phụ Kiện Cao Cấp
             </h1>
-            <p className="text-gray-300 text-xl mb-8">Khám phá bộ sưu tập phụ kiện độc đáo và chất lượng để cá nhân hóa xe máy của bạn.</p>
-            
+            <p className="text-gray-300 text-xl mb-8">
+              Khám phá bộ sưu tập phụ kiện độc đáo và chất lượng để cá nhân hóa xe máy của bạn.
+            </p>
+
             <div className="flex flex-col sm:flex-row gap-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-gray-900 font-bold shadow-lg hover:shadow-amber-500/20 transition-all"
-              >
-                Khám Phá Ngay
-              </motion.button>
+              <Link to="#categories">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-gray-900 font-bold shadow-lg hover:shadow-amber-500/20 transition-all"
+                >
+                  Khám Phá Ngay
+                </motion.button>
+              </Link>
               <motion.a
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -71,22 +94,22 @@ const HeroSection: React.FC = () => {
                 Danh Mục Sản Phẩm
               </motion.a>
             </div>
-            
+
             <div className="mt-10 flex items-center space-x-6">
               <div className="flex -space-x-2">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-gray-900 bg-gray-200 overflow-hidden">
-                    <img 
-                      src={`https://randomuser.me/api/portraits/men/${i + 20}.jpg`} 
-                      alt="Customer" 
+                    <img
+                      src={`https://randomuser.me/api/portraits/men/${i + 20}.jpg`}
+                      alt="Customer"
                       className="w-full h-full object-cover"
                     />
                   </div>
                 ))}
               </div>
               <div>
-                <p className="text-white font-medium">Được tin dùng bởi</p>
-                <p className="text-amber-400 font-bold">5000+ khách hàng</p>
+                <p className="text-white font-medium">Hơn {verifiedAccessoryCount} phụ kiện</p>
+                <p className="text-amber-400 font-bold">Đang chờ bạn khám phá</p>
               </div>
             </div>
           </motion.div>
@@ -101,35 +124,35 @@ const HeroSection: React.FC = () => {
         className="absolute right-0 bottom-0 w-1/2 h-full hidden md:flex items-end justify-end"
       >
         <div className="relative h-3/4 w-full">
-          <motion.img 
+          <motion.img
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            src="https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-            alt="Motorcycle Helmet" 
+            src="https://images.unsplash.com/photo-1591637333184-19aa84b3e01f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+            alt="Motorcycle Helmet"
             className="absolute bottom-10 right-20 h-48 object-contain z-10 drop-shadow-2xl"
           />
-          <motion.img 
+          <motion.img
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1, duration: 0.5 }}
-            src="https://images.unsplash.com/photo-1535360196337-b5a58b1ce292?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-            alt="Motorcycle Gloves" 
+            src="https://images.unsplash.com/photo-1535360196337-b5a58b1ce292?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+            alt="Motorcycle Gloves"
             className="absolute bottom-40 right-40 h-32 object-contain drop-shadow-2xl"
           />
-          <motion.img 
+          <motion.img
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.5 }}
-            src="https://images.unsplash.com/photo-1552374950-5f719f3a8e31?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
-            alt="Motorcycle Jacket" 
+            src="https://images.unsplash.com/photo-1552374950-5f719f3a8e31?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+            alt="Motorcycle Jacket"
             className="absolute bottom-20 right-72 h-40 object-contain drop-shadow-2xl"
           />
         </div>
       </motion.div>
-      
+
       {/* Scroll Indicator */}
-      <motion.div 
+      <motion.div
         className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center cursor-pointer"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 1.5, repeat: Infinity }}

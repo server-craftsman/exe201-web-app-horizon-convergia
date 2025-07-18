@@ -62,5 +62,71 @@ export const SPAREPART_BRANDS = [
 ];
 export const SPAREPART_MODELS = [
     'Bugi', 'Xích', 'Phanh', 'Lọc gió', 'Lọc dầu', 'Lốp', 'Ắc quy', 'Ống xả', 'Phuộc',
-    'Cảm biến', 'Bơm xăng', 'Bộ lọc', 'Ly hợp', 'Khác'
+    'Cảm biến', 'Bơm xăng', 'Bộ lọc', 'Ly hợp', 'Nắp bình', 'Khác'
+];
+
+// Size options cho phụ kiện
+export const SIZE_OPTIONS = {
+    // Kích thước quần áo
+    CLOTHING: [
+        { value: 'XS', label: 'XS (Extra Small)' },
+        { value: 'S', label: 'S (Small)' },
+        { value: 'M', label: 'M (Medium)' },
+        { value: 'L', label: 'L (Large)' },
+        { value: 'XL', label: 'XL (Extra Large)' },
+        { value: 'XXL', label: 'XXL (Double Extra Large)' },
+        { value: 'XXXL', label: 'XXXL (Triple Extra Large)' }
+    ],
+
+    // Size mũ bảo hiểm
+    HELMET: [
+        { value: '54-55cm', label: '54-55cm (XS)' },
+        { value: '56-57cm', label: '56-57cm (S)' },
+        { value: '58-59cm', label: '58-59cm (M)' },
+        { value: '60-61cm', label: '60-61cm (L)' },
+        { value: '62-63cm', label: '62-63cm (XL)' },
+        { value: '64-65cm', label: '64-65cm (XXL)' }
+    ],
+
+    // Size găng tay
+    GLOVES: [
+        { value: '6', label: 'Size 6 (XS)' },
+        { value: '7', label: 'Size 7 (S)' },
+        { value: '8', label: 'Size 8 (M)' },
+        { value: '9', label: 'Size 9 (L)' },
+        { value: '10', label: 'Size 10 (XL)' },
+        { value: '11', label: 'Size 11 (XXL)' }
+    ],
+
+    // Size giày
+    SHOES: [
+        { value: '35', label: '35' },
+        { value: '36', label: '36' },
+        { value: '37', label: '37' },
+        { value: '38', label: '38' },
+        { value: '39', label: '39' },
+        { value: '40', label: '40' },
+        { value: '41', label: '41' },
+        { value: '42', label: '42' },
+        { value: '43', label: '43' },
+        { value: '44', label: '44' },
+        { value: '45', label: '45' },
+        { value: '46', label: '46' }
+    ],
+
+    // Size khác
+    UNIVERSAL: [
+        { value: 'One Size', label: 'One Size (Một size)' },
+        { value: 'Free Size', label: 'Free Size (Size tự do)' },
+        { value: 'Universal', label: 'Universal (Phổ thông)' }
+    ]
+};
+
+// Tất cả size options
+export const ALL_SIZE_OPTIONS = [
+    { group: 'Kích thước quần áo', options: SIZE_OPTIONS.CLOTHING },
+    { group: 'Size mũ bảo hiểm', options: SIZE_OPTIONS.HELMET },
+    { group: 'Size găng tay', options: SIZE_OPTIONS.GLOVES },
+    { group: 'Size giày', options: SIZE_OPTIONS.SHOES },
+    { group: 'Khác', options: SIZE_OPTIONS.UNIVERSAL }
 ]; 

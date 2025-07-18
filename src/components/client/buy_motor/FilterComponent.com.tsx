@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useCategory } from '@hooks/modules/useCategory';
+import { useProduct } from '@hooks/modules/useProduct';
 
 // Data types
 type Brand = {
@@ -19,18 +21,7 @@ type EngineType = {
   label: string;
 };
 
-// Sample data
-const brands: Brand[] = [
-  { id: 1, name: 'Honda' },
-  { id: 2, name: 'Yamaha' },
-  { id: 3, name: 'Kawasaki' },
-  { id: 4, name: 'Suzuki' },
-  { id: 5, name: 'Ducati' },
-  { id: 6, name: 'BMW' },
-  { id: 7, name: 'Harley-Davidson' },
-  { id: 8, name: 'KTM' },
-];
-
+// Static price ranges and engine types
 const priceRanges: PriceRange[] = [
   { id: 1, label: 'Dưới 50 triệu', min: 0, max: 50000000 },
   { id: 2, label: '50 - 100 triệu', min: 50000000, max: 100000000 },
@@ -52,16 +43,60 @@ interface FilterProps {
 }
 
 const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
+  const { useProducts } = useProduct();
+  const { getCategorys } = useCategory();
+
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedBrands, setSelectedBrands] = useState<number[]>([]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [selectedEngineTypes, setSelectedEngineTypes] = useState<number[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const handleBrandChange = (brandId: number) => {
-    setSelectedBrands(prev => 
-      prev.includes(brandId)
-        ? prev.filter(id => id !== brandId)
-        : [...prev, brandId]
+  // Fetch products to get unique brands
+  const { data: products = [] } = useProducts({
+    pageNumber: 1,
+    pageSize: 100
+  });
+
+  // Fetch categories
+  const [categories, setCategories] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data } = await getCategorys.mutateAsync();
+        if (data) {
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Fetch categories error:', error);
+      }
+    };
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Extract unique brands from products
+  const brands: Brand[] = React.useMemo(() => {
+    const uniqueBrands = [...new Set(products.map(product => product.brand))];
+    return uniqueBrands.map((brand, index) => ({
+      id: index + 1,
+      name: brand
+    }));
+  }, [products]);
+
+  const handleBrandChange = (brandName: string) => {
+    setSelectedBrands(prev =>
+      prev.includes(brandName)
+        ? prev.filter(name => name !== brandName)
+        : [...prev, brandName]
+    );
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
     );
   };
 
@@ -70,7 +105,7 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
   };
 
   const handleEngineTypeChange = (engineId: number) => {
-    setSelectedEngineTypes(prev => 
+    setSelectedEngineTypes(prev =>
       prev.includes(engineId)
         ? prev.filter(id => id !== engineId)
         : [...prev, engineId]
@@ -78,19 +113,24 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
   };
 
   const applyFilters = () => {
+    const selectedPriceRangeData = priceRanges.find(range => range.id === selectedPriceRange);
+
     onFilter({
       brands: selectedBrands,
-      priceRange: selectedPriceRange,
+      categories: selectedCategories,
+      priceRange: selectedPriceRangeData,
       engineTypes: selectedEngineTypes
     });
   };
 
   const resetFilters = () => {
     setSelectedBrands([]);
+    setSelectedCategories([]);
     setSelectedPriceRange(null);
     setSelectedEngineTypes([]);
     onFilter({
       brands: [],
+      categories: [],
       priceRange: null,
       engineTypes: []
     });
@@ -99,7 +139,7 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden shadow-lg mb-8">
       {/* Filter header */}
-      <div 
+      <div
         className="bg-gradient-to-r from-amber-500 to-amber-400 px-6 py-4 flex justify-between items-center cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -109,11 +149,11 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
           </svg>
           <h3 className="text-xl font-bold text-gray-900">Bộ lọc tìm kiếm</h3>
         </div>
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          className={`h-6 w-6 text-gray-900 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-          fill="none" 
-          viewBox="0 0 24 24" 
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className={`h-6 w-6 text-gray-900 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
           stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -121,14 +161,35 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
       </div>
 
       {/* Filter content */}
-      <motion.div 
+      <motion.div
         initial={false}
         animate={{ height: isExpanded ? 'auto' : 0, opacity: isExpanded ? 1 : 0 }}
         transition={{ duration: 0.3 }}
         className="overflow-hidden"
       >
         <div className="p-6 bg-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Categories */}
+            <div>
+              <h4 className="text-white font-bold mb-4 border-b border-gray-700 pb-2">Danh mục</h4>
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                {categories.map(category => (
+                  <div key={category.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`category-${category.id}`}
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={() => handleCategoryChange(category.id)}
+                      className="h-4 w-4 text-amber-500 focus:ring-amber-400 border-gray-700 rounded bg-gray-700"
+                    />
+                    <label htmlFor={`category-${category.id}`} className="ml-3 text-gray-300">
+                      {category.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Brands */}
             <div>
               <h4 className="text-white font-bold mb-4 border-b border-gray-700 pb-2">Thương hiệu</h4>
@@ -138,8 +199,8 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
                     <input
                       type="checkbox"
                       id={`brand-${brand.id}`}
-                      checked={selectedBrands.includes(brand.id)}
-                      onChange={() => handleBrandChange(brand.id)}
+                      checked={selectedBrands.includes(brand.name)}
+                      onChange={() => handleBrandChange(brand.name)}
                       className="h-4 w-4 text-amber-500 focus:ring-amber-400 border-gray-700 rounded bg-gray-700"
                     />
                     <label htmlFor={`brand-${brand.id}`} className="ml-3 text-gray-300">
