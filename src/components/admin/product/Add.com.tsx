@@ -15,7 +15,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { helpers } from '@utils/index';
 import { BaseService } from '../../../app/api/base.service';
-import { MOTORCYCLE_BRANDS, MOTORCYCLE_BRANDS_MODELS, ACCESSORY_BRANDS, ACCESSORY_MODELS, SPAREPART_BRANDS, SPAREPART_MODELS } from '../../../consts/productBrandsModels';
+import { MOTORCYCLE_BRANDS, MOTORCYCLE_BRANDS_MODELS, ACCESSORY_BRANDS, ACCESSORY_MODELS, SPAREPART_BRANDS, SPAREPART_MODELS, ALL_SIZE_OPTIONS } from '../../../consts/productBrandsModels';
 
 interface AddProductAdminProps {
     onClose: () => void;
@@ -76,9 +76,47 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
     const [brands, setBrands] = useState<string[]>([]);
     const [models, setModels] = useState<string[]>([]);
 
-    const selectedCategory = categories.find(c => c.id.toString() === formData.categoryId);
-    const isAccessory = selectedCategory?.name?.toLowerCase().includes('phụ kiện');
-    const isSparePart = selectedCategory?.name?.toLowerCase().includes('phụ tùng');
+    // Helper functions to determine category type
+    const getCategoryType = (categoryId: string): 'motorcycle' | 'accessory' | 'sparepart' | 'other' => {
+        const category = categories.find(c => c.id.toString() === categoryId);
+        if (!category) return 'other';
+
+        // Check if current category matches
+        const categoryName = category.name.toLowerCase();
+        if (categoryName.includes('xe máy') || categoryName.includes('xe may')) {
+            return 'motorcycle';
+        }
+        if (categoryName.includes('phụ kiện') || categoryName.includes('phu kien')) {
+            return 'accessory';
+        }
+        if (categoryName.includes('phụ tùng') || categoryName.includes('phu tung')) {
+            return 'sparepart';
+        }
+
+        // Check parent category if exists
+        if (category.parentCategoryId) {
+            const parentCategory = categories.find(c => c.id.toString() === category.parentCategoryId);
+            if (parentCategory) {
+                const parentName = parentCategory.name.toLowerCase();
+                if (parentName.includes('xe máy') || parentName.includes('xe may')) {
+                    return 'motorcycle';
+                }
+                if (parentName.includes('phụ kiện') || parentName.includes('phu kien')) {
+                    return 'accessory';
+                }
+                if (parentName.includes('phụ tùng') || parentName.includes('phu tung')) {
+                    return 'sparepart';
+                }
+            }
+        }
+
+        return 'other';
+    };
+
+    const categoryType = getCategoryType(formData.categoryId);
+    const isAccessory = categoryType === 'accessory';
+    const isSparePart = categoryType === 'sparepart';
+    const isMotorcycle = categoryType === 'motorcycle';
 
     // Cập nhật danh sách thương hiệu và model khi thay đổi danh mục
     useEffect(() => {
@@ -257,30 +295,79 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
 
     /* ---------------- Category-specific fields ---------------- */
     const getCategorySpecificFields = () => {
-        const selectedCategoryName = categories.find(c => c.id.toString() === formData.categoryId)?.name || '';
-
-        const isMotorcycle = selectedCategoryName.includes('Xe Máy');
-        const isAccessory = selectedCategoryName.includes('Phụ kiện xe máy');
-        const isSparePart = selectedCategoryName.includes('Phụ tùng xe máy');
-
         if (isMotorcycle) {
             return (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Dung tích xi-lanh (cc) *
+                            <label className="block text-sm font-medium text-white mb-2">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    Dung tích xi-lanh (cc) *
+                                </span>
                             </label>
-                            <input
-                                type="number"
+                            <select
                                 value={formData.engineCapacity ?? ''}
-                                onChange={e => handleInputChange('engineCapacity', parseInt(e.target.value))}
+                                onChange={e => handleInputChange('engineCapacity', e.target.value ? parseInt(e.target.value) : undefined)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
-                                placeholder="VD: 150"
-                            />
+                            >
+                                <option value="">Chọn dung tích xi-lanh</option>
+                                <optgroup label="Xe số & Tay ga">
+                                    <option value="50">50cc - Xe máy điện/50cc</option>
+                                    <option value="110">110cc - Wave Alpha, Future Neo</option>
+                                    <option value="125">125cc - Wave RSX, Janus, Grande</option>
+                                </optgroup>
+                                <optgroup label="Xe ga & Scooter">
+                                    <option value="110">110cc - Vision, Vario, Lead</option>
+                                    <option value="125">125cc - SH Mode, PCX 125</option>
+                                    <option value="150">150cc - SH 150i, PCX 150</option>
+                                    <option value="160">160cc - FreeGo, Latte</option>
+                                </optgroup>
+                                <optgroup label="Xe thể thao">
+                                    <option value="150">150cc - Exciter 150, Winner X</option>
+                                    <option value="155">155cc - NVX 155, Exciter 155 VVA</option>
+                                    <option value="175">175cc - CBR150R, GSX-R150</option>
+                                </optgroup>
+                                <optgroup label="Xe phân khối lớn">
+                                    <option value="250">250cc - CBR250RR, Ninja 250</option>
+                                    <option value="300">300cc - Ninja 300, Duke 390</option>
+                                    <option value="350">350cc - SH 350i, Forza 350</option>
+                                    <option value="400">400cc - CB400, Ninja 400</option>
+                                    <option value="500">500cc - CB500F, Rebel 500</option>
+                                    <option value="600">600cc - CBR600RR, GSX-R600</option>
+                                    <option value="650">650cc - Ninja 650, MT-07</option>
+                                    <option value="750">750cc - Forza 750, GSX-S750</option>
+                                    <option value="1000">1000cc - CBR1000RR, GSX-R1000</option>
+                                </optgroup>
+                                <optgroup label="Khác">
+                                    <option value="other">Dung tích khác</option>
+                                </optgroup>
+                            </select>
+                            {formData.engineCapacity && formData.engineCapacity.toString() !== 'other' && (
+                                <p className="text-gray-400 text-xs mt-1">
+                                    <span className="inline-flex items-center">
+                                        <svg className="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        Dung tích: {formData.engineCapacity}cc
+                                    </span>
+                                </p>
+                            )}
+                            {formData.engineCapacity?.toString() === 'other' && (
+                                <div className="mt-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Nhập dung tích (cc)"
+                                        onChange={e => handleInputChange('engineCapacity', parseInt(e.target.value) || '')}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
+                                    />
+                                </div>
+                            )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-white mb-2">
                                 Loại nhiên liệu
                             </label>
                             <select
@@ -295,28 +382,181 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Số km đã đi
+                            <label className="block text-sm font-medium text-white mt-2 mb-2">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    Số km đã đi
+                                </span>
                             </label>
-                            <input
-                                type="number"
+                            <select
                                 value={formData.mileage ?? ''}
-                                onChange={e => handleInputChange('mileage', parseInt(e.target.value))}
+                                onChange={e => {
+                                    const value = e.target.value;
+                                    if (value === 'custom') {
+                                        // User will input custom value
+                                        handleInputChange('mileage', '');
+                                    } else {
+                                        handleInputChange('mileage', value ? parseInt(value) : undefined);
+                                    }
+                                }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
-                                placeholder="VD: 15000"
-                            />
+                            >
+                                <option value="">Chọn số km đã đi</option>
+                                <optgroup label="Xe mới">
+                                    <option value="0">0 km - Xe hoàn toàn mới</option>
+                                    <option value="100">Dưới 100 km - Xe mới chạy thử</option>
+                                    <option value="500">Dưới 500 km - Xe mới rời đại lý</option>
+                                </optgroup>
+                                <optgroup label="Xe ít sử dụng">
+                                    <option value="1000">1,000 km - Ít sử dụng</option>
+                                    <option value="2000">2,000 km</option>
+                                    <option value="3000">3,000 km</option>
+                                    <option value="5000">5,000 km</option>
+                                </optgroup>
+                                <optgroup label="Xe sử dụng bình thường">
+                                    <option value="10000">10,000 km</option>
+                                    <option value="15000">15,000 km</option>
+                                    <option value="20000">20,000 km</option>
+                                    <option value="25000">25,000 km</option>
+                                    <option value="30000">30,000 km</option>
+                                </optgroup>
+                                <optgroup label="Xe sử dụng nhiều">
+                                    <option value="40000">40,000 km</option>
+                                    <option value="50000">50,000 km</option>
+                                    <option value="60000">60,000 km</option>
+                                    <option value="70000">70,000 km</option>
+                                    <option value="80000">80,000 km</option>
+                                    <option value="90000">90,000 km</option>
+                                    <option value="100000">100,000 km+</option>
+                                </optgroup>
+                                <optgroup label="Khác">
+                                    <option value="custom">Số km khác</option>
+                                </optgroup>
+                            </select>
+                            {formData.mileage && formData.mileage.toString() !== 'custom' && (
+                                <p className="text-gray-400 text-xs mt-1">
+                                    <span className="inline-flex items-center">
+                                        <svg className="w-3 h-3 mr-1 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        {(() => {
+                                            const km = parseInt(formData.mileage.toString());
+                                            if (km === 0) return "Xe hoàn toàn mới";
+                                            if (km <= 1000) return "Xe rất ít sử dụng";
+                                            if (km <= 10000) return "Xe ít sử dụng";
+                                            if (km <= 30000) return "Xe sử dụng bình thường";
+                                            if (km <= 60000) return "Xe sử dụng nhiều";
+                                            return "Xe sử dụng rất nhiều";
+                                        })()}: {parseInt(formData.mileage.toString()).toLocaleString('vi-VN')} km
+                                    </span>
+                                </p>
+                            )}
+                            {(!formData.mileage || formData.mileage.toString() === 'custom') && (
+                                <div className="mt-2">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={typeof formData.mileage === 'number' ? formData.mileage : ''}
+                                            onChange={e => handleInputChange('mileage', parseInt(e.target.value) || undefined)}
+                                            placeholder="Nhập số km đã đi"
+                                            className="w-full pl-8 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
+                                        />
+                                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                        </div>
+                                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                            <span className="text-gray-400 text-xs">km</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-white mt-3 mb-2">
                                 Màu sắc
                             </label>
-                            <input
-                                type="text"
-                                value={formData.color}
-                                onChange={e => handleInputChange('color', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
-                                placeholder="VD: Đỏ"
-                            />
+                            <div className="space-y-3">
+                                {/* Color Picker Grid */}
+                                <div className="grid grid-cols-6 gap-2">
+                                    {[
+                                        { name: 'Đen', value: 'Đen', color: '#000000' },
+                                        { name: 'Trắng', value: 'Trắng', color: '#FFFFFF' },
+                                        { name: 'Vàng', value: 'Vàng', color: '#FFD700' },
+                                        { name: 'Hồng', value: 'Hồng', color: '#FF69B4' },
+                                        { name: 'Xanh dương', value: 'Xanh dương', color: '#1E90FF' },
+                                        { name: 'Xanh lá', value: 'Xanh lá', color: '#32CD32' },
+                                        { name: 'Cam', value: 'Cam', color: '#FF6347' },
+                                        { name: 'Đỏ', value: 'Đỏ', color: '#DC143C' },
+                                        { name: 'Xám', value: 'Xám', color: '#808080' },
+                                        { name: 'Nâu', value: 'Nâu', color: '#8B4513' },
+                                        { name: 'Bạc', value: 'Bạc', color: '#C0C0C0' },
+                                        { name: 'Xanh', value: 'Xanh', color: '#008B8B' }
+                                    ].map((colorOption) => {
+                                        const selectedColors = formData.color ? formData.color.split(', ').map(c => c.trim()) : [];
+                                        const isSelected = selectedColors.includes(colorOption.value);
+
+                                        return (
+                                            <button
+                                                key={colorOption.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    const currentColors = formData.color ? formData.color.split(', ').map(c => c.trim()).filter(c => c) : [];
+
+                                                    if (isSelected) {
+                                                        // Remove color
+                                                        const newColors = currentColors.filter(c => c !== colorOption.value);
+                                                        handleInputChange('color', newColors.join(', '));
+                                                    } else {
+                                                        // Add color
+                                                        const newColors = [...currentColors, colorOption.value];
+                                                        handleInputChange('color', newColors.join(', '));
+                                                    }
+                                                }}
+                                                className={`w-8 h-8 rounded-full border-2 transition-all relative ${isSelected
+                                                    ? 'border-amber-500 scale-110 shadow-lg'
+                                                    : 'border-gray-300 hover:border-gray-400'
+                                                    }`}
+                                                style={{ backgroundColor: colorOption.color }}
+                                                title={colorOption.name}
+                                            >
+                                                {isSelected && (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {/* Custom Color Input */}
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        value={formData.color}
+                                        onChange={e => handleInputChange('color', e.target.value)}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
+                                        placeholder="VD: Đỏ, đen hoặc nhập màu tùy chỉnh..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleInputChange('color', '')}
+                                        className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+                                    >
+                                        Xóa
+                                    </button>
+                                </div>
+                                {formData.color && (
+                                    <div className="text-xs text-gray-600">
+                                        <span className="font-medium">Đã chọn:</span> {formData.color}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </>
@@ -327,34 +567,43 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Loại phụ kiện
+                        <label className="block text-sm font-medium text-white mb-2">
+                            Loại phụ kiện *
                         </label>
                         <select
                             value={formData.accessoryType}
-                            onChange={e => handleInputChange('accessoryType', e.target.value)}
+                            onChange={e => {
+                                const selectedType = e.target.value;
+                                handleInputChange('accessoryType', selectedType);
+                                // Tự động set model = accessoryType
+                                handleInputChange('model', selectedType);
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700">
-                            <option value="helmet">Mũ bảo hiểm</option>
-                            <option value="clothing">Quần áo bảo hộ</option>
-                            <option value="gloves">Găng tay</option>
-                            <option value="boots">Giày bảo hộ</option>
-                            <option value="bags">Túi đựng đồ</option>
-                            <option value="lights">Đèn LED</option>
-                            <option value="phone-holder">Giá đỡ điện thoại</option>
-                            <option value="other">Khác</option>
+                            <option value="">Chọn loại phụ kiện</option>
+                            {ACCESSORY_MODELS.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-white mb-2">
                             Kích thước/Size
                         </label>
-                        <input
-                            type="text"
+                        <select
                             value={formData.size}
                             onChange={e => handleInputChange('size', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700"
-                            placeholder="VD: M, L, XL hoặc kích thước cụ thể"
-                        />
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700">
+                            <option value="">Chọn kích thước</option>
+                            {ALL_SIZE_OPTIONS.map(sizeGroup => (
+                                <optgroup key={sizeGroup.group} label={sizeGroup.group}>
+                                    {sizeGroup.options.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            ))}
+                        </select>
                     </div>
                 </div>
             );
@@ -364,36 +613,45 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Loại phụ tùng
+                        <label className="block text-sm font-medium text-white mb-2">
+                            Loại phụ tùng *
                         </label>
                         <select
                             value={formData.sparePartType}
-                            onChange={e => handleInputChange('sparePartType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus-border-transparent">
-                            <option value="engine">Động cơ</option>
-                            <option value="brake">Phanh</option>
-                            <option value="tire">Lốp xe</option>
-                            <option value="battery">Ắc quy</option>
-                            <option value="exhaust">Ống xả</option>
-                            <option value="filter">Lọc gió/dầu</option>
-                            <option value="spark-plug">Bugi</option>
-                            <option value="chain">Xích/dây curoa</option>
-                            <option value="mirror">Gương chiếu hậu</option>
-                            <option value="other">Khác</option>
+                            onChange={e => {
+                                const selectedType = e.target.value;
+                                handleInputChange('sparePartType', selectedType);
+                                // Tự động set model = sparePartType
+                                handleInputChange('model', selectedType);
+                            }}
+                            className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus-border-transparent">
+                            <option value="">Chọn loại phụ tùng</option>
+                            {SPAREPART_MODELS.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-white mb-2">
                             Tương thích với xe
                         </label>
-                        <input
-                            type="text"
+                        <select
                             value={formData.vehicleCompatible}
                             onChange={e => handleInputChange('vehicleCompatible', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                            placeholder="VD: Honda Wave, Yamaha Exciter"
-                        />
+                            className="w-full px-3 py-2 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                            <option value="">Chọn dòng xe tương thích</option>
+                            <option value="Tất cả">Tất cả các dòng xe</option>
+                            {MOTORCYCLE_BRANDS.map(brand => (
+                                <optgroup key={brand} label={brand}>
+                                    <option value={brand}>{brand} - Tất cả model</option>
+                                    {MOTORCYCLE_BRANDS_MODELS[brand]?.map(model => (
+                                        <option key={`${brand}-${model}`} value={`${brand} ${model}`}>
+                                            {brand} {model}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            ))}
+                        </select>
                     </div>
                 </div>
             );
@@ -401,10 +659,6 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
 
         return null;
     };
-
-    const modelLabel = (isAccessory || isSparePart)
-        ? 'Dòng xe tương thích *'
-        : 'Model *';
 
     // Thêm state cho modal bản đồ và vị trí
     const [showMapModal, setShowMapModal] = useState(false);
@@ -501,39 +755,44 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
         }
 
         // Tìm code cho province
-        const province = (provinces.data || []).find((p: any) =>
+        const foundProvince = (provinces.data || []).find((p: any) =>
             provinceName && p.name && provinceName.toLowerCase().includes(p.name.toLowerCase())
         );
-        const provinceCode = province?.code || '';
+        const foundProvinceCode = foundProvince?.code || '';
 
         // Tìm code cho district
-        let districtCode = '';
+        let foundDistrictCode = '';
         let districtList = [];
-        if (provinceCode) {
+        if (foundProvinceCode) {
             districtList = (districtsQuery.data || []);
-            if (!districtList.length && province.districts) districtList = province.districts;
-            const district = districtList.find((d: any) =>
+            if (!districtList.length && foundProvince?.districts) districtList = foundProvince.districts;
+            const foundDistrict = districtList.find((d: any) =>
                 districtName && d.name && districtName.toLowerCase().includes(d.name.toLowerCase())
             );
-            districtCode = district?.code || '';
+            foundDistrictCode = foundDistrict?.code || '';
         }
 
         // Tìm code cho ward
-        let wardCode = '';
+        let foundWardCode = '';
         let wardList = [];
-        if (districtCode) {
+        if (foundDistrictCode) {
             wardList = (wardsQuery.data || []);
-            if (!wardList.length && districtList.length) wardList = districtList.find((d: any) => d.code === districtCode)?.wards || [];
-            const ward = wardList.find((w: any) =>
+            if (!wardList.length && districtList.length) {
+                wardList = districtList.find((d: any) => d.code === foundDistrictCode)?.wards || [];
+            }
+            const foundWard = wardList.find((w: any) =>
                 wardName && w.name && wardName.toLowerCase().includes(wardName.toLowerCase())
             );
-            wardCode = ward?.code || '';
+            foundWardCode = foundWard?.code || '';
         }
 
-        setProvinceCode(provinceCode);
-        setTempDistrictName(districtName);
-        setTempWardName(wardName);
+        // Cập nhật tất cả state address
+        setProvinceCode(foundProvinceCode);
+        setDistrictCode(foundDistrictCode);
+        setWardCode(foundWardCode);
         setStreetAddress(street);
+        setTempDistrictName('');
+        setTempWardName('');
 
         // Sử dụng địa chỉ đầy đủ từ mapAddress
         setFormData((prev) => ({
@@ -593,8 +852,19 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ type: 'spring', damping: 20 }}
-                className="bg-gray-700 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                className="bg-gray-700 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto scrollbar-hide"
+                style={{
+                    scrollbarWidth: 'none', // Firefox
+                    msOverflowStyle: 'none', // IE 10+
+                }}
             >
+                <style>
+                    {`
+                        .scrollbar-hide::-webkit-scrollbar {
+                            display: none;
+                        }
+                    `}
+                </style>
                 {/* Header */}
                 <div className="border-b bg-gradient-to-r from-amber-500 to-amber-600 border-gray-200 px-6 py-4 flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-white">Thêm sản phẩm mới</h2>
@@ -662,23 +932,41 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                                     {errors.brand && <p className="text-red-500 text-sm mt-1">{errors.brand}</p>}
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-white mb-2">
-                                        {modelLabel}
-                                    </label>
-                                    <select
-                                        value={formData.model}
-                                        onChange={e => handleInputChange('model', e.target.value)}
-                                        disabled={createProductMutation.isPending || !models.length}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.model ? 'border-red-500' : 'border-gray-300'}`}
-                                    >
-                                        <option value="">Chọn model</option>
-                                        {models.map(m => (
-                                            <option key={m} value={m}>{m}</option>
-                                        ))}
-                                    </select>
-                                    {errors.model && <p className="text-red-500 text-sm mt-1">{errors.model}</p>}
-                                </div>
+                                {/* Chỉ hiển thị Model field cho xe máy */}
+                                {isMotorcycle && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-white mb-2">
+                                            Mẫu xe *
+                                        </label>
+                                        <select
+                                            value={formData.model}
+                                            onChange={e => handleInputChange('model', e.target.value)}
+                                            disabled={createProductMutation.isPending || !models.length}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.model ? 'border-red-500' : 'border-gray-300'}`}
+                                        >
+                                            <option value="">Chọn mẫu xe</option>
+                                            {models.map(m => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                        {errors.model && <p className="text-red-500 text-sm mt-1">{errors.model}</p>}
+                                    </div>
+                                )}
+
+                                {/* Hiển thị placeholder cho phụ kiện/phụ tùng */}
+                                {/* {(isAccessory || isSparePart) && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-white mb-2">
+                                            {isAccessory ? 'Dòng xe tương thích' : 'Dòng xe tương thích'}
+                                        </label>
+                                        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm">
+                                            {isAccessory
+                                                ? 'Model sẽ tự động được đặt theo loại phụ kiện'
+                                                : 'Model sẽ tự động được đặt theo loại phụ tùng'
+                                            }
+                                        </div>
+                                    </div>
+                                )} */}
                             </div>
                         </div>
 
@@ -695,49 +983,121 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
                                     <label className="block text-sm font-medium text-white mb-2">
-                                        Năm sản xuất *
+                                        <span className="flex items-center">
+                                            <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            Năm sản xuất *
+                                        </span>
                                     </label>
-                                    <input
-                                        type="number"
+                                    <select
                                         value={formData.year}
                                         onChange={e => handleInputChange('year', parseInt(e.target.value))}
                                         disabled={createProductMutation.isPending}
-                                        min="1900"
-                                        max={new Date().getFullYear() + 1}
                                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.year ? 'border-red-500' : 'border-gray-300'}`}
-                                    />
+                                    >
+                                        <option value="">Chọn năm sản xuất</option>
+                                        {Array.from({ length: new Date().getFullYear() - 1990 + 1 }, (_, i) => {
+                                            const year = new Date().getFullYear() - i;
+                                            return (
+                                                <option key={year} value={year}>
+                                                    {year}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
                                     {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-white mb-2">
-                                        Giá (VNĐ) *
+                                        <span className="flex items-center">
+                                            <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                            </svg>
+                                            Giá (VNĐ) *
+                                        </span>
                                     </label>
-                                    <input
-                                        type="number"
-                                        value={formData.price}
-                                        onChange={e => handleInputChange('price', parseFloat(e.target.value))}
-                                        disabled={createProductMutation.isPending}
-                                        min="0"
-                                        step="1000"
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={formData.price ? formData.price.toLocaleString('vi-VN') : ''}
+                                            onChange={e => {
+                                                // Remove all non-numeric characters and convert back to number
+                                                const numericValue = e.target.value.replace(/[^\d]/g, '');
+                                                handleInputChange('price', numericValue ? parseInt(numericValue) : 0);
+                                            }}
+                                            disabled={createProductMutation.isPending}
+                                            className={`w-full pl-8 pr-12 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.price ? 'border-red-500' : 'border-gray-300'}`}
+                                            placeholder="VD: 50,000,000"
+                                        />
+                                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                            <span className="text-gray-500 text-sm">₫</span>
+                                        </div>
+                                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                            <span className="text-gray-400 text-xs">VNĐ</span>
+                                        </div>
+                                    </div>
                                     {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                                    {formData.price && formData.price > 0 && (
+                                        <p className="text-gray-400 text-xs mt-1">
+                                            Giá: {formData.price.toLocaleString('vi-VN')} đồng
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-white mb-2">
-                                        Số lượng *
+                                        <span className="flex items-center">
+                                            <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                            </svg>
+                                            Số lượng *
+                                        </span>
                                     </label>
-                                    <input
-                                        type="number"
-                                        value={formData.quantity}
-                                        onChange={e => handleInputChange('quantity', parseInt(e.target.value))}
-                                        disabled={createProductMutation.isPending}
-                                        min="1"
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.quantity ? 'border-red-500' : 'border-gray-300'}`}
-                                    />
+                                    <div className="relative">
+                                        <div className="flex">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newQty = Math.max(1, (formData.quantity || 1) - 1);
+                                                    handleInputChange('quantity', newQty);
+                                                }}
+                                                disabled={createProductMutation.isPending || formData.quantity <= 1}
+                                                className="px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <input
+                                                type="number"
+                                                value={formData.quantity}
+                                                onChange={e => handleInputChange('quantity', parseInt(e.target.value) || 1)}
+                                                disabled={createProductMutation.isPending}
+                                                min="1"
+                                                max="9999"
+                                                className={`w-full px-3 py-2 border-t border-b text-center focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.quantity ? 'border-red-500' : 'border-gray-300'}`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newQty = Math.min(9999, (formData.quantity || 1) + 1);
+                                                    handleInputChange('quantity', newQty);
+                                                }}
+                                                disabled={createProductMutation.isPending || formData.quantity >= 9999}
+                                                className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-lg bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
                                     {errors.quantity && <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>}
+                                    <p className="text-gray-400 text-xs mt-1">
+                                        {formData.quantity === 1 ? 'Sản phẩm duy nhất' : `${formData.quantity} sản phẩm`}
+                                    </p>
                                 </div>
                             </div>
 
