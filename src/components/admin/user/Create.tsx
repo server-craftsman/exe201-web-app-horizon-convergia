@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { RegisterRequest } from '../../../types/user/User.req.type';
 import { helpers } from '@utils/index';
@@ -19,7 +19,7 @@ interface AddUserModalProps {
 }
 
 export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserModalProps) => {
-  const [formData, setFormData] = useState<Omit<RegisterRequest, 'gender' | 'address'> & { gender: Gender | undefined; role: UserRoleInteger | undefined; provinceCode?: string; districtCode?: string; wardCode?: string; streetAddress?: string }>({
+  const [formData, setFormData] = useState<Omit<RegisterRequest, 'gender' | 'address'> & { gender: Gender | undefined; role: UserRoleInteger | undefined; provinceCode?: string; districtCode?: string; wardCode?: string; streetAddress?: string; bankOption?: any }>({
     name: '',
     email: '',
     password: '',
@@ -37,6 +37,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
     districtCode: '',
     wardCode: '',
     streetAddress: '',
+    bankOption: null,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -149,7 +150,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
         businessType: formData.role === UserRoleInteger.SELLER ? (formData.businessType?.trim() || '') : '',
       };
       if (formData.role === UserRoleInteger.SELLER || formData.role === UserRoleInteger.SHIPPER) {
-        payload.bankName = formData.bankName?.trim() || '';
+        payload.bankName = formData.bankOption?.value?.trim?.() || formData.bankName?.trim() || '';
         payload.bankAccountNumber = formData.bankAccountNumber?.trim() || '';
         payload.bankAccountHolder = formData.bankAccountHolder?.trim() || '';
       }
@@ -160,6 +161,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
           name: '', email: '', password: '', phoneNumber: '',
           gender: undefined, dob: new Date(), role: undefined, shopName: '', shopDescription: '', businessType: '', bankName: '', bankAccountNumber: '', bankAccountHolder: '',
           provinceCode: '', districtCode: '', wardCode: '', streetAddress: '',
+          bankOption: null,
         });
         setErrors({});
         onSuccess();
@@ -189,6 +191,7 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
       name: '', email: '', password: '', phoneNumber: '',
       gender: undefined, dob: new Date(), role: undefined, shopName: '', shopDescription: '', businessType: '', bankName: '', bankAccountNumber: '', bankAccountHolder: '',
       provinceCode: '', districtCode: '', wardCode: '', streetAddress: '',
+      bankOption: null,
     });
     setErrors({});
     setIsSubmitting(false);
@@ -214,10 +217,8 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
       bank,
     }));
 
-  // Log options để debug
-  console.log('Banks raw data:', banks);
-  const bankOptions = getBankOptions(banks);
-  console.log('Bank options for Select:', bankOptions);
+  // Memo hóa bankOptions để tránh tạo lại mỗi lần render
+  const bankOptions = useMemo(() => getBankOptions(banks), [banks]);
 
   // Địa chỉ preview cho UI
   const getNameByCode = (list: any[], code: string) => {
@@ -520,19 +521,40 @@ export const AddUserModal = ({ open, onCancel, onSuccess, onAddUser }: AddUserMo
                         <Select
                           inputId="bankName"
                           name="bankName"
-                          options={getBankOptions(banks)}
-                          value={getBankOptions(banks).find((opt: { value: string }) => opt.value === formData.bankName) || null}
+                          options={bankOptions}
+                          value={bankOptions.find(opt => opt.value === formData.bankName) || null}
                           onChange={option => setFormData(prev => ({ ...prev, bankName: option?.value || '' }))}
                           isLoading={isLoadingBanks}
                           placeholder={isLoadingBanks ? 'Đang tải danh sách ngân hàng...' : 'Chọn ngân hàng'}
                           classNamePrefix="react-select"
                           styles={{
-                            option: (provided) => ({ ...provided, display: 'flex', alignItems: 'center', gap: 8 }),
-                            singleValue: (provided) => ({ ...provided, display: 'flex', alignItems: 'center', gap: 8 }),
+                            option: (provided, state) => ({
+                              ...provided,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              color: '#111',
+                              backgroundColor: state.isSelected ? '#ffe082' : state.isFocused ? '#fff8e1' : 'white',
+                            }),
+                            singleValue: (provided) => ({
+                              ...provided,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              color: '#111',
+                            }),
+                            input: (provided) => ({
+                              ...provided,
+                              color: '#111',
+                            }),
+                            placeholder: (provided) => ({
+                              ...provided,
+                              color: '#888',
+                            }),
                           }}
+                          menuPlacement="top"
                           isClearable
                           noOptionsMessage={() => 'Không tìm thấy ngân hàng'}
-                          menuPlacement="top"
                         />
                       </div>
                       {errors.bankName && <p className="text-red-400 text-xs">{errors.bankName}</p>}
