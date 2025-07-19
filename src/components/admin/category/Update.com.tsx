@@ -27,6 +27,10 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
     const dropzoneRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Custom dropdown state
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     // Load category data when modal opens
     useEffect(() => {
         if (open && category) {
@@ -41,6 +45,20 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
             }
         }
     }, [open, category]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const validateForm = useCallback(() => {
         const newErrors: { [key: string]: string } = {};
@@ -67,13 +85,19 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
         }
     }, [errors]);
 
-    const handleSelectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value || null }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+    const handleSelectCategory = useCallback((categoryId: string | null) => {
+        setFormData(prev => ({ ...prev, parentCategoryId: categoryId }));
+        setIsDropdownOpen(false);
+        if (errors.parentCategoryId) {
+            setErrors(prev => ({ ...prev, parentCategoryId: '' }));
         }
     }, [errors]);
+
+    const getSelectedCategoryName = () => {
+        if (!formData.parentCategoryId) return '-- Chọn danh mục cha (để trống nếu là gốc) --';
+        const selectedCategory = categories.find(cat => cat.id === formData.parentCategoryId);
+        return selectedCategory ? selectedCategory.name : 'Không rõ';
+    };
 
     const handleUploadImage = async (files: FileList | null) => {
         if (!files || files.length === 0) return;
@@ -314,27 +338,68 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
                                     <label htmlFor="parentCategoryId" className="block text-sm font-medium text-gray-300">
                                         Danh mục cha
                                     </label>
-                                    <select
-                                        id="parentCategoryId"
-                                        name="parentCategoryId"
-                                        value={formData.parentCategoryId || ''}
-                                        onChange={handleSelectChange}
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
-                                        disabled={isSubmitting}
-                                    >
-                                        <option value="">-- Chọn danh mục cha (để trống nếu là gốc) --</option>
-                                        {categories.filter(c => c.id !== category?.id).map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div
+                                            ref={dropdownRef}
+                                            className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 max-h-48 overflow-y-auto ${isDropdownOpen ? 'border-blue-500 focus:border-blue-500 focus:ring-blue-500/20' : ''}`}
+                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 100)}
+                                            tabIndex={0}
+                                            aria-label="Danh mục cha"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>{getSelectedCategoryName()}</span>
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {isDropdownOpen && (
+                                            <div className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                                                <div
+                                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${!formData.parentCategoryId ? 'bg-blue-500/20 text-blue-400' : ''}`}
+                                                    onClick={() => handleSelectCategory(null)}
+                                                >
+                                                    -- Chọn danh mục cha (để trống nếu là gốc) --
+                                                </div>
+                                                {categories.filter(c => c.id !== category?.id).map(cat => (
+                                                    <div
+                                                        key={cat.id}
+                                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${cat.id === formData.parentCategoryId ? 'bg-blue-500/20 text-blue-400' : ''}`}
+                                                        onClick={() => handleSelectCategory(cat.id)}
+                                                    >
+                                                        {cat.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                     {category && category.parentCategoryId && (
                                         <p className="text-gray-500 text-xs">
                                             Cha hiện tại: <span className="text-gray-400">{categories.find(c => c.id === category.parentCategoryId)?.name || 'Không rõ'}</span>
                                         </p>
                                     )}
                                 </div>
+
+                                {/* Custom scrollbar styles for the dropdown */}
+                                <style>
+                                    {`
+                                        .max-h-60::-webkit-scrollbar {
+                                            width: 8px;
+                                        }
+                                        .max-h-60::-webkit-scrollbar-track {
+                                            background: #374151;
+                                            border-radius: 4px;
+                                        }
+                                        .max-h-60::-webkit-scrollbar-thumb {
+                                            background: #3b82f6;
+                                            border-radius: 4px;
+                                        }
+                                        .max-h-60::-webkit-scrollbar-thumb:hover {
+                                            background: #2563eb;
+                                        }
+                                    `}
+                                </style>
 
                                 {/* Image Upload */}
                                 <div className="space-y-2">

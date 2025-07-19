@@ -11,15 +11,17 @@ export const useProduct = () => {
     // Get all products query
     const useProducts = ({
         categoryId = '',
+        location = '',
         sortField = 'createdAt',
         ascending = false,
         pageNumber = 1,
         pageSize = 10
     } = {}) => {
         return useQuery({
-            queryKey: ['products', categoryId, sortField, ascending, pageNumber, pageSize],
+            queryKey: ['products', categoryId, location, sortField, ascending, pageNumber, pageSize],
             queryFn: () => ProductService.getProducts({
                 categoryId,
+                location,
                 sortField,
                 ascending,
                 pageNumber,
@@ -36,6 +38,7 @@ export const useProduct = () => {
     // Get unverified products by sellerId, hỗ trợ filter
     const useUnverifiedProductsBySeller = (sellerId: string, filter?: {
         categoryId?: string;
+        location?: string;
         sortField?: string;
         ascending?: boolean;
         pageNumber?: number;
@@ -45,6 +48,7 @@ export const useProduct = () => {
             queryKey: ['products', 'unverified-unpaid', sellerId, filter],
             queryFn: () => ProductService.getProductUnverified(sellerId, {
                 categoryId: filter?.categoryId || '',
+                location: filter?.location || '',
                 sortField: filter?.sortField || 'createdAt',
                 ascending: filter?.ascending ?? false,
                 pageNumber: filter?.pageNumber,

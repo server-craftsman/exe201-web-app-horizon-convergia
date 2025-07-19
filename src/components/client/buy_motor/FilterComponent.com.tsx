@@ -63,12 +63,13 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilter }) => {
   React.useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { data } = await getCategorys.mutateAsync();
+        // Request all categories for filtering (no pagination limit)
+        const { data } = await getCategorys.mutateAsync({ pageSize: 1000 });
         if (data) {
           setCategories(data);
         }
       } catch (error) {
-        console.error('Fetch categories error:', error);
+        console.error('Error fetching categories:', error);
       }
     };
     fetchCategories();

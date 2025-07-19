@@ -1,10 +1,11 @@
-import {BaseService} from "@app/api/base.service.ts";
-import type {ApiResponse} from "@app/interface/apiResponse.interface.ts";
+import { BaseService } from "@app/api/base.service.ts";
+import type { ApiResponse } from "@app/interface/apiResponse.interface.ts";
 // @ts-ignore
-import type {CreateCategory} from "@types/category/Category.req.type";
+import type { CreateCategory, GetCategoriesParams } from "@types/category/Category.req.type";
 // @ts-ignore
-import type {CategoryResponse} from "@types/category/Category.res.type";
-import {API_PATH} from "@consts/api.path.const";
+import type { CategoryResponse } from "@types/category/Category.res.type";
+import { API_PATH } from "@consts/api.path.const";
+
 
 export const CategoryService = {
     createCategory(params: CreateCategory) {
@@ -20,17 +21,29 @@ export const CategoryService = {
         });
     },
 
-    getCategories(name?: string) {
+    getCategories(params?: GetCategoriesParams) {
         let url = API_PATH.CATEGORY.GET_ALL;
-        if (name) {
-            // Append query param for name filter
-            const params = new URLSearchParams({ name });
-            url += `?${params.toString()}`;
+        const searchParams = new URLSearchParams();
+
+        if (params?.name) {
+            searchParams.append('name', params.name);
         }
+        if (params?.pageNumber !== undefined) {
+            searchParams.append('pageNumber', params.pageNumber.toString());
+        }
+        if (params?.pageSize !== undefined) {
+            searchParams.append('pageSize', params.pageSize.toString());
+        }
+
+        if (searchParams.toString()) {
+            url += `?${searchParams.toString()}`;
+        }
+
         return BaseService.get<CategoryResponse[]>({
             url: url
         });
     },
+
     getCategory(id: string) {
         return BaseService.get<CategoryResponse>({
             url: API_PATH.CATEGORY.GET_BY_ID(id)

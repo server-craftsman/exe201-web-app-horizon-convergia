@@ -70,7 +70,8 @@ const Banner: React.FC = () => {
     const fetchCategories = async () => {
       setCategoriesLoading(true);
       try {
-        const { data } = await getCategorys.mutateAsync();
+        // Request all categories for the banner navigation (no pagination)
+        const { data } = await getCategorys.mutateAsync({ pageSize: 1000 });
         if (data) {
           const allCategories = data;
           const parentCategories = allCategories.filter((cat) => !cat.parentCategoryId);

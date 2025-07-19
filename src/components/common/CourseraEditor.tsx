@@ -29,7 +29,7 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
         underline: false
     });
     const [showColorPicker, setShowColorPicker] = useState(false);
-    const [colorAnchor, setColorAnchor] = useState<HTMLButtonElement | null>(null);
+    // const [colorAnchor, setColorAnchor] = useState<HTMLButtonElement | null>(null);
     const colorPickerRef = useRef<HTMLDivElement>(null);
     // Lưu selection khi mở bảng màu
     const [savedSelection, setSavedSelection] = useState<Range | null>(null);
@@ -267,9 +267,9 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
             icon: <span style={{ color: '#f59e0b' }}>A</span>,
             title: 'Màu chữ',
             isActive: false,
-            onClick: (e: any) => {
+            onClick: () => {
                 setShowColorPicker((v) => !v);
-                setColorAnchor(e.currentTarget);
+                // setColorAnchor(e.currentTarget);
                 saveSelection();
             }
         },

@@ -19,7 +19,10 @@ const PopularBrands: React.FC = () => {
     const fetchBrands = async () => {
       setLoading(true);
       try {
-        const { data } = await getCategorys.mutateAsync();
+        const { data } = await getCategorys.mutateAsync({
+          pageNumber: 1,
+          pageSize: 1000
+        });
         if (data) {
           const categories = data;
           const parentCategories = categories.filter((cat) => !cat.parentCategoryId);

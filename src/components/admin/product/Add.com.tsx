@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ProductService } from '../../../services/product/product.service';
 import type { CreateProduct } from '../../../types/product/Product.req.type';
@@ -69,8 +69,8 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
     const [uploadingImages, setUploadingImages] = useState(false);
 
     /* ---------------- Danh mục ---------------- */
-    const [categories, setCategories] = useState<ICategory[]>([]);
-    const { getCategorys } = useCategory();
+    const { useGetCategories } = useCategory();
+    const { data: categories = [] } = useGetCategories({ pageNumber: 1, pageSize: 1000 });
 
     // Thêm state cho brands/models động
     const [brands, setBrands] = useState<string[]>([]);
@@ -78,68 +78,98 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
 
     // Helper functions to determine category type
     const getCategoryType = (categoryId: string): 'motorcycle' | 'accessory' | 'sparepart' | 'other' => {
-        const category = categories.find(c => c.id.toString() === categoryId);
-        if (!category) return 'other';
+        console.log('🔥 getCategoryType called with:', { categoryId, categoriesCount: categories.length });
 
-        // Check if current category matches
-        const categoryName = category.name.toLowerCase();
-        if (categoryName.includes('xe máy') || categoryName.includes('xe may')) {
-            return 'motorcycle';
-        }
-        if (categoryName.includes('phụ kiện') || categoryName.includes('phu kien')) {
-            return 'accessory';
-        }
-        if (categoryName.includes('phụ tùng') || categoryName.includes('phu tung')) {
-            return 'sparepart';
+        if (!categoryId) {
+            console.log('❌ No categoryId provided');
+            return 'other';
         }
 
-        // Check parent category if exists
-        if (category.parentCategoryId) {
-            const parentCategory = categories.find(c => c.id.toString() === category.parentCategoryId);
-            if (parentCategory) {
-                const parentName = parentCategory.name.toLowerCase();
-                if (parentName.includes('xe máy') || parentName.includes('xe may')) {
-                    return 'motorcycle';
-                }
-                if (parentName.includes('phụ kiện') || parentName.includes('phu kien')) {
-                    return 'accessory';
-                }
-                if (parentName.includes('phụ tùng') || parentName.includes('phu tung')) {
-                    return 'sparepart';
-                }
+        const findCategoryType = (catId: string, visited = new Set()): 'motorcycle' | 'accessory' | 'sparepart' | 'other' => {
+            // Prevent infinite loops
+            if (visited.has(catId)) {
+                console.log('🔄 Loop detected for:', catId);
+                return 'other';
             }
-        }
+            visited.add(catId);
 
-        return 'other';
+            const category = categories.find((c: ICategory) => c.id.toString() === catId);
+            if (!category) {
+                console.log('❌ Category not found for ID:', catId, 'Available categories:', categories.map((c: ICategory) => ({ id: c.id, name: c.name })));
+                return 'other';
+            }
+
+            // Check current category name với logging chi tiết
+            const normalizeText = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+            // const categoryNameRaw = category.name.toLowerCase().trim();
+            const categoryName = normalizeText(category.name);
+            console.log('🔍 Checking category:', category.name, '→ normalized:', categoryName);
+
+            // Exact match và includes match cho tên tiếng Việt
+            if (categoryName === 'xe may' || categoryName.includes('xe may') ||
+                categoryName.includes('moto') || categoryName.includes('motorcycle')) {
+                console.log('✅ Detected as MOTORCYCLE for:', category.name);
+                return 'motorcycle';
+            }
+            if (categoryName === 'phu kien' || categoryName.includes('phu kien') ||
+                categoryName.includes('accessory')) {
+                console.log('✅ Detected as ACCESSORY for:', category.name);
+                return 'accessory';
+            }
+            if (categoryName === 'phu tung' || categoryName.includes('phu tung') ||
+                categoryName.includes('spare part') || categoryName.includes('linh kien')) {
+                console.log('✅ Detected as SPAREPART for:', category.name);
+                return 'sparepart';
+            }
+
+            // If current category doesn't match, check parent category
+            if (category.parentCategoryId) {
+                console.log('⬆️ Checking parent category for:', category.name);
+                return findCategoryType(String(category.parentCategoryId), visited);
+            }
+
+            console.log('❌ No match found for:', category.name, '→ returning OTHER');
+            return 'other';
+        };
+
+        const result = findCategoryType(categoryId);
+        console.log('🎯 Final category type result:', result, 'for categoryId:', categoryId);
+        return result;
     };
-
-    const categoryType = getCategoryType(formData.categoryId);
-    const isAccessory = categoryType === 'accessory';
-    const isSparePart = categoryType === 'sparepart';
-    const isMotorcycle = categoryType === 'motorcycle';
 
     // Cập nhật danh sách thương hiệu và model khi thay đổi danh mục
     useEffect(() => {
-        if (isAccessory) {
-            setBrands(ACCESSORY_BRANDS);
-            setModels(ACCESSORY_MODELS);
-        } else if (isSparePart) {
-            setBrands(SPAREPART_BRANDS);
-            setModels(SPAREPART_MODELS);
-        } else {
-            setBrands(MOTORCYCLE_BRANDS);
-            setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
+        if (categories.length > 0 && formData.categoryId) {
+            const categoryType = getCategoryType(formData.categoryId);
+            console.log('Category type detected:', categoryType, 'for category:', formData.categoryId);
+
+            if (categoryType === 'accessory') {
+                setBrands(ACCESSORY_BRANDS);
+                setModels(ACCESSORY_MODELS);
+            } else if (categoryType === 'sparepart') {
+                setBrands(SPAREPART_BRANDS);
+                setModels(SPAREPART_MODELS);
+            } else if (categoryType === 'motorcycle') {
+                setBrands(MOTORCYCLE_BRANDS);
+                setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
+            } else {
+                setBrands([]);
+                setModels([]);
+            }
+
+            // Reset brand and model when category type changes
+            setFormData(prev => ({ ...prev, brand: '', model: '' }));
         }
-        setFormData(prev => ({ ...prev, brand: '', model: '' }));
     }, [formData.categoryId, categories]);
 
     // Khi chọn brand, cập nhật models (chỉ với xe máy)
     useEffect(() => {
-        if (!isAccessory && !isSparePart) {
+        const currentCategoryType = getCategoryType(formData.categoryId);
+        if (currentCategoryType === 'motorcycle') {
             setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
             setFormData(prev => ({ ...prev, model: '' }));
         }
-    }, [formData.brand, isAccessory, isSparePart]);
+    }, [formData.brand, formData.categoryId, categories]);
 
     /* ---------------- Địa chỉ ---------------- */
     const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
@@ -171,21 +201,7 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
     ]);
 
     /** Lấy danh sách danh mục */
-    const fetchCategories = useCallback(async () => {
-        try {
-            const { data } = await getCategorys.mutateAsync();
-            setCategories(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error('Error fetching categories:', err);
-            setCategories([]);
-        }
-    }, [getCategorys]);
 
-    // Fetch categories once on mount
-    useEffect(() => {
-        fetchCategories();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     // Lấy adminId từ localStorage (hoặc context nếu có)
     const adminId = localStorage.getItem('userId') || '';
@@ -216,11 +232,15 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
         console.log('Validating form with data:', formData);
 
         // Brand/model validation động
+        const currentCategoryType = getCategoryType(formData.categoryId);
+        const isCurrentAccessory = currentCategoryType === 'accessory';
+        const isCurrentSparePart = currentCategoryType === 'sparepart';
+
         if (!formData.brand?.trim()) newErrors.brand = 'Thương hiệu là bắt buộc';
         else if (
-            (isAccessory && !ACCESSORY_BRANDS.includes(formData.brand)) ||
-            (isSparePart && !SPAREPART_BRANDS.includes(formData.brand)) ||
-            (!isAccessory && !isSparePart && !MOTORCYCLE_BRANDS.includes(formData.brand))
+            (isCurrentAccessory && !ACCESSORY_BRANDS.includes(formData.brand)) ||
+            (isCurrentSparePart && !SPAREPART_BRANDS.includes(formData.brand)) ||
+            (!isCurrentAccessory && !isCurrentSparePart && !MOTORCYCLE_BRANDS.includes(formData.brand))
         ) {
             newErrors.brand = 'Thương hiệu không hợp lệ';
         }
@@ -295,7 +315,25 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
 
     /* ---------------- Category-specific fields ---------------- */
     const getCategorySpecificFields = () => {
-        if (isMotorcycle) {
+        console.log('🚀 getCategorySpecificFields called:');
+        console.log('   - categoryId:', formData.categoryId);
+        console.log('   - categories loaded:', categories.length);
+        console.log('   - categories list:', categories.map((c: ICategory) => ({ id: c.id, name: c.name })));
+
+        if (!formData.categoryId) {
+            console.log('❌ No categoryId selected, returning null');
+            return null;
+        }
+
+        if (categories.length === 0) {
+            console.log('❌ Categories not loaded yet, returning null');
+            return null;
+        }
+
+        const categoryType = getCategoryType(formData.categoryId);
+
+        if (categoryType === 'motorcycle') {
+            console.log('🏍️ Returning MOTORCYCLE fields');
             return (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -563,7 +601,8 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
             );
         }
 
-        if (isAccessory) {
+        if (categoryType === 'accessory') {
+            console.log('🎯 Returning ACCESSORY fields');
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -609,7 +648,7 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
             );
         }
 
-        if (isSparePart) {
+        if (categoryType === 'sparepart') {
             return (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -894,19 +933,40 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                                     <label className="block text-sm font-medium text-white mb-2">
                                         Danh mục *
                                     </label>
-                                    <select
-                                        value={formData.categoryId}
-                                        onChange={e => handleInputChange('categoryId', e.target.value)}
-                                        disabled={createProductMutation.isPending}
-                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.categoryId ? 'border-red-500' : 'border-gray-300'}`}
-                                    >
-                                        <option value="">Chọn danh mục</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.categoryId}
+                                            onChange={e => handleInputChange('categoryId', e.target.value)}
+                                            disabled={createProductMutation.isPending}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 ${errors.categoryId ? 'border-red-500' : 'border-gray-300'} max-h-48 overflow-y-auto`}
+                                            style={{ overflowY: 'auto' }}
+                                            size={1}
+                                        >
+                                            <option value="">Chọn danh mục</option>
+                                            {categories.map((cat: ICategory) => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {/* Custom scrollbar for select dropdown (if supported by browser) */}
+                                        <style>
+                                            {`
+                                                select.max-h-48 {
+                                                    scrollbar-width: thin;
+                                                    scrollbar-color: #f59e42 #f3f4f6;
+                                                }
+                                                select.max-h-48::-webkit-scrollbar {
+                                                    width: 6px;
+                                                    background: #f3f4f6;
+                                                }
+                                                select.max-h-48::-webkit-scrollbar-thumb {
+                                                    background: #f59e42;
+                                                    border-radius: 4px;
+                                                }
+                                            `}
+                                        </style>
+                                    </div>
                                     {errors.categoryId && (
                                         <p className="text-red-500 text-sm mt-1">{errors.categoryId}</p>
                                     )}
@@ -933,7 +993,7 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                                 </div>
 
                                 {/* Chỉ hiển thị Model field cho xe máy */}
-                                {isMotorcycle && (
+                                {getCategoryType(formData.categoryId) === 'motorcycle' && (
                                     <div>
                                         <label className="block text-sm font-medium text-white mb-2">
                                             Mẫu xe *
@@ -954,13 +1014,13 @@ export const AddProductAdminComponent: React.FC<AddProductAdminProps> = ({
                                 )}
 
                                 {/* Hiển thị placeholder cho phụ kiện/phụ tùng */}
-                                {/* {(isAccessory || isSparePart) && (
+                                {/* {(getCategoryType(formData.categoryId) === 'accessory' || getCategoryType(formData.categoryId) === 'sparepart') && (
                                     <div>
                                         <label className="block text-sm font-medium text-white mb-2">
-                                            {isAccessory ? 'Dòng xe tương thích' : 'Dòng xe tương thích'}
+                                            {getCategoryType(formData.categoryId) === 'accessory' ? 'Dòng xe tương thích' : 'Dòng xe tương thích'}
                                         </label>
                                         <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm">
-                                            {isAccessory
+                                            {getCategoryType(formData.categoryId) === 'accessory'
                                                 ? 'Model sẽ tự động được đặt theo loại phụ kiện'
                                                 : 'Model sẽ tự động được đặt theo loại phụ tùng'
                                             }

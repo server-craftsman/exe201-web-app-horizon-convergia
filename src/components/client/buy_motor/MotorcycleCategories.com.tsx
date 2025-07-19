@@ -53,14 +53,15 @@ const MotorcycleCategories: React.FC = () => {
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        const { data } = await getCategorys.mutateAsync();
+        // Request all categories for display (no pagination limit)
+        const { data } = await getCategorys.mutateAsync({ pageSize: 1000 });
         if (data) {
           // Filter parent categories only
           const parentCategories = data.filter((cat: any) => !cat.parentCategoryId);
-          setCategories(parentCategories);
+          setCategories(parentCategories.slice(0, 8)); // Limit to 8 categories for display
         }
       } catch (error) {
-        console.error('Fetch categories error:', error);
+        console.error('Error fetching categories:', error);
       } finally {
         setLoading(false);
       }

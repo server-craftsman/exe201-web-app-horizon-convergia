@@ -65,13 +65,14 @@ const PopularCategories: React.FC = () => {
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        const { data } = await getCategorys.mutateAsync();
+        // Request categories for display (limit to reasonable number)
+        const { data } = await getCategorys.mutateAsync({ pageSize: 20 });
         if (data) {
           // Filter categories that might be related to accessories or all categories
           setCategories(data.slice(0, 6)); // Limit to 6 categories for display
         }
       } catch (error) {
-        console.error('Fetch categories error:', error);
+        console.error('Error fetching categories:', error);
       } finally {
         setLoading(false);
       }
