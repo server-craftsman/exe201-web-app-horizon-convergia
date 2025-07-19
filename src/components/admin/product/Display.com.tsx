@@ -56,7 +56,8 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
 
     const fetchCategories = useCallback(async () => {
         try {
-            const { data } = await getCategorys.mutateAsync();
+            // Request all categories for the dropdown (no pagination limit)
+            const { data } = await getCategorys.mutateAsync({ pageNumber: 1, pageSize: 1000 });
             setCategories(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching categories:', err);
@@ -83,7 +84,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
         fetchCategories();
     }, []);
 
-    // Fetch products using the custom hook
+    // Fetch products using the custom hook with location support
     const {
         data: products,
         isLoading,
@@ -91,6 +92,7 @@ export const DisplayProductsAdminComponent: React.FC<DisplayProductsAdminProps> 
         refetch
     } = useProducts({
         categoryId: categoryFilter === 'all' ? '' : categoryFilter,
+        location: searchTerm ? searchTerm : '', // Use searchTerm for location filtering as well
         sortField: 'createdAt',
         ascending: false,
         pageNumber,

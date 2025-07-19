@@ -78,7 +78,10 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
 
         const loadCategories = async () => {
             try {
-                const result = await getCategorys.mutateAsync();
+                const result = await getCategorys.mutateAsync({
+                    pageNumber: 1,
+                    pageSize: 1000
+                });
                 if (result?.data) {
                     setCategories(result.data);
                 }

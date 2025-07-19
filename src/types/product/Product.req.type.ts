@@ -45,6 +45,7 @@ export interface UpdateProduct {
 
 export interface FilterProduct {
     categoryId: string;
+    location: string;
     sortField: string;
     ascending: boolean;
     pageNumber?: number;

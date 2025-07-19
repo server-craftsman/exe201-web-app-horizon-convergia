@@ -3,6 +3,8 @@ import { useProduct, useCategory } from '../../../hooks';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
 import AddProduct from './AddProduct.com';
 import { PlusOutlined } from '@ant-design/icons';
+// @ts-ignore
+import { GetCategoriesParams } from '../../../types/category/Category.req.type';
 
 const Products: React.FC = () => {
     const {
@@ -18,7 +20,8 @@ const Products: React.FC = () => {
     useEffect(() => {
         const loadCategories = async () => {
             try {
-                const result = await getCategorys.mutateAsync();
+                // Request all categories for the dropdown (no pagination limit)
+                const result = await getCategorys.mutateAsync({ pageSize: 1000 });
                 if (result?.data) setCategories(result.data);
             } catch { }
         };

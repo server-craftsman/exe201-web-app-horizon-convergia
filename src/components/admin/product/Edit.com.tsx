@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ProductService } from '../../../services/product/product.service';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
@@ -74,17 +74,16 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
     const [uploadingImages, setUploadingImages] = useState(false);
 
     // Category list for dropdown
-    const [categories, setCategories] = useState<ICategory[]>([]);
-
-    const { getCategorys } = useCategory();
+    const { useGetCategories } = useCategory();
+    const { data: categories = [] } = useGetCategories({ pageNumber: 1, pageSize: 1000 });
 
     // Thêm state cho brands/models động
     const [brands, setBrands] = useState<string[]>([]);
     const [models, setModels] = useState<string[]>([]);
 
-    const UNIVERSAL_MODELS = [
-        'Tất cả', 'Xe ga', 'Xe số', 'Xe côn tay', 'Xe phân khối lớn', 'Xe điện', 'Khác'
-    ];
+    // const UNIVERSAL_MODELS = [
+    //     'Tất cả', 'Xe ga', 'Xe số', 'Xe côn tay', 'Xe phân khối lớn', 'Xe điện', 'Khác'
+    // ];
 
     /* ---------------- Địa chỉ ---------------- */
     const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
@@ -108,47 +107,50 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
 
     // Helper functions to determine category type
     const getCategoryType = (categoryId: string): 'motorcycle' | 'accessory' | 'sparepart' | 'other' => {
-        const category = categories.find(c => c.id.toString() === categoryId);
-        if (!category) return 'other';
+        if (!categoryId) return 'other';
 
-        // Check if current category matches
-        const categoryName = category.name.toLowerCase();
-        if (categoryName.includes('xe máy') || categoryName.includes('xe may')) {
-            return 'motorcycle';
-        }
-        if (categoryName.includes('phụ kiện') || categoryName.includes('phu kien')) {
-            return 'accessory';
-        }
-        if (categoryName.includes('phụ tùng') || categoryName.includes('phu tung')) {
-            return 'sparepart';
-        }
+        const findCategoryType = (catId: string, visited = new Set()): 'motorcycle' | 'accessory' | 'sparepart' | 'other' => {
+            // Prevent infinite loops
+            if (visited.has(catId)) return 'other';
+            visited.add(catId);
 
-        // Check parent category if exists
-        if (category.parentCategoryId) {
-            const parentCategory = categories.find(c => c.id.toString() === category.parentCategoryId);
-            if (parentCategory) {
-                const parentName = parentCategory.name.toLowerCase();
-                if (parentName.includes('xe máy') || parentName.includes('xe may')) {
-                    return 'motorcycle';
-                }
-                if (parentName.includes('phụ kiện') || parentName.includes('phu kien')) {
-                    return 'accessory';
-                }
-                if (parentName.includes('phụ tùng') || parentName.includes('phu tung')) {
-                    return 'sparepart';
-                }
+            const category = categories.find((c: ICategory) => c.id.toString() === catId);
+            if (!category) return 'other';
+
+            const normalizeText = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+            const categoryName = normalizeText(category.name);
+            console.log('🔍 Checking category (Edit):', category.name, '→ normalized:', categoryName);
+
+            // Exact match và includes match cho tên tiếng Việt
+            if (categoryName === 'xe may' || categoryName.includes('xe may') ||
+                categoryName.includes('moto') || categoryName.includes('motorcycle')) {
+                console.log('✅ Detected as MOTORCYCLE for:', category.name);
+                return 'motorcycle';
             }
-        }
+            if (categoryName === 'phu kien' || categoryName.includes('phu kien') ||
+                categoryName.includes('accessory')) {
+                console.log('✅ Detected as ACCESSORY for:', category.name);
+                return 'accessory';
+            }
+            if (categoryName === 'phu tung' || categoryName.includes('phu tung') ||
+                categoryName.includes('spare part') || categoryName.includes('linh kien')) {
+                console.log('✅ Detected as SPAREPART for:', category.name);
+                return 'sparepart';
+            }
 
-        return 'other';
+            // If current category doesn't match, check parent category
+            if (category.parentCategoryId) {
+                console.log('⬆️ Checking parent category for:', category.name);
+                return findCategoryType(String(category.parentCategoryId), visited);
+            }
+
+            console.log('❌ No match found for:', category.name, '→ returning OTHER');
+            return 'other';
+        };
+
+        return findCategoryType(categoryId);
     };
 
-    const categoryType = getCategoryType(formData.categoryId || '');
-    const isAccessory = categoryType === 'accessory';
-    const isSparePart = categoryType === 'sparepart';
-    const isMotorcycle = categoryType === 'motorcycle';
-
-    // Thêm ref cho drag & drop
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragActive, setIsDragActive] = useState(false);
     const isInitialMount = useRef(true);
@@ -256,34 +258,22 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
         setFormData(prev => ({ ...prev, location: full }));
     }, [streetAddress, provinceCode, districtCode, wardCode, provinces.data, districtsQuery.data, wardsQuery.data]);
 
-    const fetchCategories = useCallback(async () => {
-        try {
-            const { data } = await getCategorys.mutateAsync();
-            setCategories(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error('Error fetching categories:', err);
-            setCategories([]);
-        }
-    }, [getCategorys]);
-
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
     // Khởi tạo brands và models dựa trên dữ liệu product khi categories được load
     useEffect(() => {
-        if (categories.length > 0 && isInitialMount.current) {
+        if (categories.length > 0 && formData.categoryId) {
             console.log('Initializing brands/models for category:', formData.categoryId);
             console.log('Product brand:', formData.brand, 'Product model:', formData.model);
 
             const catType = getCategoryType(formData.categoryId || '');
+            console.log('Category type detected:', catType, 'for category:', formData.categoryId);
+
             if (catType === 'accessory') {
                 setBrands(ACCESSORY_BRANDS);
-                setModels(UNIVERSAL_MODELS);
+                setModels(ACCESSORY_MODELS);
             } else if (catType === 'sparepart') {
                 setBrands(SPAREPART_BRANDS);
-                setModels(UNIVERSAL_MODELS);
-            } else {
+                setModels(SPAREPART_MODELS);
+            } else if (catType === 'motorcycle') {
                 setBrands(MOTORCYCLE_BRANDS);
                 // Set models based on current brand
                 if (formData.brand && MOTORCYCLE_BRANDS_MODELS[formData.brand as keyof typeof MOTORCYCLE_BRANDS_MODELS]) {
@@ -291,26 +281,31 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                 } else {
                     setModels([]);
                 }
+            } else {
+                setBrands([]);
+                setModels([]);
             }
-
-            isInitialMount.current = false;
         }
     }, [categories, formData.categoryId, formData.brand]);
 
     // Cập nhật danh sách thương hiệu và model khi thay đổi danh mục
     useEffect(() => {
-        if (isAccessory) {
-            setBrands(ACCESSORY_BRANDS);
-            setModels(ACCESSORY_MODELS);
-        } else if (isSparePart) {
-            setBrands(SPAREPART_BRANDS);
-            setModels(SPAREPART_MODELS);
-        } else {
-            setBrands(MOTORCYCLE_BRANDS);
-            setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
-        }
-        if (categories.length > 0 && !isInitialMount.current) {
-            setFormData(prev => ({ ...prev, brand: '', model: '' }));
+        if (categories.length > 0 && formData.categoryId) {
+            const categoryType = getCategoryType(formData.categoryId);
+
+            if (categoryType === 'accessory') {
+                setBrands(ACCESSORY_BRANDS);
+                setModels(ACCESSORY_MODELS);
+            } else if (categoryType === 'sparepart') {
+                setBrands(SPAREPART_BRANDS);
+                setModels(SPAREPART_MODELS);
+            } else {
+                setBrands(MOTORCYCLE_BRANDS);
+                setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
+            }
+            if (categories.length > 0 && !isInitialMount.current) {
+                setFormData(prev => ({ ...prev, brand: '', model: '' }));
+            }
         }
         if (categories.length > 0) {
             isInitialMount.current = false;
@@ -319,13 +314,16 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
 
     // Khi chọn brand, cập nhật models (chỉ với xe máy)
     useEffect(() => {
-        if (!isAccessory && !isSparePart) {
-            setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
-            if (!isInitialMount.current) {
-                setFormData(prev => ({ ...prev, model: '' }));
+        if (categories.length > 0 && formData.categoryId) {
+            const categoryType = getCategoryType(formData.categoryId);
+            if (categoryType === 'motorcycle') {
+                setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
+                if (!isInitialMount.current) {
+                    setFormData(prev => ({ ...prev, model: '' }));
+                }
             }
         }
-    }, [formData.brand, isAccessory, isSparePart]);
+    }, [formData.brand, formData.categoryId, categories]);
 
     // Fix default marker icon for leaflet
     useEffect(() => {
@@ -539,12 +537,16 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
         console.log('Validating form with data:', formData);
 
         // Brand/model validation động
+        const currentCategoryType = getCategoryType(formData.categoryId || '');
+        const isCurrentAccessory = currentCategoryType === 'accessory';
+        const isCurrentSparePart = currentCategoryType === 'sparepart';
+
         if (!formData.brand?.trim()) {
             newErrors.brand = 'Thương hiệu là bắt buộc';
         } else if (
-            (isAccessory && !ACCESSORY_BRANDS.includes(formData.brand)) ||
-            (isSparePart && !SPAREPART_BRANDS.includes(formData.brand)) ||
-            (!isAccessory && !isSparePart && !MOTORCYCLE_BRANDS.includes(formData.brand))
+            (isCurrentAccessory && !ACCESSORY_BRANDS.includes(formData.brand)) ||
+            (isCurrentSparePart && !SPAREPART_BRANDS.includes(formData.brand)) ||
+            (!isCurrentAccessory && !isCurrentSparePart && !MOTORCYCLE_BRANDS.includes(formData.brand))
         ) {
             newErrors.brand = 'Thương hiệu không hợp lệ';
         }
@@ -656,7 +658,31 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
 
     // Get category-specific fields
     const getCategorySpecificFields = () => {
+        console.log('🚀 getCategorySpecificFields (Edit) called:');
+        console.log('   - categoryId:', formData.categoryId);
+        console.log('   - categories loaded:', categories.length);
+        console.log('   - categories list:', categories.map((c: ICategory) => ({ id: c.id, name: c.name })));
+
+        if (!formData.categoryId) {
+            console.log('❌ No categoryId selected, returning null');
+            return null;
+        }
+
+        if (categories.length === 0) {
+            console.log('❌ Categories not loaded yet, returning null');
+            return null;
+        }
+
+        const categoryType = getCategoryType(formData.categoryId || '');
+        const isMotorcycle = categoryType === 'motorcycle';
+        const isAccessory = categoryType === 'accessory';
+        const isSparePart = categoryType === 'sparepart';
+
+        console.log('   - categoryType detected:', categoryType);
+        console.log('   - isMotorcycle:', isMotorcycle, 'isAccessory:', isAccessory, 'isSparePart:', isSparePart);
+
         if (isMotorcycle) {
+            console.log('🏍️ Returning MOTORCYCLE fields');
             return (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1092,19 +1118,43 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                                     <label className="block text-sm font-medium text-white mb-2">
                                         Danh mục *
                                     </label>
-                                    <select
-                                        value={formData.categoryId}
-                                        onChange={(e) => handleInputChange('categoryId', e.target.value)}
-                                        disabled={updateProductMutation.isPending}
-                                        className={`w-full text-gray-700 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent ${errors.categoryId ? 'border-red-500' : 'border-gray-300'}`}
-                                    >
-                                        <option value="">Chọn danh mục</option>
-                                        {categories.map((cat) => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.categoryId}
+                                            onChange={e => handleInputChange('categoryId', e.target.value)}
+                                            disabled={updateProductMutation.isPending}
+                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-700 max-h-48 overflow-y-auto ${errors.categoryId ? 'border-red-500' : 'border-gray-300'}`}
+                                            size={1}
+                                            style={{ overflowY: 'auto' }}
+                                        >
+                                            <option value="">Chọn danh mục</option>
+                                            {categories.map((cat: ICategory) => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {/* Custom scrollbar for select dropdown */}
+                                        <style>
+                                            {`
+                                                select.max-h-48 {
+                                                    scrollbar-width: thin;
+                                                    scrollbar-color: #f59e42 #f3f4f6;
+                                                }
+                                                select.max-h-48::-webkit-scrollbar {
+                                                    width: 6px;
+                                                    background: #f3f4f6;
+                                                }
+                                                select.max-h-48::-webkit-scrollbar-thumb {
+                                                    background: #f59e42;
+                                                    border-radius: 4px;
+                                                }
+                                                select.max-h-48::-webkit-scrollbar-thumb:hover {
+                                                    background: #d97706;
+                                                }
+                                            `}
+                                        </style>
+                                    </div>
                                     {errors.categoryId && (
                                         <p className="text-red-500 text-sm mt-1">{errors.categoryId}</p>
                                     )}
@@ -1135,7 +1185,7 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                                 </div>
 
                                 {/* Chỉ hiển thị Model field cho xe máy */}
-                                {isMotorcycle && (
+                                {getCategoryType(formData.categoryId || '') === 'motorcycle' && (
                                     <div>
                                         <label className="block text-sm font-medium text-white mb-2">
                                             Mẫu xe *
@@ -1158,13 +1208,13 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                                 )}
 
                                 {/* Hiển thị placeholder cho phụ kiện/phụ tùng */}
-                                {/* {(isAccessory || isSparePart) && (
+                                {/* {(getCategoryType(formData.categoryId) === 'accessory' || getCategoryType(formData.categoryId) === 'sparepart') && (
                                     <div>
                                         <label className="block text-sm font-medium text-white mb-2">
-                                            {isAccessory ? 'Dòng xe tương thích' : 'Dòng xe tương thích'}
+                                            {getCategoryType(formData.categoryId) === 'accessory' ? 'Dòng xe tương thích' : 'Dòng xe tương thích'}
                                         </label>
                                         <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm">
-                                            {isAccessory
+                                            {getCategoryType(formData.categoryId) === 'accessory'
                                                 ? 'Model sẽ tự động được đặt theo loại phụ kiện'
                                                 : 'Model sẽ tự động được đặt theo loại phụ tùng'
                                             }

@@ -1,9 +1,9 @@
 // FILEPATH: D:/CN8/EXE201/web-app-horizon-convergia/src/hooks/modules/useCategory.ts
 
 import { CategoryService } from "@services/category/category.service.ts";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // @ts-ignore
-import type { CreateCategory } from "@types/category/Category.req.type";
+import type { CreateCategory, GetCategoriesParams } from "@types/category/Category.req.type";
 // @ts-ignore
 import type { ICategory } from "@types/category/Category.res.type";
 import { helpers } from "@utils/index";
@@ -11,15 +11,32 @@ import { helpers } from "@utils/index";
 export const useCategory = () => {
     const queryClient = useQueryClient();
 
+    // CORRECT: Use useQuery for fetching data.
+    const useGetAllCategories = (params?: GetCategoriesParams) => {
+        return useQuery({
+            queryKey: ['categories', params],
+            queryFn: async () => {
+                const response = await CategoryService.getCategories(params);
+                // The actual data is in response.data
+                return (response.data || []) as ICategory[];
+            },
+            staleTime: 5 * 60 * 1000, // 5 minutes
+            enabled: true, // Keep it enabled to fetch on mount
+        });
+    };
+
+    // Keep getCategorys mutation for cases where you need to trigger manually,
+    // but for fetching lists, useGetAllCategories is preferred.
     const getCategorys = useMutation({
-        mutationFn: () => CategoryService.getCategories(),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] });
+        mutationFn: (params?: GetCategoriesParams) => CategoryService.getCategories(params),
+        onSuccess: (data) => {
+            // Manually set the query data for the corresponding query key
+            queryClient.setQueryData(['categories'], data.data);
         },
         onError: (error: any) => {
             console.error('Get categories error:', error);
         }
-    })
+    });
 
     const getCategory = useMutation({
         mutationFn: (id: string) => CategoryService.getCategory(id),
@@ -67,13 +84,11 @@ export const useCategory = () => {
         }
     });
 
-    // Add getCategoriesByName for filtering by name (client-side fallback)
+    // Updated getCategoriesByName to use backend filtering with pagination support
     const getCategoriesByName = useMutation({
-        // This currently fetches all and expects client-side filtering. Replace with backend filter if available.
-        mutationFn: async (name: string) => {
-            const res = await CategoryService.getCategories();
-            const all = Array.isArray(res) ? res : (res?.data || []);
-            return all.filter((cat: any) => cat.name.toLowerCase().includes(name.toLowerCase()));
+        mutationFn: async (params: GetCategoriesParams) => {
+            const res = await CategoryService.getCategories(params);
+            return Array.isArray(res) ? res : (res?.data || []);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -84,11 +99,13 @@ export const useCategory = () => {
     });
 
     return {
+        useGetCategories: useGetAllCategories,
+        useGetAllCategories,
         getCategorys,
         getCategory,
         createCategory,
         updateCategory,
         deleteCategory,
-        getCategoriesByName, // new
+        getCategoriesByName,
     };
 };

@@ -3,3 +3,9 @@ export interface CreateCategory {
     imageUrl: string;
     parentCategoryId: string | null;
 }
+
+export interface GetCategoriesParams {
+    name?: string;
+    pageNumber?: number;
+    pageSize?: number;
+}

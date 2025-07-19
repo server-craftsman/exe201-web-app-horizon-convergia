@@ -25,11 +25,29 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
     const dropzoneRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Custom dropdown state
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (open && nameInputRef.current) {
             nameInputRef.current.focus();
         }
     }, [open]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const validateForm = useCallback(() => {
         const newErrors: { [key: string]: string } = {};
@@ -58,13 +76,19 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
         }
     }, [errors]);
 
-    const handleSelectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value || null }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+    const handleSelectCategory = useCallback((categoryId: string | null) => {
+        setFormData(prev => ({ ...prev, parentCategoryId: categoryId }));
+        setIsDropdownOpen(false);
+        if (errors.parentCategoryId) {
+            setErrors(prev => ({ ...prev, parentCategoryId: '' }));
         }
     }, [errors]);
+
+    const getSelectedCategoryName = () => {
+        if (!formData.parentCategoryId) return '-- Chọn danh mục cha (để trống nếu là gốc) --';
+        const category = categories.find(cat => cat.id === formData.parentCategoryId);
+        return category ? category.name : 'Không rõ';
+    };
 
     const handleUploadImage = async (files: FileList | null) => {
         if (!files || files.length === 0) return;
@@ -264,22 +288,64 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
                                     <label htmlFor="parentCategoryId" className="block text-sm font-medium text-gray-300">
                                         Danh mục cha
                                     </label>
-                                    <select
-                                        id="parentCategoryId"
-                                        name="parentCategoryId"
-                                        value={formData.parentCategoryId || ''}
-                                        onChange={handleSelectChange}
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-amber-500 focus:ring-amber-500/20 transition-all duration-200"
-                                        disabled={isSubmitting}
-                                    >
-                                        <option value="">-- Chọn danh mục cha (để trống nếu là gốc) --</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div
+                                            ref={dropdownRef}
+                                            className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-amber-500 focus:ring-amber-500/20 transition-all duration-200 max-h-48 overflow-y-auto ${isDropdownOpen ? 'border-amber-500 focus:border-amber-500 focus:ring-amber-500/20' : ''}`}
+                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 100)}
+                                            tabIndex={0}
+                                            aria-label="Danh mục cha"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span>{getSelectedCategoryName()}</span>
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {isDropdownOpen && (
+                                            <div className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                                                <div
+                                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${!formData.parentCategoryId ? 'bg-amber-500/20 text-amber-400' : ''}`}
+                                                    onClick={() => handleSelectCategory(null)}
+                                                >
+                                                    -- Chọn danh mục cha (để trống nếu là gốc) --
+                                                </div>
+                                                {categories.map(cat => (
+                                                    <div
+                                                        key={cat.id}
+                                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${cat.id === formData.parentCategoryId ? 'bg-amber-500/20 text-amber-400' : ''}`}
+                                                        onClick={() => handleSelectCategory(cat.id)}
+                                                    >
+                                                        {cat.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {errors.parentCategoryId && <p className="text-red-400 text-sm mt-1">{errors.parentCategoryId}</p>}
                                 </div>
+
+                                {/* Custom scrollbar styles for the dropdown */}
+                                <style>
+                                    {`
+                                        .max-h-60::-webkit-scrollbar {
+                                            width: 8px;
+                                        }
+                                        .max-h-60::-webkit-scrollbar-track {
+                                            background: #374151;
+                                            border-radius: 4px;
+                                        }
+                                        .max-h-60::-webkit-scrollbar-thumb {
+                                            background: #f59e42;
+                                            border-radius: 4px;
+                                        }
+                                        .max-h-60::-webkit-scrollbar-thumb:hover {
+                                            background: #d97706;
+                                        }
+                                    `}
+                                </style>
 
                                 {/* Image Upload */}
                                 <div className="space-y-2">

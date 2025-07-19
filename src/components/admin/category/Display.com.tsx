@@ -8,7 +8,8 @@ import { motion } from 'framer-motion';
 import { helpers } from "@utils/index.ts";
 import SearchCommon from '../../common/SearchCommon.com';
 import { DeleteCom } from "./Delete.com.tsx";
-
+// @ts-ignore
+import type { GetCategoriesParams } from '../../../types/category/Category.req.type.ts';
 // StatsCard component
 interface StatsCardProps {
     label: string;
@@ -33,6 +34,7 @@ const StatsCard = ({ label, value, icon, iconBg, iconColor, tooltip }: StatsCard
     </div>
 );
 
+
 export const DisplayCom = () => {
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
@@ -44,6 +46,11 @@ export const DisplayCom = () => {
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [isSearching, setIsSearching] = useState(false);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(1000);
+    const [totalCategories, setTotalCategories] = useState(0);
+
     const {
         getCategorys,
         createCategory,
@@ -52,15 +59,22 @@ export const DisplayCom = () => {
         getCategoriesByName
     } = useCategory();
 
-    const fetchCategories = useCallback(async () => {
+    const fetchCategories = useCallback(async (params?: GetCategoriesParams) => {
         try {
-            const { data } = await getCategorys.mutateAsync();
+            const requestParams = {
+                pageNumber: currentPage,
+                pageSize: pageSize,
+                ...params
+            };
+            const { data } = await getCategorys.mutateAsync(requestParams);
             setCategories(data || []);
+            // Note: You may need to get total count from API response if available
+            setTotalCategories(data?.length || 0);
         } catch (error) {
             console.error('Error fetching categories:', error);
             setCategories([]);
         }
-    }, [getCategorys]);
+    }, [getCategorys, currentPage, pageSize]);
 
     const handleSearch = async () => {
         if (!searchTerm) {
@@ -69,8 +83,14 @@ export const DisplayCom = () => {
         }
         setIsSearching(true);
         try {
-            const filtered = await getCategoriesByName.mutateAsync(searchTerm);
+            const searchParams: GetCategoriesParams = {
+                name: searchTerm,
+                pageNumber: 1, // Reset to first page when searching
+                pageSize: 1000
+            };
+            const filtered = await getCategoriesByName.mutateAsync(searchParams);
             setCategories(filtered || []);
+            setCurrentPage(1); // Reset current page when searching
         } catch (error) {
             // fallback: do nothing
         } finally {
@@ -78,9 +98,20 @@ export const DisplayCom = () => {
         }
     };
 
+    // Handle page change
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+    };
+
+    // Handle page size change
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        setCurrentPage(1); // Reset to first page when changing page size
+    };
+
     useEffect(() => {
         fetchCategories();
-    }, []);
+    }, [currentPage, pageSize]);
 
     const handleCreateSuccess = useCallback(() => {
         setIsCreateModalVisible(false);
@@ -150,7 +181,7 @@ export const DisplayCom = () => {
                 <div className="flex gap-3 mb-6 items-stretch">
                     <StatsCard
                         label="Tổng danh mục"
-                        value={categories.length}
+                        value={totalCategories}
                         iconBg="bg-amber-500/20"
                         iconColor="text-amber-400"
                         icon={
@@ -399,6 +430,72 @@ export const DisplayCom = () => {
                         </div>
                     )}
                 </motion.div>
+
+                {/* Pagination Controls */}
+                {categories.length > 0 && (
+                    <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                        {/* Page Size Selector */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-gray-400 text-sm">Hiển thị:</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                                className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-amber-400"
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                            </select>
+                            <span className="text-gray-400 text-sm">mục/trang</span>
+                        </div>
+
+                        {/* Pagination Info */}
+                        <div className="text-gray-400 text-sm">
+                            Trang {currentPage} - Hiển thị {categories.length} mục
+                        </div>
+
+                        {/* Pagination Buttons */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage <= 1}
+                                className="px-3 py-1 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Trước
+                            </button>
+
+                            {/* Page Numbers */}
+                            <div className="flex items-center gap-1">
+                                {[...Array(Math.min(5, Math.ceil(totalCategories / pageSize)))].map((_, index) => {
+                                    const pageNum = currentPage - 2 + index;
+                                    if (pageNum < 1) return null;
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => handlePageChange(pageNum)}
+                                            className={`px-3 py-1 rounded-lg text-sm transition-colors ${pageNum === currentPage
+                                                ? 'bg-amber-500 text-white'
+                                                : 'bg-gray-700 text-white hover:bg-gray-600'
+                                                }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={categories.length < pageSize}
+                                className="px-3 py-1 bg-gray-700 text-white rounded-lg text-sm hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modals */}

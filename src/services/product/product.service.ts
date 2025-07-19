@@ -34,6 +34,7 @@ export const ProductService = {
     getProducts(params: FilterProduct) {
         const queryParams = new URLSearchParams();
         if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+        if (params.location) queryParams.append('location', params.location);
         if (params.sortField) queryParams.append('sortField', params.sortField);
         if (params.ascending !== undefined) queryParams.append('ascending', params.ascending.toString());
         if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
