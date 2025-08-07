@@ -90,6 +90,18 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
         return category ? category.name : 'Không rõ';
     };
 
+    const handleDropdownMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDropdownOpen(prev => !prev);
+    }, []);
+
+    const handleCategorySelectMouseDown = useCallback((categoryId: string | null, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSelectCategory(categoryId);
+    }, [handleSelectCategory]);
+
     const handleUploadImage = async (files: FileList | null) => {
         if (!files || files.length === 0) return;
         setUploadingImage(true);
@@ -170,6 +182,16 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
             handleCancel();
         }
     }, [handleCancel]);
+
+    const handleDropdownKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsDropdownOpen(prev => !prev);
+        } else if (e.key === 'Escape' && isDropdownOpen) {
+            e.preventDefault();
+            setIsDropdownOpen(false);
+        }
+    }, [isDropdownOpen]);
 
     return (
         <AnimatePresence>
@@ -292,10 +314,14 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
                                         <div
                                             ref={dropdownRef}
                                             className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-amber-500 focus:ring-amber-500/20 transition-all duration-200 max-h-48 overflow-y-auto ${isDropdownOpen ? 'border-amber-500 focus:border-amber-500 focus:ring-amber-500/20' : ''}`}
-                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 100)}
+                                            onMouseDown={handleDropdownMouseDown}
+                                            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                                             tabIndex={0}
                                             aria-label="Danh mục cha"
+                                            onKeyDown={handleDropdownKeyDown}
+                                            role="combobox"
+                                            aria-expanded={isDropdownOpen}
+                                            aria-haspopup="listbox"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span>{getSelectedCategoryName()}</span>
@@ -305,18 +331,27 @@ export const CreateCom = ({ open, onCancel, onSuccess, createCategory, categorie
                                             </div>
                                         </div>
                                         {isDropdownOpen && (
-                                            <div className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                                            <div
+                                                className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1 pointer-events-none"
+                                                onMouseDown={e => e.stopPropagation()}
+                                                role="listbox"
+                                                aria-label="Danh mục cha"
+                                            >
                                                 <div
-                                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${!formData.parentCategoryId ? 'bg-amber-500/20 text-amber-400' : ''}`}
-                                                    onClick={() => handleSelectCategory(null)}
+                                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 pointer-events-auto ${!formData.parentCategoryId ? 'bg-amber-500/20 text-amber-400' : ''}`}
+                                                    onMouseDown={e => handleCategorySelectMouseDown(null, e)}
+                                                    role="option"
+                                                    aria-selected={!formData.parentCategoryId}
                                                 >
                                                     -- Chọn danh mục cha (để trống nếu là gốc) --
                                                 </div>
                                                 {categories.map(cat => (
                                                     <div
                                                         key={cat.id}
-                                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${cat.id === formData.parentCategoryId ? 'bg-amber-500/20 text-amber-400' : ''}`}
-                                                        onClick={() => handleSelectCategory(cat.id)}
+                                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 pointer-events-auto ${cat.id === formData.parentCategoryId ? 'bg-amber-500/20 text-amber-400' : ''}`}
+                                                        onMouseDown={e => handleCategorySelectMouseDown(cat.id, e)}
+                                                        role="option"
+                                                        aria-selected={cat.id === formData.parentCategoryId}
                                                     >
                                                         {cat.name}
                                                     </div>

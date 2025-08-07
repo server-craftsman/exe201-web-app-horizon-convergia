@@ -34,11 +34,27 @@ export const ProductService = {
     getProducts(params: FilterProduct) {
         const queryParams = new URLSearchParams();
         if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+        if (params.brand) queryParams.append('brand', params.brand);
+        if (params.model) queryParams.append('model', params.model);
+        if (params.year !== undefined) queryParams.append('year', params.year.toString());
+        if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
+        if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
+        if (params.description) queryParams.append('description', params.description);
         if (params.location) queryParams.append('location', params.location);
+        if (params.condition) queryParams.append('condition', params.condition);
+        if (params.quantity !== undefined) queryParams.append('quantity', params.quantity.toString());
+        if (params.engineCapacity !== undefined) queryParams.append('engineCapacity', params.engineCapacity.toString());
+        if (params.fuelType) queryParams.append('fuelType', params.fuelType);
+        if (params.mileage !== undefined) queryParams.append('mileage', params.mileage.toString());
+        if (params.color) queryParams.append('color', params.color);
+        if (params.accessoryType) queryParams.append('accessoryType', params.accessoryType);
+        if (params.size) queryParams.append('size', params.size);
+        if (params.sparePartType) queryParams.append('sparePartType', params.sparePartType);
+        if (params.vehicleCompatible) queryParams.append('vehicleCompatible', params.vehicleCompatible);
         if (params.sortField) queryParams.append('sortField', params.sortField);
         if (params.ascending !== undefined) queryParams.append('ascending', params.ascending.toString());
-        if (params.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
-        if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+        if (params.pageNumber !== undefined) queryParams.append('pageNumber', params.pageNumber.toString());
+        if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
         return BaseService.get<ProductResponse[]>({
             url: `${API_PATH.PRODUCT.GET_ALL_PRODUCTS}?${queryParams.toString()}`,
         });
