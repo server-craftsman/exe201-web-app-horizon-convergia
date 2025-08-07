@@ -250,9 +250,9 @@ export const DisplayCom = () => {
       <p className="text-gray-400 text-xs">Tổng người dùng</p>
       <p className="text-2xl font-extrabold text-white">{totalRecords}</p>
     </div>
-    <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+    <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+      <svg className="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
     </div>
   </div>
@@ -261,9 +261,10 @@ export const DisplayCom = () => {
       <p className="text-gray-400 text-xs">Đang hoạt động</p>
       <p className="text-2xl font-extrabold text-white">{activeCount}</p>
     </div>
-    <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+      <svg className="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={2} fill="none" />
       </svg>
     </div>
   </div>
@@ -272,9 +273,10 @@ export const DisplayCom = () => {
       <p className="text-gray-400 text-xs">Đã bị block</p>
       <p className="text-2xl font-extrabold text-white">{blockedCount}</p>
     </div>
-    <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
-      <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0m12.728 0L5.636 18.364" />
+    <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+      <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0" />
+        <line x1="5.636" y1="18.364" x2="18.364" y2="5.636" stroke="currentColor" strokeWidth={2} />
       </svg>
     </div>
   </div>
@@ -294,9 +296,9 @@ export const DisplayCom = () => {
                         </div>
                     ) : users.length === 0 ? (
                         <div className="text-center py-12">
-                            <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                            <div className="w-24 h-24 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                             </div>
                             <h3 className="text-xl font-semibold text-white mb-2">

@@ -149,6 +149,19 @@ export const Detail: React.FC<DetailProps> = ({ userId, onBack }) => {
     return null;
   };
 
+  // Hàm ánh xạ loại hình kinh doanh sang tiếng Việt
+  const businessTypeLabel = (type: string) => {
+    switch (type) {
+      case 'motorcycle-parts': return 'Phụ tùng xe máy';
+      case 'motorcycle-accessories': return 'Phụ kiện xe máy';
+      case 'motorcycle-maintenance': return 'Bảo dưỡng sửa chữa';
+      case 'motorcycle-sales': return 'Mua bán xe máy';
+      case 'motorcycle-rental': return 'Cho thuê xe máy';
+      case 'other': return 'Khác';
+      default: return type || '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-6 flex flex-col items-center justify-center">
       <div className="max-w-4xl w-full bg-gray-800/90 border border-gray-700 rounded-2xl shadow-2xl p-0 md:p-14">
@@ -202,7 +215,7 @@ export const Detail: React.FC<DetailProps> = ({ userId, onBack }) => {
                 <div className="flex items-center gap-4">
                   <MdPerson className="w-6 h-6 text-blue-400" />
                   <span className="text-gray-400 text-base min-w-[90px]">Giới tính:</span>
-                  <span className="text-white text-base font-medium">{user.gender === 1 ? 'Nam' : user.gender === 2 ? 'Nữ' : 'Khác'}</span>
+                  <span className="text-white text-base font-medium">{user.gender === 0 ? 'Nam' : user.gender === 1 ? 'Nữ' : 'Khác'}</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <MdCake className="w-6 h-6 text-pink-400" />
@@ -225,30 +238,49 @@ export const Detail: React.FC<DetailProps> = ({ userId, onBack }) => {
                   <span className="text-white text-base font-medium">{user.updatedAt ? new Date(user.updatedAt).toLocaleString() : 'N/A'}</span>
                 </div>
               </div>
-              {user.shopName && (
+              {(Number(user.role) === 1 /* Seller */ || Number(user.role) === 2 /* Shipper */) && (
                 <>
+                  {/* Section: Thông tin shop (chỉ Seller) */}
+                  {Number(user.role) === 1 && (
+                    <>
+                      <hr className="my-8 border-gray-700" />
+                      <div>
+                        <h3 className="text-amber-400 font-semibold mb-4 text-xl flex items-center gap-2">
+                          <MdStoreMallDirectory className="w-7 h-7 text-amber-400" />
+                          Thông tin shop
+                        </h3>
+                        <div className="flex flex-col gap-5">
+                          <div className="flex items-center gap-4">
+                            <MdStoreMallDirectory className="w-6 h-6 text-amber-400" />
+                            <span className="text-gray-400 text-base min-w-[120px]">Tên shop:</span>
+                            <span className="text-white text-base font-medium">{user.shopName}</span>
+                          </div>
+                          {user.shopDescription && (
+                            <div className="flex items-start gap-4">
+                              <MdDescription className="w-6 h-6 text-blue-400 mt-1" />
+                              <span className="text-gray-400 text-base min-w-[120px]">Mô tả:</span>
+                              <span className="text-white text-base font-medium">
+                                <span dangerouslySetInnerHTML={{ __html: user.shopDescription }} />
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4">
+                            <MdBusiness className="w-6 h-6 text-green-400" />
+                            <span className="text-gray-400 text-base min-w-[120px]">Loại hình kinh doanh:</span>
+                            <span className="text-white text-base font-medium">{businessTypeLabel(user.businessType || '')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {/* Section: Thông tin ngân hàng (Seller & Shipper) */}
                   <hr className="my-8 border-gray-700" />
                   <div>
                     <h3 className="text-amber-400 font-semibold mb-4 text-xl flex items-center gap-2">
-                      <MdStoreMallDirectory className="w-7 h-7 text-amber-400" />
-                      Thông tin shop
+                      <MdAccountBalance className="w-7 h-7 text-amber-400" />
+                      Thông tin ngân hàng
                     </h3>
                     <div className="flex flex-col gap-5">
-                      <div className="flex items-center gap-4">
-                        <MdStoreMallDirectory className="w-6 h-6 text-amber-400" />
-                        <span className="text-gray-400 text-base min-w-[120px]">Tên shop:</span>
-                        <span className="text-white text-base font-medium">{user.shopName}</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <MdDescription className="w-6 h-6 text-blue-400" />
-                        <span className="text-gray-400 text-base min-w-[120px]">Mô tả:</span>
-                        <span className="text-white text-base font-medium">{user.shopDescription}</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <MdBusiness className="w-6 h-6 text-green-400" />
-                        <span className="text-gray-400 text-base min-w-[120px]">Loại hình kinh doanh:</span>
-                        <span className="text-white text-base font-medium">{user.businessType}</span>
-                      </div>
                       {/* Ngân hàng */}
                       {user.bankName && (
                         <div className="flex items-center gap-4">
@@ -304,3 +336,4 @@ export const Detail: React.FC<DetailProps> = ({ userId, onBack }) => {
     </div>
   );
 };
+
