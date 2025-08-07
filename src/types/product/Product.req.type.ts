@@ -44,10 +44,26 @@ export interface UpdateProduct {
 }
 
 export interface FilterProduct {
-    categoryId: string;
-    location: string;
-    sortField: string;
-    ascending: boolean;
+    categoryId?: string;
+    brand?: string;
+    model?: string;
+    year?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    description?: string;
+    location?: string;
+    condition?: string;
+    quantity?: number;
+    engineCapacity?: number;
+    fuelType?: string;
+    mileage?: number;
+    color?: string;
+    accessoryType?: string;
+    size?: string;
+    sparePartType?: string;
+    vehicleCompatible?: string;
+    sortField?: string;
+    ascending?: boolean;
     pageNumber?: number;
     pageSize?: number;
 }

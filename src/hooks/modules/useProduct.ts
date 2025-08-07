@@ -9,31 +9,14 @@ export const useProduct = () => {
     const queryClient = useQueryClient();
 
     // Get all products query
-    const useProducts = ({
-        categoryId = '',
-        location = '',
-        sortField = 'createdAt',
-        ascending = false,
-        pageNumber = 1,
-        pageSize = 10
-    } = {}) => {
+    const useProducts = (filter = {}) => {
         return useQuery({
-            queryKey: ['products', categoryId, location, sortField, ascending, pageNumber, pageSize],
-            queryFn: () => ProductService.getProducts({
-                categoryId,
-                location,
-                sortField,
-                ascending,
-                pageNumber,
-                pageSize
-            }),
+            queryKey: ['products', filter],
+            queryFn: () => ProductService.getProducts(filter),
             select: (data) => data.data as ProductResponse[],
             staleTime: 5 * 60 * 1000, // 5 minutes
         });
-    };
-
-    // Remove the broken unverifiedProducts query (it references undefined sellerId)
-    // Instead, provide a hook to fetch unverified products by sellerId
+    }
 
     // Get unverified products by sellerId, hỗ trợ filter
     const useUnverifiedProductsBySeller = (sellerId: string, filter?: {

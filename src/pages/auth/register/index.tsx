@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ROUTER_URL } from '../../../consts/router.path.const';
 import { useVietnamAddress, useUser } from '../../../hooks';
-import { useBank } from '../../../hooks/other/useBank';
+// import { useBank } from '../../../hooks/other/useBank'; // Commented out - not needed for basic register
 import { helpers } from '../../../utils';
 import { Gender, UserRoleInteger } from "../../../app/enums";
-import CourseraEditor from '../../../components/common/CourseraEditor';
-import Select from 'react-select';
+// import CourseraEditor from '../../../components/common/CourseraEditor'; // Commented out - not needed for basic register
+// import Select from 'react-select'; // Commented out - not needed for basic register
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,16 +21,16 @@ const RegisterPage: React.FC = () => {
     gender: Gender.MALE,
     dob: '',
     role: UserRoleInteger.BUYER,
-    shopName: '',
-    shopDescription: '',
-    businessType: '',
+    // shopName: '', // Commented out - not in API
+    // shopDescription: '', // Commented out - not in API
+    // businessType: '', // Commented out - not in API
     agreeTerms: false,
     provinceCode: '',
     districtCode: '',
     wardCode: '',
-    bankName: '',
-    bankAccountNumber: '',
-    bankAccountHolder: '',
+    // bankName: '', // Commented out - not in API
+    // bankAccountNumber: '', // Commented out - not in API
+    // bankAccountHolder: '', // Commented out - not in API
   });
 
   const [selectedProvince, setSelectedProvince] = useState('');
@@ -41,7 +41,7 @@ const RegisterPage: React.FC = () => {
 
   const { register } = useUser();
   const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
-  const { banks, isLoading: isLoadingBanks } = useBank();
+  // const { banks, isLoading: isLoadingBanks } = useBank(); // Commented out - not needed for basic register
   const districts = getDistricts(formData.provinceCode);
   const wards = getWards(formData.districtCode);
 
@@ -125,12 +125,12 @@ const RegisterPage: React.FC = () => {
   };
 
   // Handler for CourseraEditor
-  const handleEditorChange = (value: string) => {
-    setFormData({
-      ...formData,
-      shopDescription: value
-    });
-  };
+  // const handleEditorChange = (value: string) => {
+  //   // setFormData({
+  //   //   ...formData,
+  //   //   shopDescription: value
+  //   // });
+  // };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,30 +149,30 @@ const RegisterPage: React.FC = () => {
 
     // Validate seller fields if role is seller
     if (formData.role === UserRoleInteger.SELLER) {
-      if (!formData.shopName.trim()) {
-        helpers.notificationMessage("Vui lòng nhập tên cửa hàng", "error");
-        return;
-      }
-      if (!formData.shopDescription.trim()) {
-        helpers.notificationMessage("Vui lòng nhập mô tả cửa hàng", "error");
-        return;
-      }
-      if (!formData.businessType.trim()) {
-        helpers.notificationMessage("Vui lòng nhập loại hình kinh doanh", "error");
-        return;
-      }
-      if (!formData.bankName.trim()) {
-        helpers.notificationMessage("Vui lòng chọn ngân hàng", "error");
-        return;
-      }
-      if (!formData.bankAccountNumber.trim()) {
-        helpers.notificationMessage("Vui lòng nhập số tài khoản ngân hàng", "error");
-        return;
-      }
-      if (!formData.bankAccountHolder.trim()) {
-        helpers.notificationMessage("Vui lòng nhập tên chủ tài khoản ngân hàng", "error");
-        return;
-      }
+      // if (!formData.shopName.trim()) {
+      //   helpers.notificationMessage("Vui lòng nhập tên cửa hàng", "error");
+      //   return;
+      // }
+      // if (!formData.shopDescription.trim()) {
+      //   helpers.notificationMessage("Vui lòng nhập mô tả cửa hàng", "error");
+      //   return;
+      // }
+      // if (!formData.businessType.trim()) {
+      //   helpers.notificationMessage("Vui lòng nhập loại hình kinh doanh", "error");
+      //   return;
+      // }
+      // if (!formData.bankName.trim()) {
+      //   helpers.notificationMessage("Vui lòng chọn ngân hàng", "error");
+      //   return;
+      // }
+      // if (!formData.bankAccountNumber.trim()) {
+      //   helpers.notificationMessage("Vui lòng nhập số tài khoản ngân hàng", "error");
+      //   return;
+      // }
+      // if (!formData.bankAccountHolder.trim()) {
+      //   helpers.notificationMessage("Vui lòng nhập tên chủ tài khoản ngân hàng", "error");
+      //   return;
+      // }
     }
 
     register.mutate({
@@ -185,12 +185,12 @@ const RegisterPage: React.FC = () => {
       dob: formData.dob ? new Date(formData.dob) : new Date(),
       role: formData.role,
       ...(formData.role === UserRoleInteger.SELLER && {
-        shopName: formData.shopName.trim(),
-        shopDescription: formData.shopDescription.trim(),
-        businessType: formData.businessType.trim(),
-        bankName: formData.bankName.trim(),
-        bankAccountNumber: formData.bankAccountNumber.trim(),
-        bankAccountHolder: formData.bankAccountHolder.trim(),
+        // shopName: formData.shopName.trim(),
+        // shopDescription: formData.shopDescription.trim(),
+        // businessType: formData.businessType.trim(),
+        // bankName: formData.bankName.trim(),
+        // bankAccountNumber: formData.bankAccountNumber.trim(),
+        // bankAccountHolder: formData.bankAccountHolder.trim(),
       })
     });
   };
@@ -212,19 +212,19 @@ const RegisterPage: React.FC = () => {
   };
 
   // Helper for react-select options
-  const getBankOptions = (banks: Array<{ code: string; name: string; logo?: string }>) =>
-    banks.map((bank) => ({
-      value: bank.code,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {bank.logo && (
-            <img src={bank.logo} alt={bank.name} style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
-          )}
-          <span>{bank.name}</span>
-        </div>
-      ),
-      bank,
-    }));
+  // const getBankOptions = (banks: Array<{ code: string; name: string; logo?: string }>) =>
+  //   banks.map((bank) => ({
+  //     value: bank.code,
+  //     label: (
+  //       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+  //         {bank.logo && (
+  //           <img src={bank.logo} alt={bank.name} style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
+  //         )}
+  //         <span>{bank.name}</span>
+  //       </div>
+  //     ),
+  //     bank,
+  //   }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -758,7 +758,7 @@ const RegisterPage: React.FC = () => {
             </div>
 
             {/* Seller-specific fields */}
-            {formData.role === UserRoleInteger.SELLER && (
+            {/* {formData.role === UserRoleInteger.SELLER && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -860,7 +860,6 @@ const RegisterPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Bank Preview */}
                   {formData.bankName && !isLoadingBanks && (
                     <div className="mt-2 p-3 bg-gray-800/30 border border-gray-700 rounded-lg">
                       {(() => {
@@ -942,7 +941,7 @@ const RegisterPage: React.FC = () => {
 
 
               </motion.div>
-            )}
+            )} */}
 
             <div className="flex items-center">
               <input
@@ -1010,24 +1009,24 @@ const RegisterPage: React.FC = () => {
                     <span className="text-gray-200">{formData.name}</span>
                   </div>
                 )}
-                {formData.role === UserRoleInteger.SELLER && formData.shopName && (
+                {/* {formData.role === UserRoleInteger.SELLER && formData.shopName && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Tên cửa hàng:</span>
                     <span className="text-blue-300">{formData.shopName}</span>
                   </div>
-                )}
-                {formData.role === UserRoleInteger.SELLER && formData.bankName && (
+                )} */}
+                {/* {formData.role === UserRoleInteger.SELLER && formData.bankName && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Ngân hàng:</span>
                     <span className="text-blue-300">{formData.bankName}</span>
                   </div>
-                )}
-                {formData.role === UserRoleInteger.SELLER && formData.bankAccountNumber && (
+                )} */}
+                {/* {formData.role === UserRoleInteger.SELLER && formData.bankAccountNumber && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Số tài khoản:</span>
                     <span className="text-blue-300">{formData.bankAccountNumber}</span>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
 

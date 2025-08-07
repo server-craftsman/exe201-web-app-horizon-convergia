@@ -99,6 +99,18 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
         return selectedCategory ? selectedCategory.name : 'Không rõ';
     };
 
+    const handleDropdownMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDropdownOpen(prev => !prev);
+    }, []);
+
+    const handleCategorySelectMouseDown = useCallback((categoryId: string | null, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleSelectCategory(categoryId);
+    }, [handleSelectCategory]);
+
     const handleUploadImage = async (files: FileList | null) => {
         if (!files || files.length === 0) return;
         setUploadingImage(true);
@@ -188,6 +200,16 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
             handleCancel();
         }
     }, [handleCancel]);
+
+    const handleDropdownKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsDropdownOpen(prev => !prev);
+        } else if (e.key === 'Escape' && isDropdownOpen) {
+            e.preventDefault();
+            setIsDropdownOpen(false);
+        }
+    }, [isDropdownOpen]);
 
     const hasChanges = category && (formData.name.trim() !== category.name || formData.imageUrl !== (category as any).imageUrl || formData.parentCategoryId !== category.parentCategoryId);
 
@@ -342,10 +364,14 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
                                         <div
                                             ref={dropdownRef}
                                             className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 max-h-48 overflow-y-auto ${isDropdownOpen ? 'border-blue-500 focus:border-blue-500 focus:ring-blue-500/20' : ''}`}
-                                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 100)}
+                                            onMouseDown={handleDropdownMouseDown}
+                                            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
                                             tabIndex={0}
                                             aria-label="Danh mục cha"
+                                            onKeyDown={handleDropdownKeyDown}
+                                            role="combobox"
+                                            aria-expanded={isDropdownOpen}
+                                            aria-haspopup="listbox"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span>{getSelectedCategoryName()}</span>
@@ -355,18 +381,27 @@ export const UpdateCom = ({ open, category, recordId, onCancel, onSuccess, updat
                                             </div>
                                         </div>
                                         {isDropdownOpen && (
-                                            <div className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                                            <div
+                                                className="absolute z-10 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1 pointer-events-none"
+                                                onMouseDown={e => e.stopPropagation()}
+                                                role="listbox"
+                                                aria-label="Danh mục cha"
+                                            >
                                                 <div
-                                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${!formData.parentCategoryId ? 'bg-blue-500/20 text-blue-400' : ''}`}
-                                                    onClick={() => handleSelectCategory(null)}
+                                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 pointer-events-auto ${!formData.parentCategoryId ? 'bg-blue-500/20 text-blue-400' : ''}`}
+                                                    onMouseDown={e => handleCategorySelectMouseDown(null, e)}
+                                                    role="option"
+                                                    aria-selected={!formData.parentCategoryId}
                                                 >
                                                     -- Chọn danh mục cha (để trống nếu là gốc) --
                                                 </div>
                                                 {categories.filter(c => c.id !== category?.id).map(cat => (
                                                     <div
                                                         key={cat.id}
-                                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 ${cat.id === formData.parentCategoryId ? 'bg-blue-500/20 text-blue-400' : ''}`}
-                                                        onClick={() => handleSelectCategory(cat.id)}
+                                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-700 transition-colors duration-200 pointer-events-auto ${cat.id === formData.parentCategoryId ? 'bg-blue-500/20 text-blue-400' : ''}`}
+                                                        onMouseDown={e => handleCategorySelectMouseDown(cat.id, e)}
+                                                        role="option"
+                                                        aria-selected={cat.id === formData.parentCategoryId}
                                                     >
                                                         {cat.name}
                                                     </div>
