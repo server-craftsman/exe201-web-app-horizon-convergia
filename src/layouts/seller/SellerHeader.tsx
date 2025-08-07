@@ -78,7 +78,7 @@ const SellerHeader: React.FC = () => {
                     {/* Logo */}
                     <div className="flex-shrink-0">
                         <Link
-                            to={ROUTER_URL.SELLER.DASHBOARD}
+                            to={ROUTER_URL.COMMON.HOME}
                             className="flex items-center space-x-2"
                         >
                             <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">

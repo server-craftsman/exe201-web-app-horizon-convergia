@@ -38,6 +38,7 @@ const RegisterPage: React.FC = () => {
   const [selectedWard, setSelectedWard] = useState('');
   const [fullAddress, setFullAddress] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [dobError, setDobError] = useState('');
 
   const { register } = useUser();
   const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
@@ -51,7 +52,7 @@ const RegisterPage: React.FC = () => {
       helpers.notificationMessage("Đăng ký thành công! Chuyển hướng đến trang đăng nhập...", "success");
       setTimeout(() => {
         navigate(ROUTER_URL.AUTH.LOGIN);
-      }, 2000);
+      }, 1500);
     }
   }, [register.isSuccess, navigate]);
 
@@ -101,6 +102,32 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
+    // Handle DOB validation
+    if (name === 'dob') {
+      const selectedDate = new Date(value);
+      const today = new Date();
+      const minDate = new Date();
+      minDate.setFullYear(today.getFullYear() - 100);
+
+      if (selectedDate > today) {
+        setDobError('Ngày sinh không được là ngày trong tương lai');
+        setFormData({
+          ...formData,
+          [name]: value
+        });
+        return;
+      } else if (selectedDate < minDate) {
+        setDobError('Ngày sinh không được quá 100 năm trước');
+        setFormData({
+          ...formData,
+          [name]: value
+        });
+        return;
+      } else {
+        setDobError('');
+      }
+    }
+
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
@@ -144,6 +171,12 @@ const RegisterPage: React.FC = () => {
     // Validate password strength
     if (passwordStrength < 2) {
       helpers.notificationMessage("Mật khẩu quá yếu. Vui lòng tạo mật khẩu mạnh hơn", "error");
+      return;
+    }
+
+    // Validate DOB
+    if (dobError) {
+      helpers.notificationMessage("Vui lòng chọn ngày sinh hợp lệ", "error");
       return;
     }
 
@@ -600,9 +633,16 @@ const RegisterPage: React.FC = () => {
                     type="date"
                     value={formData.dob}
                     onChange={handleChange}
+                    min={(() => {
+                      const minDate = new Date();
+                      minDate.setFullYear(minDate.getFullYear() - 100);
+                      return minDate.toISOString().split('T')[0];
+                    })()}
+                    max={new Date().toISOString().split('T')[0]}
                     className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                   />
                 </div>
+                {dobError && <p className="mt-1 text-xs text-red-400">{dobError}</p>}
               </div>
             </div>
 
