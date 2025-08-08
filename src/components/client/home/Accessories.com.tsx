@@ -340,21 +340,23 @@ const Accessories: React.FC = () => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {accessories.map((item, index) => (
-                    <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: index * 0.1 }} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:border-amber-200 transition-all duration-500 group flex flex-col h-full">
-                      <div className="relative h-48">
-                        <img src={item.image || 'https://via.placeholder.com/400x300?text=No+Image'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Image'; }} />
-                        {item.discount && (<div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">-{item.discount}%</div>)}
-                        {item.isNew && !item.discount && (<div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">Mới</div>)}
-                      </div>
-                      <div className="p-5 flex flex-col flex-grow">
-                        <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 line-clamp-2">{item.title}</h3>
-                        <div className="flex-grow">
-                          <p className="text-amber-600 font-bold text-xl mb-1">{item.price.toLocaleString('vi-VN')} ₫</p>
-                          {item.originalPrice && (<p className="text-gray-400 text-sm line-through mb-3">{item.originalPrice.toLocaleString('vi-VN')} ₫</p>)}
+                    <Link key={item.id} to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', item.id)} className="group">
+                      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: index * 0.1 }} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:border-amber-200 transition-all duration-500 flex flex-col h-full">
+                        <div className="relative h-48">
+                          <img src={item.image || 'https://via.placeholder.com/400x300?text=No+Image'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Image'; }} />
+                          {item.discount && (<div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">-{item.discount}%</div>)}
+                          {item.isNew && !item.discount && (<div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">Mới</div>)}
                         </div>
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full bg-gray-800 hover:bg-amber-500 text-white font-medium py-2 rounded-lg transition-colors duration-300 mt-auto">Thêm vào giỏ</motion.button>
-                      </div>
-                    </motion.div>
+                        <div className="p-5 flex flex-col flex-grow">
+                          <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 line-clamp-2">{item.title}</h3>
+                          <div className="flex-grow">
+                            <p className="text-amber-600 font-bold text-xl mb-1">{item.price.toLocaleString('vi-VN')} ₫</p>
+                            {item.originalPrice && (<p className="text-gray-400 text-sm line-through mb-3">{item.originalPrice.toLocaleString('vi-VN')} ₫</p>)}
+                          </div>
+                          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full bg-gray-800 hover:bg-amber-500 text-white font-medium py-2 rounded-lg transition-colors duration-300 mt-auto">Xem chi tiết</motion.button>
+                        </div>
+                      </motion.div>
+                    </Link>
                   ))}
                 </div>
 

@@ -71,7 +71,15 @@ export const useProduct = () => {
         return useQuery({
             queryKey: ['products', id],
             queryFn: () => ProductService.getProductById(id),
-            select: (data) => data.data.data as ProductResponse,
+            select: (resp) => {
+                const payload = (resp as any)?.data;
+                // Nếu backend bọc trong ApiResponse { data: T }
+                if (payload && typeof payload === 'object' && 'data' in payload) {
+                    return (payload as any).data as ProductResponse;
+                }
+                // Ngược lại: trả thẳng đối tượng ProductResponse
+                return payload as ProductResponse;
+            },
             enabled: !!id,
             staleTime: 5 * 60 * 1000,
         });

@@ -265,7 +265,7 @@ const NewListings: React.FC = () => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {pagedProducts.map((product) => (
-                    <Link key={product.id} to={`${ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID}/${product.categoryId}`} className="group">
+                    <Link key={product.id} to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', product.id)} className="group">
                       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 group-hover:shadow-2xl group-hover:border-amber-200 transition-all duration-500">
                         <div className="relative h-48">
                           <img src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : 'https://via.placeholder.com/300x200?text=No+Image'} alt={`${product.brand} ${product.model}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image'; }} />
