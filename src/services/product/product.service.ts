@@ -55,6 +55,10 @@ export const ProductService = {
         if (params.ascending !== undefined) queryParams.append('ascending', params.ascending.toString());
         if (params.pageNumber !== undefined) queryParams.append('pageNumber', params.pageNumber.toString());
         if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
+        // Extra filters if backend supports them
+        const anyParams = params as any;
+        if (typeof anyParams.status !== 'undefined') queryParams.append('status', String(anyParams.status));
+        if (typeof anyParams.isVerified !== 'undefined') queryParams.append('isVerified', String(anyParams.isVerified));
         return BaseService.get<ProductResponse[]>({
             url: `${API_PATH.PRODUCT.GET_ALL_PRODUCTS}?${queryParams.toString()}`,
         });

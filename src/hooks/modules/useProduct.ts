@@ -4,19 +4,40 @@ import { BaseService } from '../../app/api/base.service';
 import { notificationMessage } from '../../utils/helper';
 import type { ProductResponse } from '../../types/product/Product.res.type';
 import type { CreateProduct, UpdateProduct, SendProductPayment } from '../../types/product/Product.req.type';
+import type { FilterProduct } from '../../types/product/Product.req.type';
 
 export const useProduct = () => {
     const queryClient = useQueryClient();
 
     // Get all products query
-    const useProducts = (filter = {}) => {
+    const useProducts = (filter: Partial<FilterProduct> = {}) => {
+        // sensible defaults for public listing
+        const defaultFilter: Partial<FilterProduct & { status?: number; isVerified?: boolean }> = {
+            sortField: 'createdAt',
+            ascending: false,
+            pageNumber: 1,
+            pageSize: 8,
+            // If backend supports, prefer verified and approved items
+            isVerified: true,
+            status: 4,
+        };
+        const merged = { ...defaultFilter, ...filter } as any;
         return useQuery({
-            queryKey: ['products', filter],
-            queryFn: () => ProductService.getProducts(filter),
+            queryKey: ['products', merged],
+            queryFn: () => ProductService.getProducts(merged),
             select: (data) => data.data as ProductResponse[],
             staleTime: 5 * 60 * 1000, // 5 minutes
         });
     }
+
+    // helper: keep only Province/City from location string
+    // const extractProvinceOrCity = (location?: string): string => {
+    //     if (!location) return '';
+    //     // Try splitting by comma and take the last token
+    //     const parts = location.split(',').map(s => s.trim()).filter(Boolean);
+    //     if (parts.length === 0) return location;
+    //     return parts[parts.length - 1];
+    // };
 
     // Get unverified products by sellerId, hỗ trợ filter
     const useUnverifiedProductsBySeller = (sellerId: string, filter?: {
