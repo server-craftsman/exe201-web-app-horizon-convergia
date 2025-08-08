@@ -162,7 +162,7 @@ const SellerHeader: React.FC = () => {
                                 <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-lg border border-gray-700 rounded-lg shadow-xl z-50">
                                     <div className="py-1">
                                         <Link
-                                            to={ROUTER_URL.SELLER.PROFILE}
+                                            to={ROUTER_URL.SELLER.SETTINGS}
                                             className="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700/50 hover:text-blue-400 transition-colors"
                                         >
                                             <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +188,7 @@ const SellerHeader: React.FC = () => {
                                             </svg>
                                             Ví & Thu Nhập
                                         </Link>
-                                        <Link
+                                        {/* <Link
                                             to={ROUTER_URL.SELLER.SETTINGS}
                                             className="flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700/50 hover:text-blue-400 transition-colors"
                                         >
@@ -197,7 +197,7 @@ const SellerHeader: React.FC = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
                                             Cài Đặt
-                                        </Link>
+                                        </Link> */}
                                         <hr className="border-gray-700 my-1" />
                                         <button
                                             onClick={handleLogout}

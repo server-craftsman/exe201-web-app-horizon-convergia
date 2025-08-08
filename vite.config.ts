@@ -8,7 +8,17 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    host: true,
+    // enable history API fallback in dev
+    fs: {
+      strict: false,
+    },
   },
+  preview: {
+    port: 4173,
+    host: true,
+  },
+  appType: 'spa',
   build: {
     chunkSizeWarningLimit: 100000,
   },

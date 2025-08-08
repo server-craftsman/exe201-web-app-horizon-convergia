@@ -11,7 +11,7 @@ import { MOTORCYCLE_BRANDS_MODELS, MOTORCYCLE_BRANDS } from '@consts/productBran
 import voChinhHang from '@assets/horizon-khung/vo chinh hang@2x.png';
 import nhotChinhHang from '@assets/horizon-khung/nhot chinh hang@2x.png';
 import phuKienBiker from '@assets/horizon-khung/phu kien biker@2x.png';
-
+import phuTungChinhHang from '@assets/horizon-khung/phu tung chinh hang@2x.png';
 // Dữ liệu slider
 const sliderData = [
   {
@@ -72,10 +72,13 @@ const categoryBackgroundMap = {
   'do choi': phuKienBiker,
 
   // Phụ tùng categories
-  'phụ tùng': voChinhHang,
-  'phụ tùng xe': voChinhHang,
-  'spare parts': voChinhHang,
-  'phu tung': voChinhHang,
+  'phụ tùng': phuTungChinhHang,
+  'phụ tùng xe': phuTungChinhHang,
+  'phụ tùng theo xe': phuTungChinhHang,
+  'spare parts': phuTungChinhHang,
+  'parts': phuTungChinhHang,
+  'phu tung': phuTungChinhHang,
+  'theo xe': phuTungChinhHang,
 
   // Xe máy categories
   'xe máy': phuKienBiker,
@@ -301,8 +304,15 @@ const Banner: React.FC = () => {
     else if (lowerName.includes('phụ kiện') || lowerName.includes('phu kien') || lowerName.includes('đồ chơi') || lowerName.includes('do choi')) {
       return phuKienBiker;
     }
-    else if (lowerName.includes('phụ tùng') || lowerName.includes('phu tung') || lowerName.includes('thay thế') || lowerName.includes('thay the')) {
-      return voChinhHang; // Use tire image for parts
+    else if (
+      lowerName.includes('phụ tùng') ||
+      lowerName.includes('phu tung') ||
+      lowerName.includes('thay thế') ||
+      lowerName.includes('thay the') ||
+      lowerName.includes('theo xe') ||
+      lowerName.includes('parts')
+    ) {
+      return phuTungChinhHang; // Use genuine parts image for parts-related categories
     } else if (lowerName.includes('xe máy') || lowerName.includes('xe may') || lowerName.includes('motorcycle')) {
       return phuKienBiker; // Use accessories image for motorcycles
     } else if (lowerName.includes('dịch vụ') || lowerName.includes('dich vu') || lowerName.includes('sửa chữa') || lowerName.includes('sua chua')) {
