@@ -19,6 +19,7 @@ export const ROUTER_URL = {
         ACCESSORIES: "/phu-kien",
         NEWS: "/tin-tuc",
         PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
+        PRODUCT_DETAIL: "/san-pham/:id",
     },
     // BUYER ROUTES
     BUYER: {

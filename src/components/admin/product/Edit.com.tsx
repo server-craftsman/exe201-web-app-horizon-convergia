@@ -268,25 +268,29 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
             console.log('Category type detected:', catType, 'for category:', formData.categoryId);
 
             if (catType === 'accessory') {
-                setBrands(ACCESSORY_BRANDS);
-                setModels(ACCESSORY_MODELS);
+                const bs = new Set<string>(ACCESSORY_BRANDS);
+                if (formData.brand) bs.add(formData.brand);
+                setBrands(Array.from(bs));
+                const ms = new Set<string>(ACCESSORY_MODELS);
+                if (formData.model) ms.add(formData.model);
+                setModels(Array.from(ms));
             } else if (catType === 'sparepart') {
-                setBrands(SPAREPART_BRANDS);
-                setModels(SPAREPART_MODELS);
-            } else if (catType === 'motorcycle') {
-                setBrands(MOTORCYCLE_BRANDS);
-                // Set models based on current brand
-                if (formData.brand && MOTORCYCLE_BRANDS_MODELS[formData.brand as keyof typeof MOTORCYCLE_BRANDS_MODELS]) {
-                    setModels(MOTORCYCLE_BRANDS_MODELS[formData.brand as keyof typeof MOTORCYCLE_BRANDS_MODELS]);
-                } else {
-                    setModels([]);
-                }
+                const bs = new Set<string>(SPAREPART_BRANDS);
+                if (formData.brand) bs.add(formData.brand);
+                setBrands(Array.from(bs));
+                const ms = new Set<string>(SPAREPART_MODELS);
+                if (formData.model) ms.add(formData.model);
+                setModels(Array.from(ms));
             } else {
-                setBrands([]);
-                setModels([]);
+                const bs = new Set<string>(MOTORCYCLE_BRANDS);
+                if (formData.brand) bs.add(formData.brand);
+                setBrands(Array.from(bs));
+                const msList = new Set<string>(formData.brand ? (MOTORCYCLE_BRANDS_MODELS[formData.brand] || []) : []);
+                if (formData.model) msList.add(formData.model);
+                setModels(Array.from(msList));
             }
         }
-    }, [categories, formData.categoryId, formData.brand]);
+    }, [categories, formData.categoryId, formData.brand, formData.model]);
 
     // Cập nhật danh sách thương hiệu và model khi thay đổi danh mục
     useEffect(() => {
@@ -310,7 +314,7 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
         if (categories.length > 0) {
             isInitialMount.current = false;
         }
-    }, [formData.categoryId, categories]);
+    }, [formData.categoryId, categories, formData.brand, formData.model]);
 
     // Khi chọn brand, cập nhật models (chỉ với xe máy)
     useEffect(() => {
