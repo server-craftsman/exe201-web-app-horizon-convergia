@@ -32,7 +32,10 @@ export const API_PATH = {
         GET_ALL_PRODUCTS_UNVERIFIED: (sellerId: string) => `/Products/unverified-unpaid/${sellerId}`,
         GET_PRODUCT_BY_ID: (id: string) => `/Products/${id}`,
         UPDATE_PRODUCT: (id: string) => `/Products/${id}`,
-        DELETE_PRODUCT: (id: string) => `/Products/${id}`
+        DELETE_PRODUCT: (id: string) => `/Products/${id}`,
+        ADD_FAVORITE: (productId: string, userId: string) => `/Products/${productId}/favorite/${userId}`,
+        REMOVE_FAVORITE: (productId: string, userId: string) => `/Products/${productId}/favorite/${userId}`,
+        GET_FAVORITES: (userId: string) => `/Products/favorite/${userId}`,
     },
     CART: {
         GET_BY_USER: (userId: string) => `/Carts/user/${userId}`,
@@ -40,6 +43,24 @@ export const API_PATH = {
         GET_DETAILS: (cartId: string) => `/Carts/${cartId}/details`,
         DELETE_DETAIL: (cartDetailId: string) => `/Carts/detail/${cartDetailId}`,
         UPDATE_DETAIL_QUANTITY: (cartDetailId: string, newQuantity: number) => `/Carts/detail/${cartDetailId}/quantity/${newQuantity}`,
+    },
+    ORDER: {
+        CREATE_FROM_CART: "/Orders/create-from-cart",
+        SEARCH: "/Orders/search",
+        GET_BY_ID: (orderId: string) => `/Orders/${orderId}`,
+        CONFIRM: (id: string) => `/Orders/${id}/confirm`,
+        PROCESS: (id: string) => `/Orders/${id}/process`,
+        DELIVER: (id: string) => `/Orders/${id}/deliver`,
+    },
+    PAYMENT: {
+        MULTI_PAYMENT: "/Payments/multi-payment",
+        PAYOS_CALLBACK: "/Payments/payos-callback",
+        GET_PENDING_PAYOUTS: "/Payments/GetPendingPayouts",
+        APPROVE_PAYOUT: "/Payments/ApprovePayOut",
+    },
+    REVIEW: {
+        BASE: "/Review",
+        BY_ID: (id: string) => `/Review/${id}`,
     },
     CATEGORY: {
         CREATE: "/Categories/",

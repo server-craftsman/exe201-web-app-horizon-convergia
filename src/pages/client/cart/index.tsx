@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react'
 import { useCartStore } from '@hooks/modules/useCartStore'
 import { useUserInfo } from '@hooks/index'
+import { OrderService } from '@services/order/order.service'
+import { PaymentService } from '@services/payment/payment.service'
+import { notificationMessage } from '@utils/helper'
 
 const CartPage: React.FC = () => {
     const user = useUserInfo()
@@ -11,6 +14,39 @@ const CartPage: React.FC = () => {
     }, [user?.id])
 
     if (!user) return <div className="container mx-auto px-4 py-12 text-center text-gray-600">Vui lòng đăng nhập để xem giỏ hàng</div>
+
+    const handleCheckout = async () => {
+        try {
+            if (!cart || (cart.details || []).length === 0) {
+                notificationMessage('Giỏ hàng trống', 'warning');
+                return;
+            }
+            const cartIds = cart.details.map(d => d.id);
+            const shippingAddress = 'Địa chỉ nhận hàng'; // TODO: lấy từ profile/checkout form
+            const discount = 0;
+
+            // 1) tạo order từ cart
+            const orderResp = await OrderService.createFromCart({ cartId: cartIds, shippingAddress, discount });
+            const order = (orderResp as any)?.data?.data;
+
+            if (!order) {
+                notificationMessage('Không tạo được đơn hàng', 'error');
+                return;
+            }
+
+            // 2) khởi tạo thanh toán nhiều đơn (ở đây 1 đơn)
+            const paymentResp = await PaymentService.multiPayment({ orderIds: [order.id], paymentMethod: 'payos', description: 'Thanh toán đơn hàng' });
+            const paymentUrl = (paymentResp as any)?.data?.data?.paymentUrl || (paymentResp as any)?.data?.data?.redirectUrl;
+
+            if (paymentUrl) {
+                window.location.href = paymentUrl;
+            } else {
+                notificationMessage('Không lấy được link thanh toán', 'error');
+            }
+        } catch (e: any) {
+            notificationMessage(e?.message || 'Lỗi khi thanh toán', 'error');
+        }
+    }
 
     return (
         <section className="py-10 bg-gray-50 min-h-[60vh]">
@@ -57,7 +93,7 @@ const CartPage: React.FC = () => {
                                     <span>Tổng</span>
                                     <span className="text-amber-600">{cart.totalPrice.toLocaleString('vi-VN')} ₫</span>
                                 </div>
-                                <button className="w-full mt-4 bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-3 font-semibold">Thanh toán</button>
+                                <button onClick={handleCheckout} className="w-full mt-4 bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-3 font-semibold">Thanh toán</button>
                             </div>
                         </div>
                     </div>

@@ -5,6 +5,9 @@ import { useProduct } from '@hooks/modules/useProduct';
 import { ROUTER_URL } from '@consts/router.path.const';
 import { useCartStore } from '@hooks/modules/useCartStore';
 import { useUserInfo } from '@hooks/index';
+import { useEffect } from 'react';
+import { ProductService } from '@services/product/product.service';
+import { notificationMessage } from '@utils/helper';
 
 // Import ProductResponse type
 import type { ProductResponse } from '../../../types/product/Product.res.type';
@@ -167,6 +170,39 @@ const Accessories: React.FC = () => {
   const currentItems = refined.slice((page - 1) * pageSize, page * pageSize);
 
   const accessories = currentItems.map(convertToAccessoryType);
+
+  // Favorites state
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!user?.id) { setFavoriteIds(new Set()); return; }
+        const resp = await ProductService.getFavorites(user.id);
+        const list = (resp as any)?.data || [];
+        if (mounted) setFavoriteIds(new Set(list.map((p: any) => p.id)));
+      } catch { }
+    })();
+    return () => { mounted = false; };
+  }, [user?.id]);
+
+  const toggleFavorite = async (productId: string, name: string) => {
+    try {
+      if (!user?.id) { notificationMessage('Vui lòng đăng nhập để yêu thích', 'warning'); return; }
+      const isFav = favoriteIds.has(productId);
+      if (isFav) {
+        await ProductService.removeFavorite(productId, user.id);
+        setFavoriteIds(prev => { const ns = new Set(prev); ns.delete(productId); return ns; });
+        notificationMessage(`Đã bỏ yêu thích: ${name}`, 'success');
+      } else {
+        await ProductService.addFavorite(productId, user.id);
+        setFavoriteIds(prev => new Set([...prev, productId]));
+        notificationMessage(`Đã thêm vào yêu thích: ${name}`, 'success');
+      }
+    } catch (e: any) {
+      notificationMessage(e?.message || 'Lỗi thao tác yêu thích', 'error');
+    }
+  };
 
   const chips = useMemo(() => {
     const xs: string[] = [];
@@ -351,6 +387,12 @@ const Accessories: React.FC = () => {
                             <img src={item.image || 'https://via.placeholder.com/400x300?text=No+Image'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Image'; }} />
                             {item.discount && (<div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">-{item.discount}%</div>)}
                             {item.isNew && !item.discount && (<div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">Mới</div>)}
+                            {favoriteIds.has(item.id) && (<div className="absolute bottom-3 left-3 bg-rose-500/90 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">Đã thích</div>)}
+                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(item.id, item.title); }} className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 ${favoriteIds.has(item.id) ? 'text-rose-600' : 'text-gray-400'}`}>
+                                <path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.187 25.18 25.18 0 01-4.244-2.62C4.688 16.182 2.25 13.555 2.25 10.5 2.25 7.462 4.714 5 7.75 5a5.5 5.5 0 013.9 1.64A5.5 5.5 0 0115.55 5c3.036 0 5.5 2.462 5.5 5.5 0 3.055-2.438 5.682-4.739 7.59a25.175 25.175 0 01-4.244 2.62 15.247 15.247 0 01-.383.187l-.022.01-.007.003a.75.75 0 01-.61 0z" />
+                              </svg>
+                            </button>
                           </div>
                           <div className="p-5 flex flex-col flex-grow">
                             <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 line-clamp-2">{item.title}</h3>

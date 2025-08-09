@@ -100,6 +100,24 @@ export const ProductService = {
         });
     },
 
+    // Favorite APIs
+    addFavorite(productId: string, userId: string) {
+        return BaseService.post<ApiResponse<void>>({
+            url: API_PATH.PRODUCT.ADD_FAVORITE(productId, userId)
+        });
+    },
+    removeFavorite(productId: string, userId: string) {
+        return BaseService.remove<ApiResponse<void>>({
+            url: API_PATH.PRODUCT.REMOVE_FAVORITE(productId, userId)
+        });
+    },
+    getFavorites(userId: string, query?: Partial<FilterProduct>) {
+        return BaseService.get<ProductResponse[]>({
+            url: API_PATH.PRODUCT.GET_FAVORITES(userId),
+            payload: query as any
+        });
+    },
+
     // Verify product by admin
     verifyProduct(id: string) {
         return BaseService.put<ApiResponse<ProductResponse>>({
