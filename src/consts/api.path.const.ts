@@ -34,6 +34,13 @@ export const API_PATH = {
         UPDATE_PRODUCT: (id: string) => `/Products/${id}`,
         DELETE_PRODUCT: (id: string) => `/Products/${id}`
     },
+    CART: {
+        GET_BY_USER: (userId: string) => `/Carts/user/${userId}`,
+        ADD: (userId: string, productId: string, quantity?: number) => `/Carts/${userId}/add/${productId}${typeof quantity === 'number' ? `?quantity=${quantity}` : ''}`,
+        GET_DETAILS: (cartId: string) => `/Carts/${cartId}/details`,
+        DELETE_DETAIL: (cartDetailId: string) => `/Carts/detail/${cartDetailId}`,
+        UPDATE_DETAIL_QUANTITY: (cartDetailId: string, newQuantity: number) => `/Carts/detail/${cartDetailId}/quantity/${newQuantity}`,
+    },
     CATEGORY: {
         CREATE: "/Categories/",
         GET_ALL: "/Categories",

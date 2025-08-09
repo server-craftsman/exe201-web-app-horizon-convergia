@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUserInfo, useAuth } from '../../hooks';
 import { UserRole } from '../../app/enums';
 import { ROUTER_URL } from '../../consts/router.path.const';
+import { useCartStore } from '@hooks/modules/useCartStore';
 
 // Mapping helpers for role-specific paths
 const getProfilePath = (role: UserRole) => {
@@ -360,8 +361,11 @@ const HeaderLayout: React.FC = () => {
                     </motion.nav>
 
                     {/* Search and User Info for Desktop */}
-                    <div className="hidden md:flex items-center">
+                    <div className="hidden md:flex items-center gap-3">
                         <SearchComponent />
+
+                        {/* Cart Icon */}
+                        <CartIcon />
 
                         {/* User Info for Desktop */}
                         <UserProfileComponent />
@@ -370,6 +374,7 @@ const HeaderLayout: React.FC = () => {
                     {/* Mobile Menu Button */}
                     <div className="flex items-center md:hidden">
                         <SearchComponent />
+                        <CartIcon />
                         <motion.button
                             className="text-amber-400 ml-4"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -432,3 +437,16 @@ const HeaderLayout: React.FC = () => {
 };
 
 export default HeaderLayout;
+
+// Inline CartIcon component
+const CartIcon: React.FC = () => {
+    const itemCount = useCartStore(s => s.itemCount);
+    return (
+        <Link to={ROUTER_URL.CLIENT.CART} className="relative ml-2">
+            <span className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-gray-900 transition">
+                🛒
+            </span>
+            <span className="absolute -top-1 -right-1 text-[10px] bg-amber-500 text-white rounded-full px-1.5 py-0.5 min-w-[18px] text-center">{itemCount || 0}</span>
+        </Link>
+    )
+}

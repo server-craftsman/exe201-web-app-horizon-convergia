@@ -4,6 +4,8 @@ import { useProduct } from '@hooks/modules/useProduct';
 import { ROUTER_URL } from '@consts/router.path.const';
 import { MOTORCYCLE_BRANDS } from '@consts/productBrandsModels';
 import { useVietnamAddress } from '@hooks/other/useVietnamAddress';
+import { useCartStore } from '@hooks/modules/useCartStore';
+import { useUserInfo } from '@hooks/index';
 
 const NEW_BADGE_HOURS = 72; // cấu hình: hiển thị "Mới đăng" trong 72 giờ từ createdAt
 
@@ -85,6 +87,8 @@ const NewListings: React.FC = () => {
 
   // Fetch latest products
   const { data: products = [], isLoading, error } = useProducts(apiFilter);
+  const { addItem } = useCartStore();
+  const user = useUserInfo();
 
   // helpers
   const shortLocation = (full?: string) => {
@@ -265,8 +269,8 @@ const NewListings: React.FC = () => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {pagedProducts.map((product) => (
-                    <Link key={product.id} to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', product.id)} className="group">
-                      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 group-hover:shadow-2xl group-hover:border-amber-200 transition-all duration-500">
+                    <div key={product.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-2xl hover:border-amber-200 transition-all duration-500">
+                      <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', product.id)} className="block">
                         <div className="relative h-48">
                           <img src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : 'https://via.placeholder.com/300x200?text=No+Image'} alt={`${product.brand} ${product.model}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image'; }} />
                           <div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">{product.year}</div>
@@ -280,8 +284,11 @@ const NewListings: React.FC = () => {
                             {product.condition && (<span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full">{product.condition}</span>)}
                           </div>
                         </div>
+                      </Link>
+                      <div className="px-5 pb-4">
+                        <button onClick={() => user?.id && addItem(user.id, product.id, 1, `${product.brand} ${product.model}`)} className="w-full text-sm bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium">Thêm vào giỏ</button>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
                 {/* Pagination */}

@@ -20,6 +20,7 @@ export const ROUTER_URL = {
         NEWS: "/tin-tuc",
         PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
         PRODUCT_DETAIL: "/san-pham/:id",
+        CART: "/gio-hang",
     },
     // BUYER ROUTES
     BUYER: {
