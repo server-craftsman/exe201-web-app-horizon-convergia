@@ -66,6 +66,16 @@ export interface FilterProduct {
     ascending?: boolean;
     pageNumber?: number;
     pageSize?: number;
+    // optional extras
+    status?: number;
+    isVerified?: boolean;
+}
+
+// AI Product Analysis (Chat Box) request
+export interface ProductAnalysisChatRequest {
+    image?: File | Blob | null;
+    description?: string;
+    userId?: string;
 }
 
 export interface SendProductPayment {

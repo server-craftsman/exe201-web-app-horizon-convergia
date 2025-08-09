@@ -11,6 +11,8 @@ import type {
     // DeleteProduct
 } from "../../types/product/Product.req.type";
 import type { ProductResponse } from "../../types/product/Product.res.type";
+import type { ProductAnalysisChatRequest, } from "../../types/product/Product.req.type";
+import type { ProductAnalysisChatResponse } from "../../types/product/Product.res.type";
 
 export const ProductService = {
     // Create product by seller
@@ -115,6 +117,19 @@ export const ProductService = {
         return BaseService.get<ProductResponse[]>({
             url: API_PATH.PRODUCT.GET_FAVORITES(userId),
             payload: query as any
+        });
+    },
+
+    // AI: Product Analysis Chat Box (multipart/form-data)
+    analyzeProductWithAI(params: ProductAnalysisChatRequest) {
+        const form = new FormData();
+        if (params.image) form.append('Image', params.image);
+        if (params.description) form.append('Description', params.description);
+        if (params.userId) form.append('UserId', params.userId);
+        return BaseService.post<ApiResponse<ProductAnalysisChatResponse>>({
+            url: API_PATH.AI.PRODUCT_ANALYSIS_CHAT_BOX,
+            payload: form,
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
 
