@@ -135,18 +135,18 @@ const RegisterPage: React.FC = () => {
 
     // Handle address selections
     if (name === 'provinceCode') {
-      const selectedProvinceName = provinces.data?.find((p: { code: string; }) => p.code === value)?.name || '';
+      const selectedProvinceName = provinces.data?.find((p: { code: string; }) => String(p.code) === String(value))?.name || '';
       setSelectedProvince(selectedProvinceName);
       setFormData(prev => ({ ...prev, districtCode: '', wardCode: '' }));
       setSelectedDistrict('');
       setSelectedWard('');
     } else if (name === 'districtCode') {
-      const selectedDistrictName = districts.data?.find((d: { code: string; }) => d.code === value)?.name || '';
+      const selectedDistrictName = districts.data?.find((d: { code: string; }) => String(d.code) === String(value))?.name || '';
       setSelectedDistrict(selectedDistrictName);
       setFormData(prev => ({ ...prev, wardCode: '' }));
       setSelectedWard('');
     } else if (name === 'wardCode') {
-      const selectedWardName = wards.data?.find((w: { code: string; }) => w.code === value)?.name || '';
+      const selectedWardName = wards.data?.find((w: { code: string; }) => String(w.code) === String(value))?.name || '';
       setSelectedWard(selectedWardName);
     }
   };
@@ -533,7 +533,7 @@ const RegisterPage: React.FC = () => {
                       name="districtCode"
                       value={formData.districtCode}
                       onChange={handleChange}
-                      disabled={!formData.provinceCode}
+                      disabled={!String(formData.provinceCode)}
                       className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Chọn quận/huyện</option>
@@ -556,7 +556,7 @@ const RegisterPage: React.FC = () => {
                       name="wardCode"
                       value={formData.wardCode}
                       onChange={handleChange}
-                      disabled={!formData.districtCode}
+                      disabled={!String(formData.districtCode)}
                       className="appearance-none block w-full px-3 py-3 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">Chọn phường/xã</option>

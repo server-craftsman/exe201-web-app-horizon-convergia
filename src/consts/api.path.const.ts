@@ -62,6 +62,9 @@ export const API_PATH = {
         BASE: "/Review",
         BY_ID: (id: string) => `/Review/${id}`,
     },
+    AI: {
+        PRODUCT_ANALYSIS_CHAT_BOX: "/ProductAnalysis/Chat_Box_AI",
+    },
     CATEGORY: {
         CREATE: "/Categories/",
         GET_ALL: "/Categories",

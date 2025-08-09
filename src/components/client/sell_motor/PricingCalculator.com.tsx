@@ -1,34 +1,16 @@
 // src/components/client/sell_motor/PricingCalculator.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { ProductService } from '@services/product/product.service';
+import { useUserInfo } from '@hooks/index';
+import { notificationMessage } from '@utils/helper';
+import { MOTORCYCLE_BRANDS, MOTORCYCLE_BRANDS_MODELS } from '@consts/productBrandsModels';
 
-// Mock data for the calculator
-const brands = [
-  { id: 'honda', name: 'Honda' },
-  { id: 'yamaha', name: 'Yamaha' },
-  { id: 'suzuki', name: 'Suzuki' },
-  { id: 'kawasaki', name: 'Kawasaki' },
-  { id: 'ducati', name: 'Ducati' },
-  { id: 'bmw', name: 'BMW' },
-  { id: 'harley', name: 'Harley-Davidson' }
-];
+// Dữ liệu thương hiệu & model lấy từ @productBrandsModels.ts
+// MOTORCYCLE_BRANDS: string[]; MOTORCYCLE_BRANDS_MODELS: Record<string, string[]>
 
-const models = {
-  honda: [
-    { id: 'cbr1000rr', name: 'CBR1000RR-R Fireblade' },
-    { id: 'cb650r', name: 'CB650R' },
-    { id: 'africa-twin', name: 'Africa Twin' },
-    { id: 'gold-wing', name: 'Gold Wing' }
-  ],
-  yamaha: [
-    { id: 'yzf-r1', name: 'YZF-R1' },
-    { id: 'mt-10', name: 'MT-10' },
-    { id: 'tracer-9', name: 'Tracer 9 GT' }
-  ],
-  // Other brands have similar model structure
-};
-
-const years = Array.from({ length: 21 }, (_, i) => ({ value: 2023 - i, label: `${2023 - i}` }));
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 21 }, (_, i) => ({ value: currentYear - i, label: `${currentYear - i}` }));
 const mileageRanges = [
   { value: 1000, label: '< 1,000 km' },
   { value: 5000, label: '1,000 - 5,000 km' },
@@ -46,60 +28,75 @@ const conditions = [
 ];
 
 const PricingCalculator: React.FC = () => {
-  const [brand, setBrand] = useState('');
+  const user = useUserInfo();
+  const [brand, setBrand] = useState(''); // tên brand như 'Honda', 'Yamaha', ...
   const [model, setModel] = useState('');
-  const [year, setYear] = useState(2023);
-  const [mileage, setMileage] = useState(5000);
-  const [condition, setCondition] = useState('good');
-  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [year, setYear] = useState<number | null>(null);
+  const [mileage, setMileage] = useState<number | null>(null);
+  const [condition, setCondition] = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Simplified price calculation function - in a real app, this would be more complex
-  const calculatePrice = () => {
-    if (!brand || !model || !year || !mileage || !condition) return null;
-    
-    // Base price depending on brand and model
-    let basePrice = 500000000; // Example base price
-    
-    // Age factor (newer motorcycles cost more)
-    const ageFactor = Math.pow(0.9, 2023 - year);
-    
-    // Mileage factor (lower mileage is better)
-    const mileageFactor = 1 - (mileage / 100000);
-    
-    // Condition factor
-    const conditionFactors = {
-      excellent: 1.1,
-      good: 1.0,
-      fair: 0.85,
-      poor: 0.7
-    };
-    
-    // Calculate final price
-    const finalPrice = basePrice * ageFactor * (mileageFactor + 0.5) * conditionFactors[condition as keyof typeof conditionFactors];
-    
-    return Math.round(finalPrice);
-  };
-
-  const handleCalculate = () => {
-    setIsCalculating(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      setEstimatedPrice(calculatePrice());
-      setIsCalculating(false);
-    }, 1500);
-  };
+  // AI states
+  const [aiImage, setAiImage] = useState<File | null>(null);
+  const [aiResult, setAiResult] = useState<{ suggestionTitle?: string; suggestionDescription?: string; estimatedPrice?: number; tags?: string[]; reasoning?: string } | null>(null);
 
   // Reset model when brand changes
   useEffect(() => {
     setModel('');
   }, [brand]);
 
+  const buildDescription = () => {
+    const mil = mileageRanges.find(m => m.value === mileage)?.label || '';
+    const condLabel = conditions.find(c => c.value === condition)?.label || '';
+    return [
+      `Thương hiệu: ${brand}`,
+      `Model: ${model}`,
+      `Năm: ${year ?? ''}`,
+      `Số km: ${mil}`,
+      `Tình trạng: ${condLabel}`
+    ].filter(Boolean).join(' | ');
+  };
+
+  const handleCalculate = async () => {
+    // Validate required fields and show which ones missing
+    const missing: string[] = [];
+    if (!brand) missing.push('Thương hiệu');
+    if (!model) missing.push('Model');
+    if (!year) missing.push('Năm');
+    if (!mileage) missing.push('Số km');
+    if (!condition) missing.push('Tình trạng');
+
+    if (missing.length > 0) {
+      notificationMessage(`Bạn chưa nhập: ${missing.join(', ')}`, 'warning');
+      return;
+    }
+
+    try {
+      setIsCalculating(true);
+
+      // AI analyze with combined description
+      const description = buildDescription();
+      const resp = await ProductService.analyzeProductWithAI({
+        image: aiImage,
+        description,
+        userId: user?.id || undefined,
+      });
+      const payload = (resp as any)?.data;
+      const data = payload && typeof payload === 'object' && 'data' in payload ? (payload as any).data : payload;
+      setAiResult(data || null);
+      if (!data) notificationMessage('AI không trả về dữ liệu gợi ý', 'warning');
+    } catch (e: any) {
+      notificationMessage(e?.message || 'Không thể định giá', 'error');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
   return (
     <section id="calculator" className="py-20 bg-gradient-to-b from-gray-800 to-gray-900">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -108,7 +105,7 @@ const PricingCalculator: React.FC = () => {
           >
             Định Giá <span className="text-amber-500">Xe Máy</span> Của Bạn
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -140,8 +137,8 @@ const PricingCalculator: React.FC = () => {
                   className="bg-gray-700 text-white border border-gray-600 rounded-lg w-full p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
                   <option value="">Chọn thương hiệu</option>
-                  {brands.map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
+                  {MOTORCYCLE_BRANDS.map((name) => (
+                    <option key={name} value={name}>{name}</option>
                   ))}
                 </select>
               </div>
@@ -159,8 +156,8 @@ const PricingCalculator: React.FC = () => {
                   className="bg-gray-700 text-white border border-gray-600 rounded-lg w-full p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50"
                 >
                   <option value="">Chọn model</option>
-                  {brand && models[brand as keyof typeof models]?.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
+                  {brand && (MOTORCYCLE_BRANDS_MODELS[brand] || []).map((m) => (
+                    <option key={m} value={m}>{m}</option>
                   ))}
                 </select>
               </div>
@@ -172,10 +169,11 @@ const PricingCalculator: React.FC = () => {
                 </label>
                 <select
                   id="year"
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value))}
+                  value={year ?? ''}
+                  onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : null)}
                   className="bg-gray-700 text-white border border-gray-600 rounded-lg w-full p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
+                  <option value="">Chọn năm</option>
                   {years.map((y) => (
                     <option key={y.value} value={y.value}>{y.label}</option>
                   ))}
@@ -189,10 +187,11 @@ const PricingCalculator: React.FC = () => {
                 </label>
                 <select
                   id="mileage"
-                  value={mileage}
-                  onChange={(e) => setMileage(parseInt(e.target.value))}
+                  value={mileage ?? ''}
+                  onChange={(e) => setMileage(e.target.value ? parseInt(e.target.value) : null)}
                   className="bg-gray-700 text-white border border-gray-600 rounded-lg w-full p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
+                  <option value="">Chọn số km</option>
                   {mileageRanges.map((m) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
@@ -210,19 +209,26 @@ const PricingCalculator: React.FC = () => {
                   onChange={(e) => setCondition(e.target.value)}
                   className="bg-gray-700 text-white border border-gray-600 rounded-lg w-full p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
+                  <option value="">Chọn tình trạng</option>
                   {conditions.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
               </div>
 
+              {/* Image upload for AI (optional) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Ảnh sản phẩm (tùy chọn)</label>
+                <input type="file" accept="image/*" onChange={(e) => setAiImage(e.target.files?.[0] || null)} className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-amber-500 file:text-gray-900 hover:file:bg-amber-400" />
+              </div>
+
               {/* Calculate Button */}
-              <div className="md:col-span-2 mt-4">
+              <div className="md:col-span-2 mt-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCalculate}
-                  disabled={!brand || !model || isCalculating}
+                  disabled={isCalculating}
                   className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-gray-900 font-bold shadow-lg hover:shadow-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCalculating ? (
@@ -231,7 +237,7 @@ const PricingCalculator: React.FC = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Đang Tính Toán...
+                      Đang Định Giá...
                     </span>
                   ) : (
                     'Định Giá Xe'
@@ -241,30 +247,22 @@ const PricingCalculator: React.FC = () => {
             </div>
 
             {/* Results */}
-            {estimatedPrice !== null && (
+            {aiResult && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mt-8 border-t border-gray-700 pt-6"
               >
-                <h3 className="text-xl font-bold text-white mb-4">Định Giá Của Chúng Tôi</h3>
-                
-                <div className="bg-gradient-to-r from-amber-500/10 to-amber-400/10 p-6 rounded-xl border border-amber-500/20">
-                  <div className="flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                      <p className="text-gray-400 mb-2">Giá bán ước tính:</p>
-                      <p className="text-3xl font-bold text-amber-400">{estimatedPrice.toLocaleString()} VND</p>
+                <h3 className="text-xl font-bold text-white mb-4">Kết quả gợi ý</h3>
+                <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-6">
+                  {aiResult.suggestionTitle && (<div className="mb-3"><div className="text-sm text-gray-400">Tiêu đề (AI)</div><div className="text-white font-semibold">{aiResult.suggestionTitle}</div></div>)}
+                  {aiResult.estimatedPrice !== undefined && (<div className="mb-3"><div className="text-sm text-gray-400">Giá ước tính (AI)</div><div className="text-amber-400 font-bold text-xl">{aiResult.estimatedPrice.toLocaleString()} VND</div></div>)}
+                  {aiResult.suggestionDescription && (<div className="mb-3"><div className="text-sm text-gray-400">Mô tả (AI)</div><div className="text-gray-300 whitespace-pre-wrap">{aiResult.suggestionDescription}</div></div>)}
+                  {aiResult.tags && aiResult.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {aiResult.tags.map((t, i) => (<span key={i} className="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">#{t}</span>))}
                     </div>
-                    <div className="mt-4 md:mt-0">
-                      <button className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-lg text-gray-900 font-bold shadow-lg hover:shadow-amber-500/20 transition-all">
-                        Đăng Tin Ngay
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <p className="mt-4 text-sm text-gray-400">
-                    * Đây là giá ước tính dựa trên dữ liệu thị trường. Giá cuối cùng có thể thay đổi sau khi có sự đánh giá trực tiếp từ chuyên viên của chúng tôi.
-                  </p>
+                  )}
                 </div>
               </motion.div>
             )}
