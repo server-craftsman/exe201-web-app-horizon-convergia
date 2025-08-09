@@ -18,7 +18,8 @@ const ForgotPasswordPage = lazy(() => import("../../pages/auth/forgot_password")
 // product
 const ProductListByCategoryIdPage = lazy(() => import("../../components/client/home/ProductListByCategoryId.com"));
 const ProductDetailsPage = lazy(() => import("../../components/client/home/product/ProductDetails.com"));
-
+// cart
+const CartPage = lazy(() => import("../../pages/client/cart"));
 
 //======================================================
 //export public sub paths
@@ -66,6 +67,10 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
         {
           path: ROUTER_URL.AUTH.RESET_PASSWORD,
           element: <ResetPasswordPage />
+        },
+        {
+          path: ROUTER_URL.CLIENT.CART,
+          element: <CartPage />
         }
       ]
     }

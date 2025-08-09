@@ -390,9 +390,9 @@ const RegisterPage: React.FC = () => {
                   <input
                     id="phoneNumber"
                     name="phoneNumber"
-                    type="tel"
+                    type="number"
                     autoComplete="tel"
-                    value={formData.phoneNumber || undefined}
+                    value={formData.phoneNumber || ''}
                     onChange={handleChange}
                     className="appearance-none block w-full px-3 py-3 pl-10 border border-gray-600 rounded-lg shadow-sm placeholder-gray-400 bg-gray-800/50 text-white focus:outline-none focus:ring-amber-500 focus:border-amber-500"
                     placeholder="0123456789"

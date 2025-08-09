@@ -114,3 +114,32 @@ export const notificationMessage = (message: string, type: "success" | "error" |
 export const formatNumber = (number: number) => {
     return number.toLocaleString("en-US", { maximumFractionDigits: 2 });
 };
+
+// Cart notifications
+const cartToastOptions: ToastOptions = {
+    position: 'top-right',
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    theme: 'colored'
+};
+
+export const notifyAddedToCart = (productName?: string, quantity: number = 1) => {
+    const name = productName && productName.trim().length ? ` ${productName}` : '';
+    toast.success(`Đã thêm ${quantity} sản phẩm${name} vào giỏ hàng`, cartToastOptions);
+};
+
+export const notifyCartQuantityUpdated = (quantity: number) => {
+    toast.info(`Đã cập nhật số lượng: ${quantity}`, cartToastOptions);
+};
+
+export const notifyCartItemRemoved = (productName?: string) => {
+    const name = productName && productName.trim().length ? ` ${productName}` : '';
+    toast.warning(`Đã xóa${name} khỏi giỏ hàng`, cartToastOptions);
+};
+
+export const notifyCartError = (message: string) => {
+    toast.error(message || 'Có lỗi khi thao tác giỏ hàng', cartToastOptions);
+};
