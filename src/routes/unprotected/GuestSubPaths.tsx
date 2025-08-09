@@ -18,6 +18,8 @@ const ForgotPasswordPage = lazy(() => import("../../pages/auth/forgot_password")
 // product
 const ProductListByCategoryIdPage = lazy(() => import("../../components/client/home/ProductListByCategoryId.com"));
 const ProductDetailsPage = lazy(() => import("../../components/client/home/product/ProductDetails.com"));
+// payments callback
+const PaymentCallbackPage = lazy(() => import("../../pages/client/payment/PayosCallback"));
 // cart
 const CartPage = lazy(() => import("../../pages/client/cart"));
 
@@ -37,13 +39,14 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
           element: <ProductDetailsPage />
         },
         {
+          path: ROUTER_URL.COMMON.PAYMENT_CALLBACK,
+          element: <PaymentCallbackPage />
+        },
+        {
           path: ROUTER_URL.COMMON.HOME,
           element: <HomePage />
         },
-        {
-          path: ROUTER_URL.CLIENT.BUY_MOTOR,
-          element: <BuyMotorPage />
-        },
+        { path: ROUTER_URL.CLIENT.BUY_MOTOR, element: <BuyMotorPage /> },
         {
           path: ROUTER_URL.CLIENT.SELL_MOTOR,
           element: <SellMotorPage />

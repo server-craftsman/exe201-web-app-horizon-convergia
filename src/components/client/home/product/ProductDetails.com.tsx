@@ -5,6 +5,9 @@ import { useProduct } from '@hooks/modules/useProduct'
 import { ROUTER_URL } from '@consts/router.path.const'
 import { useCartStore } from '@hooks/modules/useCartStore'
 import { useUserInfo } from '@hooks/index'
+import { useEffect } from 'react'
+import { ProductService } from '@services/product/product.service'
+import { notificationMessage } from '@utils/helper'
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
@@ -21,6 +24,35 @@ const ProductDetails: React.FC = () => {
     const user = useUserInfo()
 
     const [selectedIndex, setSelectedIndex] = useState(0)
+    const [isFavorite, setIsFavorite] = useState(false)
+
+    useEffect(() => {
+        (async () => {
+            try {
+                if (!user?.id || !id) { setIsFavorite(false); return; }
+                const resp = await ProductService.getFavorites(user.id)
+                const list = (resp as any)?.data || []
+                setIsFavorite(list.some((p: any) => p.id === id))
+            } catch { /* ignore */ }
+        })()
+    }, [user?.id, id])
+
+    const toggleFavorite = async () => {
+        try {
+            if (!user?.id || !product) { notificationMessage('Vui lòng đăng nhập để yêu thích', 'warning'); return; }
+            if (isFavorite) {
+                await ProductService.removeFavorite(product.id, user.id)
+                setIsFavorite(false)
+                notificationMessage(`Đã bỏ yêu thích: ${product.brand} ${product.model}`, 'success')
+            } else {
+                await ProductService.addFavorite(product.id, user.id)
+                setIsFavorite(true)
+                notificationMessage(`Đã thêm vào yêu thích: ${product.brand} ${product.model}`, 'success')
+            }
+        } catch (e: any) {
+            notificationMessage(e?.message || 'Lỗi thao tác yêu thích', 'error')
+        }
+    }
 
     const isNew = (createdAt?: string) => {
         if (!createdAt) return false
@@ -96,6 +128,9 @@ const ProductDetails: React.FC = () => {
                                 {product.isVerified && (
                                     <span className="px-2 py-1 text-xs rounded-full bg-emerald-500 text-white shadow">Đã xác minh</span>
                                 )}
+                                {isFavorite && (
+                                    <span className="px-2 py-1 text-xs rounded-full bg-rose-500 text-white shadow">Đã thích</span>
+                                )}
                             </div>
                         </motion.div>
                         {moreImages.length > 0 && (
@@ -124,8 +159,8 @@ const ProductDetails: React.FC = () => {
                                     <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{shortLocation(product.location)}</span>
                                 </div>
                                 <div className="hidden md:flex items-center gap-2">
-                                    <button className="p-2 rounded-full border hover:bg-gray-50 transition-colors" title="Yêu thích">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-rose-500"><path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.187 25.18 25.18 0 01-4.244-2.62C4.688 16.182 2.25 13.555 2.25 10.5 2.25 7.462 4.714 5 7.75 5a5.5 5.5 0 013.9 1.64A5.5 5.5 0 0115.55 5c3.036 0 5.5 2.462 5.5 5.5 0 3.055-2.438 5.682-4.739 7.59a25.175 25.175 0 01-4.244 2.62 15.247 15.247 0 01-.383.187l-.022.01-.007.003a.75.75 0 01-.61 0z" /></svg>
+                                    <button onClick={toggleFavorite} className={`p-2 rounded-full border hover:bg-gray-50 transition-colors ${isFavorite ? 'bg-rose-50 border-rose-200' : ''}`} title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 ${isFavorite ? 'text-rose-600' : 'text-gray-400'}`}><path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.187 25.18 25.18 0 01-4.244-2.62C4.688 16.182 2.25 13.555 2.25 10.5 2.25 7.462 4.714 5 7.75 5a5.5 5.5 0 013.9 1.64A5.5 5.5 0 0115.55 5c3.036 0 5.5 2.462 5.5 5.5 0 3.055-2.438 5.682-4.739 7.59a25.175 25.175 0 01-4.244 2.62 15.247 15.247 0 01-.383.187l-.022.01-.007.003a.75.75 0 01-.61 0z" /></svg>
                                     </button>
                                     <button className="p-2 rounded-full border hover:bg-gray-50 transition-colors" title="Chia sẻ">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-gray-600">

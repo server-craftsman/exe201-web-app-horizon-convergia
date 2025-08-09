@@ -12,6 +12,7 @@ export const ROUTER_URL = {
         ABOUT: "/about",
         CONTACT: "/contact",
         FAQ: "/faq",
+        PAYMENT_CALLBACK: "/payments/payos-callback",
     },
     CLIENT: {
         BUY_MOTOR: "/mua-xe",
