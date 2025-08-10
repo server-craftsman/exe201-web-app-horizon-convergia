@@ -80,6 +80,7 @@ export const ROUTER_URL = {
         CATEGORIES: "/admin/quan-ly-danh-muc",
         PRODUCTS: "/admin/quan-ly-san-pham",
         ACCESSORIES: "/admin/quan-ly-phu-kien",
+        NEWS: "/admin/quan-ly-tin-tuc",
         ORDERS: "/admin/quan-ly-don-hang",
         REPORTS: "/admin/bao-cao",
         REVIEWS: "/admin/quan-ly-danh-gia",
