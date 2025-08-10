@@ -15,5 +15,6 @@ import { useUser } from "./modules/useUser.ts";
 import { useCategory } from "./modules/useCategory.ts";
 import { useVietnamAddress } from "@hooks/other/useVietnamAddress.ts";
 import { useProduct } from "./modules/useProduct.ts";
+import { useNews } from "./modules/useNews.ts";
 
-export { useUserInfo, useAuth, useLocalStorage, useUser, useCategory, useLogin, useVietnamAddress, useProduct };
+export { useUserInfo, useAuth, useLocalStorage, useUser, useCategory, useLogin, useVietnamAddress, useProduct, useNews };

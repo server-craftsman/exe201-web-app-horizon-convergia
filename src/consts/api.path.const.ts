@@ -72,5 +72,13 @@ export const API_PATH = {
         GET_BY_ID: (id: string) => `/Categories/${id}`,
         UPDATE: (id: string) => `/Categories/${id}`,
         DELETE: (id: string) => `/Categories/${id}`
+    },
+    NEWS: {
+        GET_ALL: "/Blog",
+        CREATE: "/Blog",
+        GET_BY_ID: (id: string) => `/Blog/${id}`,
+        UPDATE: (id: string) => `/Blog/${id}`,
+        DELETE: (id: string) => `/Blog/${id}`,
+        SEARCH: "/Blog/search"
     }
 };
