@@ -150,27 +150,28 @@ export interface PromiseState<T = unknown> extends AxiosResponse<T> {
 
 axiosInstance.interceptors.request.use(
     (config: AxiosRequestConfig) => {
-        // Direct localStorage access instead of using hooks
         const token = localStorage.getItem("accessToken");
-        // const userInfoStr = localStorage.getItem("userInfo");
 
         if (!config.headers) config.headers = {};
 
-        if (token) {
-            config.headers["Authorization"] = `Bearer ${token}`;
+        // Compute target host; only attach Authorization for our API host
+        try {
+            const finalUrl = (config.url || '').startsWith('http')
+                ? (config.url as string)
+                : `${config.baseURL || ''}${config.url || ''}`;
+            const targetHost = new URL(finalUrl).host;
+            const apiHost = new URL(DOMAIN_API).host;
+            if (token && targetHost === apiHost) {
+                (config.headers as any)["Authorization"] = `Bearer ${token}`;
+            } else {
+                delete (config.headers as any)["Authorization"];
+            }
+        } catch {
+            // If parsing fails, do not attach auth header
+            delete (config.headers as any)["Authorization"];
         }
 
-        // if (userInfoStr) {
-        //     try {
-        //         const parsedUserInfo = JSON.parse(userInfoStr);
-        //         config.headers["User-Id"] = parsedUserInfo.id;
-        //     } catch (e) {
-        //         console.error("Failed to parse user info from localStorage", e);
-        //     }
-        // }
-
-        // Some backend endpoints reject a Content-Type header on requests without a body (GET/DELETE…)
-        // Remove it to prevent 415 Unsupported Media Type responses
+        // Remove content-type for GET/DELETE to avoid 415 on some servers
         const method = config.method?.toLowerCase();
         if (method === "get" || method === "delete") {
             delete (config.headers as any)["content-type"];
@@ -210,9 +211,9 @@ axiosInstance.interceptors.response.use(
                     break;
                 case HTTP_STATUS.NOT_FOUND:
                     helpers.notificationMessage("Trang bạn đang tìm kiếm không tồn tại.", "error");
-                    setTimeout(() => {
-                        window.location.href = ROUTER_URL.AUTH.LOGIN;
-                    }, 2000);
+                    // setTimeout(() => {
+                    //     window.location.href = ROUTER_URL.AUTH.LOGIN;
+                    // }, 2000);
                     break;
                 case HTTP_STATUS.INTERNAL_SERVER_ERROR:
                     helpers.notificationMessage("Lỗi máy chủ. Vui lòng thử lại sau.", "error");
