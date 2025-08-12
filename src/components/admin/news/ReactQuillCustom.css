@@ -1,0 +1,87 @@
+/* Custom styles for ReactQuill in dark theme modal */
+.quill-wrapper .ql-editor {
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: white;
+}
+
+.quill-wrapper .ql-editor.ql-blank::before {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Toolbar styling */
+.quill-wrapper .ql-toolbar {
+  border-top: 1px solid #d1d5db;
+  border-left: 1px solid #d1d5db;
+  border-right: 1px solid #d1d5db;
+  background-color: #f9fafb;
+}
+
+.quill-wrapper .ql-container {
+  border-bottom: 1px solid #d1d5db;
+  border-left: 1px solid #d1d5db;
+  border-right: 1px solid #d1d5db;
+  background-color: white;
+}
+
+/* Button hover effects */
+.quill-wrapper .ql-toolbar .ql-formats button:hover {
+  color: #3b82f6;
+}
+
+.quill-wrapper .ql-toolbar .ql-formats button.ql-active {
+  color: #3b82f6;
+}
+
+/* Dropdown styles */
+.quill-wrapper .ql-toolbar .ql-formats .ql-picker-label:hover {
+  color: #3b82f6;
+}
+
+.quill-wrapper .ql-toolbar .ql-formats .ql-picker.ql-expanded .ql-picker-label {
+  color: #3b82f6;
+}
+
+/* Snow theme specific adjustments */
+.quill-wrapper .ql-snow .ql-tooltip {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 10001;
+}
+
+.quill-wrapper .ql-snow .ql-tooltip input[type="text"] {
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+}
+
+/* Focus styles */
+.quill-wrapper .ql-container.ql-snow {
+  border-color: #d1d5db;
+}
+
+.quill-wrapper .ql-editor:focus {
+  outline: none;
+}
+
+/* Custom spacing */
+.quill-wrapper {
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Override any global styles that might interfere */
+.quill-wrapper * {
+  box-sizing: border-box;
+}
+
+/* Ensure dropdown menus appear above modal */
+.quill-wrapper .ql-picker.ql-expanded .ql-picker-options {
+  z-index: 10002;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
