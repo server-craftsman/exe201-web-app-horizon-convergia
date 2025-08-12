@@ -43,7 +43,7 @@ export const NewsService = {
 
     // Get news by ID
     getNewsById(id: string) {
-        return BaseService.get<ApiResponse<NewsInfo>>({
+        return BaseService.get<NewsInfo>({
             url: API_PATH.NEWS.GET_BY_ID(id)
         });
     },

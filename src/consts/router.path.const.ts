@@ -20,6 +20,7 @@ export const ROUTER_URL = {
         ACCESSORIES: "/phu-kien",
         FAVORITE: "/yeu-thich",
         NEWS: "/tin-tuc",
+        NEWS_DETAIL: "/tin-tuc/:id",
         PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
         PRODUCT_DETAIL: "/san-pham/:id",
         CART: "/gio-hang",
