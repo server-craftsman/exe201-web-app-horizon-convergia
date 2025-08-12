@@ -23,7 +23,13 @@ export const CreateNewsModal = ({ isOpen, onClose }: CreateNewsModalProps) => {
   const titleInputRef = useRef<HTMLInputElement>(null);
   const { createNews } = useNews();
   const { useGetAllCategories } = useCategory();
-  const { data: categories } = useGetAllCategories();
+  // Lấy tất cả categories với pageSize 1000 như trong trang quản lý category
+  const { data: categories } = useGetAllCategories({ pageSize: 1000 });
+
+  // Debug log để kiểm tra số lượng categories
+  useEffect(() => {
+    console.log('Categories in Create modal:', categories?.length || 0, categories);
+  }, [categories]);
 
   useEffect(() => {
     if (isOpen && titleInputRef.current) {

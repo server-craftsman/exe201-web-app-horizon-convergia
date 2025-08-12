@@ -26,7 +26,13 @@ export const UpdateNewsModal = ({ newsId, isOpen, onClose }: UpdateNewsModalProp
   const { useGetAllCategories } = useCategory();
   
   const { data: newsDetail, isLoading: isLoadingNews, error: newsError } = useGetNewsById(newsId);
-  const { data: categories } = useGetAllCategories();
+  // Lấy tất cả categories với pageSize 1000 như trong trang quản lý category
+  const { data: categories } = useGetAllCategories({ pageSize: 1000 });
+
+  // Debug log để kiểm tra số lượng categories
+  useEffect(() => {
+    console.log('Categories in Update modal:', categories?.length || 0, categories);
+  }, [categories]);
 
   // Debug logging
   useEffect(() => {
@@ -39,8 +45,8 @@ export const UpdateNewsModal = ({ newsId, isOpen, onClose }: UpdateNewsModalProp
   useEffect(() => {
     if (newsDetail?.data && isOpen) {
       console.log('News detail data:', newsDetail.data);
-      // Handle both possible data structures
-      const newsData = newsDetail.data.data || newsDetail.data;
+      // Use newsDetail.data directly as NewsInfo
+      const newsData = newsDetail.data;
       if (newsData) {
         console.log('Setting form data:', newsData);
         setFormData({
