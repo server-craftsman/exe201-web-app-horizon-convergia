@@ -44,11 +44,11 @@ const getDashboardPath = (role: UserRole) => {
         case UserRole.ADMIN:
             return ROUTER_URL.ADMIN.BASE;
         case UserRole.BUYER:
-            return ROUTER_URL.BUYER.DASHBOARD;
+            return ROUTER_URL.BUYER.BASE;
         case UserRole.SELLER:
-            return ROUTER_URL.SELLER.DASHBOARD;
+            return ROUTER_URL.SELLER.BASE;
         case UserRole.SHIPPER:
-            return ROUTER_URL.SHIPPER.DASHBOARD;
+            return ROUTER_URL.SHIPPER.BASE;
         default:
             return '/';
     }
@@ -68,7 +68,7 @@ const getRoleSpecificMenuItems = (role: UserRole) => {
         case UserRole.BUYER:
             return [
                 { label: 'Giỏ hàng', path: ROUTER_URL.BUYER.CART, icon: '🛒' },
-                { label: 'Yêu thích', path: ROUTER_URL.BUYER.FAVORITES, icon: '❤️' },
+                { label: 'Yêu thích', path: ROUTER_URL.CLIENT.FAVORITE, icon: '❤️' },
                 { label: 'Lịch sử đơn hàng', path: ROUTER_URL.BUYER.ORDER_HISTORY, icon: '📜' },
                 { label: 'Ví tiền', path: ROUTER_URL.BUYER.WALLET, icon: '💰' },
                 { label: 'Thông báo', path: ROUTER_URL.BUYER.NOTIFICATIONS, icon: '🔔' }
@@ -103,6 +103,7 @@ const HeaderLayout: React.FC = () => {
     const location = useLocation();
     const user = useUserInfo();
     const { logout } = useAuth();
+    const loadCart = useCartStore(s => s.loadCart);
 
     const handleLogoutClick = () => {
         try {
@@ -132,6 +133,11 @@ const HeaderLayout: React.FC = () => {
         setMobileMenuOpen(false);
         setUserMenuOpen(false);
     }, [location]);
+
+    // Load cart count for badge when user available
+    useEffect(() => {
+        if (user?.id) loadCart(user.id);
+    }, [user?.id]);
 
     // Định nghĩa các menu item
     const menuItems = [

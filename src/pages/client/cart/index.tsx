@@ -22,11 +22,11 @@ const CartPage: React.FC = () => {
                 return;
             }
             const cartIds = cart.details.map(d => d.id);
-            const shippingAddress = 'Địa chỉ nhận hàng'; // TODO: lấy từ profile/checkout form
+            const shippingAddress = user.address || 'Địa chỉ nhận hàng'; // TODO: lấy từ profile/checkout form
             const discount = 0;
 
             // 1) tạo order từ cart
-            const orderResp = await OrderService.createFromCart({ cartId: cartIds, shippingAddress, discount });
+            const orderResp = await OrderService.createFromCart({ cartId: cartIds, shippingAddress: shippingAddress || '', discount });
             const order = (orderResp as any)?.data?.data;
 
             if (!order) {
@@ -51,7 +51,7 @@ const CartPage: React.FC = () => {
     return (
         <section className="py-10 bg-gray-50 min-h-[60vh]">
             <div className="container mx-auto px-4">
-                <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-6">Giỏ hàng của bạn ({itemCount})</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Giỏ hàng của bạn ({itemCount})</h1>
 
                 {isLoading ? (
                     <div className="text-center py-20 text-gray-500">Đang tải giỏ hàng...</div>

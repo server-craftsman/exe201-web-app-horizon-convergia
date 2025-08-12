@@ -331,7 +331,18 @@ const NewListings: React.FC = () => {
                         </div>
                       </Link>
                       <div className="px-5 pb-4">
-                        <button onClick={() => user?.id && addItem(user.id, product.id, 1, `${product.brand} ${product.model}`)} className="w-full text-sm bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium">Thêm vào giỏ</button>
+                        <button
+                          onClick={() => {
+                            if (!user?.id) {
+                              notificationMessage('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning');
+                              return;
+                            }
+                            addItem(user.id, product.id, 1, `${product.brand} ${product.model}`);
+                          }}
+                          className="w-full text-sm bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium"
+                        >
+                          Thêm vào giỏ
+                        </button>
                       </div>
                     </div>
                   ))}

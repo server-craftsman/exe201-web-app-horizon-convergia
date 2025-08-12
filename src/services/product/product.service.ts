@@ -114,9 +114,18 @@ export const ProductService = {
         });
     },
     getFavorites(userId: string, query?: Partial<FilterProduct>) {
+        // Chỉ pick các trường cần thiết để lọc favorites nhằm tránh query quá tải
+        const allowedKeys: (keyof FilterProduct)[] = ['brand', 'model', 'year', 'condition', 'location', 'minPrice', 'maxPrice', 'color', 'sortField', 'ascending', 'pageNumber', 'pageSize'];
+        const payload: Record<string, any> = {};
+        if (query) {
+            for (const k of allowedKeys) {
+                const v = (query as any)[k];
+                if (typeof v !== 'undefined' && v !== null && v !== '') payload[k] = v;
+            }
+        }
         return BaseService.get<ProductResponse[]>({
             url: API_PATH.PRODUCT.GET_FAVORITES(userId),
-            payload: query as any
+            payload
         });
     },
 
