@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { helpers } from "@utils/index.ts";
 import SearchCommon from '../../common/SearchCommon.com';
 import { CreateNewsModal } from './Create';
+import { UpdateNewsModal } from './Update';
+import { DeleteNews } from './Delete';
 import { memo } from 'react';
 
 export const NewsDisplayCom = () => {
@@ -16,6 +18,8 @@ export const NewsDisplayCom = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [selectedNewsId, setSelectedNewsId] = useState<string>('');
 
     const { getAllNews } = useNews();
 
@@ -212,13 +216,41 @@ export const NewsDisplayCom = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-white max-w-xs truncate">
-                                                {item.title}
+                                                {item.title.length > 20 ? item.title.substring(0, 20) + '...' : item.title}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-300 max-w-xs truncate">
-                                                {item.content}
-                                            </div>
+                                            <div 
+                                                className="text-sm text-gray-300 max-w-xs truncate"
+                                                dangerouslySetInnerHTML={{ 
+                                                    __html: (() => {
+                                                        // Convert markdown to HTML for display
+                                                        let htmlContent = item.content
+                                                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                                            .replace(/__(.*?)__/g, '<u>$1</u>')
+                                                            .replace(/~~(.*?)~~/g, '<strike>$1</strike>')
+                                                            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                                                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                                                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                                                            .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+                                                            .replace(/^- (.*$)/gm, '<li>$1</li>')
+                                                            .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
+                                                            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+                                                            .replace(/\n/g, '<br>');
+                                                        
+                                                        // Remove HTML tags for character count
+                                                        const textOnly = htmlContent.replace(/<[^>]*>/g, '');
+                                                        
+                                                        // Truncate and add ellipsis if needed
+                                                        if (textOnly.length > 20) {
+                                                            const truncatedText = textOnly.substring(0, 20);
+                                                            return truncatedText + '...';
+                                                        }
+                                                        return htmlContent;
+                                                    })()
+                                                }}
+                                            />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -235,17 +267,10 @@ export const NewsDisplayCom = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex space-x-2">
                                                 <button
-                                                    onClick={() => {/* TODO: View detail */}}
-                                                    className="text-blue-400 hover:text-blue-300"
-                                                    title="Xem chi tiết"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    onClick={() => {/* TODO: Edit */}}
+                                                    onClick={() => {
+                                                        setSelectedNewsId(item.id);
+                                                        setIsUpdateModalOpen(true);
+                                                    }}
                                                     className="text-yellow-400 hover:text-yellow-300"
                                                     title="Chỉnh sửa"
                                                 >
@@ -253,15 +278,7 @@ export const NewsDisplayCom = () => {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
                                                 </button>
-                                                <button
-                                                    onClick={() => {/* TODO: Delete */}}
-                                                    className="text-red-400 hover:text-red-300"
-                                                    title="Xóa tin tức"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
+                                                <DeleteNews newsId={item.id} />
                                             </div>
                                         </td>
                                     </motion.tr>
@@ -319,6 +336,16 @@ export const NewsDisplayCom = () => {
             <CreateNewsModal 
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
+            />
+            
+            {/* Update News Modal */}
+            <UpdateNewsModal 
+                newsId={selectedNewsId}
+                isOpen={isUpdateModalOpen}
+                onClose={() => {
+                    setIsUpdateModalOpen(false);
+                    setSelectedNewsId('');
+                }}
             />
         </div>
     );
