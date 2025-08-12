@@ -246,9 +246,7 @@ export const UpdateNewsModal = ({ newsId, isOpen, onClose }: UpdateNewsModalProp
                 />
                 
                 {errors.content && <p className="mt-1 text-sm text-red-500">{errors.content}</p>}
-                <p className="mt-1 text-xs text-gray-400">
-                  💡 <strong>Smart Editor:</strong> Copy-paste trực tiếp từ web (giữ nguyên HTML + ảnh) • Click Preview để xem kết quả • Hỗ trợ Markdown + HTML
-                </p>
+                
               </div>
 
               {/* Submit buttons */}

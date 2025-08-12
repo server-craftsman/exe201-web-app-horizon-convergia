@@ -203,9 +203,7 @@ export const CreateNewsModal = ({ isOpen, onClose }: CreateNewsModalProps) => {
               />
               
               {errors.content && <p className="mt-1 text-sm text-red-500">{errors.content}</p>}
-              <p className="mt-1 text-xs text-gray-400">
-                💡 <strong>Rich Text Editor:</strong> Sử dụng toolbar để format text • Hỗ trợ đầy đủ formatting options
-              </p>
+            
             </div>
 
             {/* Submit buttons */}
