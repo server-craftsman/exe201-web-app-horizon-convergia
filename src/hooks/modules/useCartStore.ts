@@ -7,7 +7,7 @@ interface CartState {
     cart: CartResponse | null;
     isLoading: boolean;
     error?: string;
-    itemCount: number; // tổng số lượng
+    itemCount: number; // số dòng cart detail (distinct items)
     loadCart: (userId: string) => Promise<void>;
     addItem: (userId: string, productId: string, quantity?: number, productName?: string) => Promise<void>;
     removeDetail: (cartDetailId: string, productName?: string) => Promise<void>;
@@ -30,8 +30,8 @@ export const useCartStore = create<CartState>((set, get) => ({
             const resp = await CartService.getCartByUser(userId);
             const raw = (resp as any)?.data;
             const normalized = CartService.mapRawToCart(raw);
-            const totalQty = normalized.totalQuantity;
-            set({ cart: normalized, itemCount: totalQty, isLoading: false, error: undefined });
+            const detailsCount = (normalized.details || []).length;
+            set({ cart: normalized, itemCount: detailsCount, isLoading: false, error: undefined });
         } catch (e: any) {
             notifyCartError(e?.message || 'Không tải được giỏ hàng');
             set({ isLoading: false, error: e?.message || 'Không tải được giỏ hàng' });
@@ -48,7 +48,7 @@ export const useCartStore = create<CartState>((set, get) => ({
             }
             const resp = await CartService.addToCart(userId, productId, quantity);
             const normalized = CartService.mapRawToCart((resp as any)?.data?.data);
-            set({ cart: normalized, itemCount: normalized.totalQuantity, isLoading: false });
+            set({ cart: normalized, itemCount: (normalized.details || []).length, isLoading: false });
             notifyAddedToCart(productName, quantity);
         } catch (e: any) {
             notifyCartError(e?.message || 'Không thể thêm vào giỏ');
@@ -66,7 +66,7 @@ export const useCartStore = create<CartState>((set, get) => ({
                 const details = (current.details || []).filter(d => d.id !== cartDetailId);
                 const totalQty = details.reduce((s, d) => s + d.quantity, 0);
                 const totalPrice = details.reduce((s, d) => s + d.subtotal, 0);
-                set({ cart: { ...current, details, totalQuantity: totalQty, totalPrice }, itemCount: totalQty, isLoading: false });
+                set({ cart: { ...current, details, totalQuantity: totalQty, totalPrice }, itemCount: details.length, isLoading: false });
             } else {
                 set({ isLoading: false });
             }
@@ -93,7 +93,7 @@ export const useCartStore = create<CartState>((set, get) => ({
                     const details = (current.details || []).map(d => (d.id === cartDetailId ? { ...d, quantity: newQuantity, subtotal: d.unitPrice * newQuantity } : d));
                     const totalQty = details.reduce((s, d) => s + d.quantity, 0);
                     const totalPrice = details.reduce((s, d) => s + d.subtotal, 0);
-                    set({ cart: { ...current, details, totalQuantity: totalQty, totalPrice }, itemCount: totalQty, isLoading: false });
+                    set({ cart: { ...current, details, totalQuantity: totalQty, totalPrice }, itemCount: details.length, isLoading: false });
                     notifyCartQuantityUpdated(newQuantity);
                 } else {
                     set({ isLoading: false });

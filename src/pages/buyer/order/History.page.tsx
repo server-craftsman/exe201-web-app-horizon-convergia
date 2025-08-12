@@ -11,7 +11,7 @@ const History: React.FC = () => {
         queryKey: ['orders', 'history', user?.id],
         queryFn: () => OrderService.search({ buyerId: user?.id || '', page: 1, pageSize: 20 }),
         enabled: !!user?.id,
-        select: (resp) => (resp as any)?.data?.data,
+        select: (resp) => (resp as any)?.data,
         staleTime: 60_000,
     });
 
@@ -44,7 +44,7 @@ const History: React.FC = () => {
                                 <div className="col-span-2 text-sm font-semibold text-gray-800">{(o.total || 0).toLocaleString('vi-VN')} ₫</div>
                                 <div className="col-span-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 inline-block">{o.status}</div>
                                 <div className="col-span-2 text-right">
-                                    <Link to={ROUTER_URL.CLIENT.ORDER_DETAIL.replace(':id', o.id)} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Xem chi tiết</Link>
+                                    <Link to={ROUTER_URL.BUYER.ORDER_DETAIL.replace(':id', o.id)} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Xem chi tiết</Link>
                                 </div>
                             </div>
                         ))}

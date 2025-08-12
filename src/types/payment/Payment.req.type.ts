@@ -1,5 +1,6 @@
 export interface MultiPaymentRequest {
-    orderIds: string[];
+    orderIds?: string[];
+    orderNumbers?: string[];
     paymentMethod: string; // ví dụ: payos, cod, bank-transfer
     description?: string;
 }

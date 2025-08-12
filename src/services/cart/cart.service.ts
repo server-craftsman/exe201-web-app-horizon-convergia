@@ -13,6 +13,7 @@ function mapRawToCart(raw?: RawCartResponse): CartResponse {
         productId: d.productId,
         productName: d.product ? `${d.product.brand || ''} ${d.product.model || ''}`.trim() : undefined,
         productImage: d.product?.imageUrls?.[0],
+        productDescription: d.product?.description,
         unitPrice: d.price ?? d.product?.price ?? 0,
         quantity: d.quantity,
         subtotal: (d.price ?? d.product?.price ?? 0) * d.quantity,

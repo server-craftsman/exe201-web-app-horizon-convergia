@@ -1,5 +1,5 @@
 export interface CreateOrderFromCartRequest {
-    cartId: string[]; // mảng cart detail id hoặc cart id tùy backend; theo swagger là array string
+    cartDetailIds: string[]; // mảng cart detail id theo swagger
     shippingAddress: string;
     discount?: number;
 }

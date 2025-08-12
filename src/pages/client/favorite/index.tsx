@@ -24,6 +24,8 @@ const Favorite: React.FC = () => {
     }
   };
 
+  const shortLocation = (loc?: string) => loc ? (loc.split(',').map(s => s.trim()).filter(Boolean).slice(-1)[0] || loc) : '';
+
   if (!user?.id) {
     return (
       <section className="py-16">
@@ -51,29 +53,37 @@ const Favorite: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {favorites.map((p) => (
-              <div key={p.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-2xl hover:border-amber-200 transition-all duration-500">
-                <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', p.id)} className="block">
-                  <div className="relative h-48">
-                    <img src={(p.imageUrls && p.imageUrls[0]) || 'https://via.placeholder.com/300x200?text=No+Image'} alt={`${p.brand} ${p.model}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image'; }} />
-                    <div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">{p.year}</div>
-                    <div className="absolute top-3 left-3 bg-rose-500/90 text-white text-xs font-bold px-2 py-1 rounded-full">Yêu thích</div>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 truncate">{p.brand} {p.model}</h3>
-                    <p className="text-amber-600 font-bold text-xl mb-3">{p.price.toLocaleString('vi-VN')} ₫</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 truncate max-w-[60%]">{p.location?.split(',').slice(-1)[0]}</span>
-                      {p.condition && (<span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full">{p.condition}</span>)}
+            {favorites.map((p) => {
+              const img = (p.imageUrls && p.imageUrls[0]) || 'https://via.placeholder.com/300x200?text=No+Image';
+              const outOfStock = (p.quantity || 0) <= 0;
+              return (
+                <div key={p.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 group hover:shadow-2xl hover:border-amber-200 transition-all duration-500">
+                  <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', p.id)} className="block">
+                    <div className="relative h-48">
+                      <img src={img} alt={`${p.brand} ${p.model}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image'; }} />
+                      <div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">{p.year}</div>
+                      <div className="absolute top-3 left-3 bg-rose-500/90 text-white text-xs font-bold px-2 py-1 rounded-full">Yêu thích</div>
                     </div>
+                    <div className="p-5">
+                      <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 truncate">{p.brand} {p.model}</h3>
+                      <p className="text-amber-600 font-bold text-xl mb-3">{p.price.toLocaleString('vi-VN')} ₫</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        {p.sparePartType && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">{p.sparePartType}</span>}
+                        {outOfStock && <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs">Hết hàng</span>}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500 truncate max-w-[60%]">{shortLocation(p.location)}</span>
+                        {p.condition && (<span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full">{p.condition}</span>)}
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="px-5 pb-4 grid grid-cols-2 gap-2">
+                    <button onClick={() => remove(p.id, `${p.brand} ${p.model}`)} className="text-sm border border-gray-300 hover:bg-gray-50 rounded-lg py-2 font-medium">Bỏ yêu thích</button>
+                    <button onClick={() => !outOfStock && addItem(user.id!, p.id, 1, `${p.brand} ${p.model}`)} disabled={outOfStock} className={`text-sm rounded-lg py-2 font-medium ${outOfStock ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-900 hover:bg-amber-600 text-white'}`}>{outOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}</button>
                   </div>
-                </Link>
-                <div className="px-5 pb-4 grid grid-cols-2 gap-2">
-                  <button onClick={() => remove(p.id, `${p.brand} ${p.model}`)} className="text-sm border border-gray-300 hover:bg-gray-50 rounded-lg py-2 font-medium">Bỏ yêu thích</button>
-                  <button onClick={() => addItem(user.id!, p.id, 1, `${p.brand} ${p.model}`)} className="text-sm bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium">Thêm vào giỏ</button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

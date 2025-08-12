@@ -4,6 +4,7 @@ export interface CartDetailResponse {
     productId: string;
     productName?: string;
     productImage?: string;
+    productDescription?: string;
     unitPrice: number;
     quantity: number;
     subtotal: number; // unitPrice * quantity
@@ -26,6 +27,7 @@ export interface RawCartProduct {
     model?: string;
     price?: number;
     imageUrls?: string[];
+    description?: string;
 }
 
 export interface RawCartDetailResponse {

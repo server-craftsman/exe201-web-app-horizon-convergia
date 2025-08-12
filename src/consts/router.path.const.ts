@@ -34,6 +34,7 @@ export const ROUTER_URL = {
         PROFILE: "/buyer/ho-so",
         ORDERS: "/buyer/don-hang",
         ORDER_HISTORY: "/buyer/lich-su-don-hang",
+        ORDER_DETAIL: "/buyer/don-hang/:id",
         FAVORITES: "/buyer/yeu-thich",
         CART: "/buyer/gio-hang",
         NOTIFICATIONS: "/buyer/thong-bao",
