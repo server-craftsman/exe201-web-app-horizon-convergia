@@ -4,7 +4,7 @@ import type { RouteObject } from "react-router-dom";
 
 // import page 
 const BuyerDashboard = lazy(() => import("../../../pages/buyer/Dashboard"));
-
+const SettingsPage = lazy(() => import("../../../pages/auth/settings"));
 export const BuyerRoutes: RouteObject = {
     path: ROUTER_URL.BUYER.BASE,
     children: [
@@ -12,7 +12,10 @@ export const BuyerRoutes: RouteObject = {
             index: true,
             element: <BuyerDashboard />,
         },
-
+        {
+            path: ROUTER_URL.BUYER.SETTINGS,
+            element: <SettingsPage />,
+        },
     ],
 };
 

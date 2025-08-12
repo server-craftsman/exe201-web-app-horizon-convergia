@@ -18,3 +18,34 @@ export interface CartResponse {
     updatedAt?: string;
     details: CartDetailResponse[];
 }
+
+// Raw shapes from backend
+export interface RawCartProduct {
+    id: string;
+    brand?: string;
+    model?: string;
+    price?: number;
+    imageUrls?: string[];
+}
+
+export interface RawCartDetailResponse {
+    id: string;
+    quantity: number;
+    price: number;
+    discount?: number | null;
+    cartId: string;
+    productId: string;
+    product?: RawCartProduct | null;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface RawCartResponse {
+    id: string;
+    buyerId: string;
+    buyer?: any;
+    isDeleted?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    cartDetails: RawCartDetailResponse[];
+}

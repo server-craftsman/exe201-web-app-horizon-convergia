@@ -4,7 +4,7 @@ import { BaseService } from '../../app/api/base.service';
 import { notificationMessage } from '../../utils/helper';
 import type { ProductResponse } from '../../types/product/Product.res.type';
 import type { CreateProduct, UpdateProduct, SendProductPayment } from '../../types/product/Product.req.type';
-import type { FilterProduct } from '../../types/product/Product.req.type';
+import type { FilterProduct, FavoriteFilter } from '../../types/product/Product.req.type';
 
 export const useProduct = () => {
     const queryClient = useQueryClient();
@@ -82,6 +82,17 @@ export const useProduct = () => {
             },
             enabled: !!id,
             staleTime: 5 * 60 * 1000,
+        });
+    };
+
+    // Favorites by user
+    const useFavorites = (userId: string, filter?: Partial<FavoriteFilter>) => {
+        return useQuery({
+            queryKey: ['favorites', userId, filter],
+            queryFn: () => ProductService.getFavorites(userId, filter),
+            select: (resp) => (resp as any)?.data as ProductResponse[],
+            enabled: !!userId,
+            staleTime: 2 * 60 * 1000,
         });
     };
 
@@ -241,6 +252,7 @@ export const useProduct = () => {
     return {
         // Products data
         useProducts,
+        useFavorites,
         isLoadingProducts: useProducts().isLoading, // This will be undefined as useProducts is a hook
         productsError: useProducts().error, // This will be undefined
         refetchProducts: useProducts().refetch, // This will be undefined

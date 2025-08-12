@@ -17,10 +17,10 @@ const sliderData = [
   {
     id: 1,
     title: "Vỏ Xe <span>Chính Hãng</span> Chất Lượng",
-    description: "Khám phá bộ sưu tập vỏ xe cao cấp từ các thương hiệu uy tín, đảm bảo an toàn và hiệu suất tối ưu",
+    description: "Khám phá bộ sưu tập lốp xe cao cấp từ các thương hiệu uy tín, đảm bảo an toàn và hiệu suất tối ưu",
     image: voChinhHang,
     bgColor: "from-gray-900 via-gray-800 to-gray-900",
-    category: "vỏ xe"
+    category: "lốp"
   },
   {
     id: 2,
@@ -42,12 +42,18 @@ const sliderData = [
 
 // Category mapping for better background selection
 const categoryBackgroundMap = {
-  // Vỏ xe categories
-  'vỏ xe': voChinhHang,
+  // Lốp xe categories
   'lốp xe': voChinhHang,
+  'lốp': voChinhHang,
+  'lop': voChinhHang,
   'tire': voChinhHang,
-  'vo xe': voChinhHang,
   'lop xe': voChinhHang,
+  'lốp chính hãng': voChinhHang,
+  'lop chinh hang': voChinhHang,
+  'vỏ xe': voChinhHang,
+  'vỏ': voChinhHang,
+  'vo xe': voChinhHang,
+  'vo': voChinhHang,
   'vỏ chính hãng': voChinhHang,
   'vo chinh hang': voChinhHang,
 
@@ -127,16 +133,6 @@ const Banner: React.FC = () => {
     // Add special categories
     const specialCategories: CategoryWithChildren[] = [
       {
-        id: 'vo-chinh-hang-special',
-        name: 'Vỏ chính hãng',
-        description: 'Vỏ xe chính hãng chất lượng cao',
-        imageUrl: '',
-        parentCategoryId: null,
-        children: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
         id: 'dau-nhot-chinh-hang-special',
         name: 'Dầu nhớt chính hãng',
         description: 'Dầu nhớt chính hãng bảo vệ động cơ',
@@ -176,7 +172,39 @@ const Banner: React.FC = () => {
       }
     ];
 
-    return [...specialCategories, ...mapToTree];
+    const normalize = (s?: string) => (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    const isLopName = (name: string) => {
+      const n = normalize(name);
+      return n.includes('lop') || n.includes('vo');
+    };
+
+    // Try find any 'Lốp' category (could be parent or child)
+    const lopAny = fetchedCategories.find((c: ICategory) => isLopName(c.name));
+
+    const ordered = [...mapToTree];
+
+    if (lopAny) {
+      const lopChildren = fetchedCategories.filter((c: ICategory) => c.parentCategoryId === lopAny.id);
+      const idxParent = ordered.findIndex(cat => cat.id === lopAny.id);
+      if (idxParent !== -1) {
+        // Lốp is a parent category: ensure children exactly match by parent id and move to top
+        ordered[idxParent] = { ...ordered[idxParent], children: lopChildren } as CategoryWithChildren;
+        if (idxParent > 0) {
+          const [lopCat] = ordered.splice(idxParent, 1);
+          ordered.unshift(lopCat);
+        }
+      } else if (lopAny.parentCategoryId) {
+        // Lốp is a child: synthesize a top-level entry with its children and prepend
+        const lopTopLevel: CategoryWithChildren = {
+          ...(lopAny as any),
+          children: lopChildren,
+        } as CategoryWithChildren;
+        ordered.unshift(lopTopLevel);
+      }
+    }
+
+    const result: CategoryWithChildren[] = [...specialCategories, ...ordered];
+    return result;
   }, [fetchedCategories]);
 
   // Xử lý autoplay
@@ -286,36 +314,48 @@ const Banner: React.FC = () => {
     if (!categoryName) return voChinhHang; // Fallback
 
     const lowerName = categoryName.toLowerCase();
+    const asciiName = lowerName.normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
     // Check exact matches first
     for (const [key, background] of Object.entries(categoryBackgroundMap)) {
-      if (lowerName.includes(key)) {
+      const keyLower = key.toLowerCase();
+      const keyAscii = keyLower.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+      if (lowerName.includes(keyLower) || asciiName.includes(keyAscii)) {
         return background;
       }
     }
 
     // Additional specific mappings
-    if (lowerName.includes('lốp') || lowerName.includes('lop') || lowerName.includes('vỏ') || lowerName.includes('vo')) {
+    if (lowerName.includes('lốp') || asciiName.includes('lop') || lowerName.includes('vỏ') || asciiName.includes('vo')) {
       return voChinhHang;
     }
-    else if (lowerName.includes('dầu nhớt') || lowerName.includes('dau nhot') || lowerName.includes('nhớt') || lowerName.includes('nhot') || lowerName.includes('dầu') || lowerName.includes('dau')) {
+    else if (
+      lowerName.includes('dầu nhớt') || asciiName.includes('dau nhot') ||
+      lowerName.includes('nhớt') || asciiName.includes('nhot') ||
+      lowerName.includes('dầu') || asciiName.includes('dau')
+    ) {
       return nhotChinhHang;
     }
-    else if (lowerName.includes('phụ kiện') || lowerName.includes('phu kien') || lowerName.includes('đồ chơi') || lowerName.includes('do choi')) {
+    else if (
+      lowerName.includes('phụ kiện') || asciiName.includes('phu kien') ||
+      lowerName.includes('đồ chơi') || asciiName.includes('do choi')
+    ) {
       return phuKienBiker;
     }
     else if (
-      lowerName.includes('phụ tùng') ||
-      lowerName.includes('phu tung') ||
+      lowerName.includes('phụ tùng') || asciiName.includes('phu tung') ||
       lowerName.includes('thay thế') ||
-      lowerName.includes('thay the') ||
+      asciiName.includes('thay the') ||
       lowerName.includes('theo xe') ||
       lowerName.includes('parts')
     ) {
       return phuTungChinhHang; // Use genuine parts image for parts-related categories
-    } else if (lowerName.includes('xe máy') || lowerName.includes('xe may') || lowerName.includes('motorcycle')) {
+    } else if (lowerName.includes('xe máy') || asciiName.includes('xe may') || lowerName.includes('motorcycle')) {
       return phuKienBiker; // Use accessories image for motorcycles
-    } else if (lowerName.includes('dịch vụ') || lowerName.includes('dich vu') || lowerName.includes('sửa chữa') || lowerName.includes('sua chua')) {
+    } else if (
+      lowerName.includes('dịch vụ') || asciiName.includes('dich vu') ||
+      lowerName.includes('sửa chữa') || asciiName.includes('sua chua')
+    ) {
       return nhotChinhHang; // Use oil image for services
     }
 

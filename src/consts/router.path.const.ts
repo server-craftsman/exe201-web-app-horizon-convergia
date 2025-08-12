@@ -18,10 +18,13 @@ export const ROUTER_URL = {
         BUY_MOTOR: "/mua-xe",
         SELL_MOTOR: "/ban-xe",
         ACCESSORIES: "/phu-kien",
+        FAVORITE: "/yeu-thich",
         NEWS: "/tin-tuc",
         PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
         PRODUCT_DETAIL: "/san-pham/:id",
         CART: "/gio-hang",
+        ORDER_HISTORY: "/don-hang",
+        ORDER_DETAIL: "/don-hang/:id",
     },
     // BUYER ROUTES
     BUYER: {

@@ -71,6 +71,11 @@ export interface FilterProduct {
     isVerified?: boolean;
 }
 
+// Chỉ dùng cho bộ lọc Favorites: giới hạn key cần thiết
+export type FavoriteFilter = Pick<FilterProduct,
+    'brand' | 'model' | 'year' | 'condition' | 'location' | 'minPrice' | 'maxPrice' | 'color' | 'sortField' | 'ascending' | 'pageNumber' | 'pageSize'
+>;
+
 // AI Product Analysis (Chat Box) request
 export interface ProductAnalysisChatRequest {
     image?: File | Blob | null;

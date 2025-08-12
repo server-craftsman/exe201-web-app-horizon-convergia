@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { CartService } from '../../services/cart/cart.service';
-import type { CartResponse, CartDetailResponse } from '../../types/cart/Cart.res.type';
-import { notifyAddedToCart, notifyCartError, notifyCartItemRemoved, notifyCartQuantityUpdated } from '@utils/helper';
+import type { CartResponse } from '../../types/cart/Cart.res.type';
+import { notificationMessage, notifyAddedToCart, notifyCartError, notifyCartItemRemoved, notifyCartQuantityUpdated } from '@utils/helper';
 
 interface CartState {
     cart: CartResponse | null;
@@ -28,9 +28,10 @@ export const useCartStore = create<CartState>((set, get) => ({
         set({ isLoading: true });
         try {
             const resp = await CartService.getCartByUser(userId);
-            const payload = resp.data?.data as CartResponse;
-            const totalQty = payload?.totalQuantity || (payload?.details || []).reduce((s, d) => s + d.quantity, 0);
-            set({ cart: payload, itemCount: totalQty, isLoading: false, error: undefined });
+            const raw = (resp as any)?.data;
+            const normalized = CartService.mapRawToCart(raw);
+            const totalQty = normalized.totalQuantity;
+            set({ cart: normalized, itemCount: totalQty, isLoading: false, error: undefined });
         } catch (e: any) {
             notifyCartError(e?.message || 'Không tải được giỏ hàng');
             set({ isLoading: false, error: e?.message || 'Không tải được giỏ hàng' });
@@ -40,8 +41,14 @@ export const useCartStore = create<CartState>((set, get) => ({
     addItem: async (userId: string, productId: string, quantity: number = 1, productName?: string) => {
         set({ isLoading: true });
         try {
-            await CartService.addToCart(userId, productId, quantity);
-            await get().loadCart(userId);
+            if (!userId) {
+                notificationMessage('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning');
+                set({ isLoading: false });
+                return;
+            }
+            const resp = await CartService.addToCart(userId, productId, quantity);
+            const normalized = CartService.mapRawToCart((resp as any)?.data?.data);
+            set({ cart: normalized, itemCount: normalized.totalQuantity, isLoading: false });
             notifyAddedToCart(productName, quantity);
         } catch (e: any) {
             notifyCartError(e?.message || 'Không thể thêm vào giỏ');
@@ -73,17 +80,24 @@ export const useCartStore = create<CartState>((set, get) => ({
     updateQuantity: async (cartDetailId: string, newQuantity: number) => {
         set({ isLoading: true });
         try {
-            const resp = await CartService.updateCartDetailQuantity(cartDetailId, newQuantity);
-            const updated = resp.data?.data as CartDetailResponse | undefined;
-            const current = get().cart;
-            if (current && updated) {
-                const details = (current.details || []).map(d => (d.id === updated.id ? { ...d, quantity: updated.quantity, subtotal: updated.subtotal } : d));
-                const totalQty = details.reduce((s, d) => s + d.quantity, 0);
-                const totalPrice = details.reduce((s, d) => s + d.subtotal, 0);
-                set({ cart: { ...current, details, totalQuantity: totalQty, totalPrice }, itemCount: totalQty, isLoading: false });
-                notifyCartQuantityUpdated(updated.quantity);
+            await CartService.updateCartDetailQuantity(cartDetailId, newQuantity);
+            // Always refresh cart from server to ensure totals/discounts are correct
+            const userId = get().cart?.userId;
+            if (userId) {
+                await get().loadCart(userId);
+                notifyCartQuantityUpdated(newQuantity);
             } else {
-                set({ isLoading: false });
+                // Fallback optimistic update if userId not available
+                const current = get().cart;
+                if (current) {
+                    const details = (current.details || []).map(d => (d.id === cartDetailId ? { ...d, quantity: newQuantity, subtotal: d.unitPrice * newQuantity } : d));
+                    const totalQty = details.reduce((s, d) => s + d.quantity, 0);
+                    const totalPrice = details.reduce((s, d) => s + d.subtotal, 0);
+                    set({ cart: { ...current, details, totalQuantity: totalQty, totalPrice }, itemCount: totalQty, isLoading: false });
+                    notifyCartQuantityUpdated(newQuantity);
+                } else {
+                    set({ isLoading: false });
+                }
             }
         } catch (e: any) {
             notifyCartError(e?.message || 'Không thể cập nhật số lượng');
