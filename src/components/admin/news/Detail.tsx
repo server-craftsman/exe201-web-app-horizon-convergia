@@ -44,13 +44,13 @@ export const NewsDetail = ({ newsId, isOpen, onClose }: NewsDetailProps) => {
             <div className="text-center py-8">
               <p className="text-red-400">Có lỗi xảy ra khi tải thông tin tin tức</p>
             </div>
-          ) : newsDetail?.data?.data ? (
+          ) : newsDetail?.data ? (
             <div className="space-y-6">
               {/* Image */}
               <div className="text-center">
                 <img
-                  src={newsDetail.data.data.imageUrl}
-                  alt={newsDetail.data.data.title}
+                  src={newsDetail.data.imageUrl}
+                  alt={newsDetail.data.title}
                   className="max-w-full h-auto rounded-lg mx-auto"
                   style={{ maxHeight: '400px' }}
                   onError={(e) => {
@@ -62,40 +62,40 @@ export const NewsDetail = ({ newsId, isOpen, onClose }: NewsDetailProps) => {
 
               {/* Title */}
               <div>
-                <h3 className="text-2xl font-bold text-white mb-2">{newsDetail.data.data.title}</h3>
+                <h3 className="text-2xl font-bold text-white mb-2">{newsDetail.data.title}</h3>
               </div>
 
               {/* Meta information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-700 rounded-lg">
                 <div>
                   <label className="block text-sm font-medium text-gray-300">ID</label>
-                  <p className="text-white font-mono text-sm">{newsDetail.data.data.id}</p>
+                  <p className="text-white font-mono text-sm">{newsDetail.data.id}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300">Trạng thái</label>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    newsDetail.data.data.isDeleted 
+                    newsDetail.data.isDeleted 
                       ? 'bg-red-100 text-red-800' 
                       : 'bg-green-100 text-green-800'
                   }`}>
-                    {newsDetail.data.data.isDeleted ? 'Đã xóa' : 'Hoạt động'}
+                    {newsDetail.data.isDeleted ? 'Đã xóa' : 'Hoạt động'}
                   </span>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300">Ngày tạo</label>
-                  <p className="text-white">{helpers.formatDate(new Date(newsDetail.data.data.createdAt))}</p>
+                  <p className="text-white">{helpers.formatDate(new Date(newsDetail.data.createdAt))}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300">Ngày cập nhật</label>
-                  <p className="text-white">{helpers.formatDate(new Date(newsDetail.data.data.updatedAt))}</p>
+                  <p className="text-white">{helpers.formatDate(new Date(newsDetail.data.updatedAt))}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300">ID tác giả</label>
-                  <p className="text-white font-mono text-sm">{newsDetail.data.data.authorId}</p>
+                  <p className="text-white font-mono text-sm">{newsDetail.data.authorId}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300">ID danh mục</label>
-                  <p className="text-white font-mono text-sm">{newsDetail.data.data.categoryId}</p>
+                  <p className="text-white font-mono text-sm">{newsDetail.data.categoryId}</p>
                 </div>
               </div>
 
@@ -104,7 +104,7 @@ export const NewsDetail = ({ newsId, isOpen, onClose }: NewsDetailProps) => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">Nội dung</label>
                 <div className="p-4 bg-gray-700 rounded-lg">
                   <div className="text-white whitespace-pre-wrap">
-                    {newsDetail.data.data.content}
+                    {newsDetail.data.content}
                   </div>
                 </div>
               </div>
@@ -114,12 +114,12 @@ export const NewsDetail = ({ newsId, isOpen, onClose }: NewsDetailProps) => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">URL hình ảnh</label>
                 <div className="p-3 bg-gray-700 rounded-lg">
                   <a 
-                    href={newsDetail.data.data.imageUrl}
+                    href={newsDetail.data.imageUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 break-all"
                   >
-                    {newsDetail.data.data.imageUrl}
+                    {newsDetail.data.imageUrl}
                   </a>
                 </div>
               </div>

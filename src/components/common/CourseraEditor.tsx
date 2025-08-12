@@ -31,6 +31,7 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
     const [showColorPicker, setShowColorPicker] = useState(false);
     // const [colorAnchor, setColorAnchor] = useState<HTMLButtonElement | null>(null);
     const colorPickerRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     // Lưu selection khi mở bảng màu
     const [savedSelection, setSavedSelection] = useState<Range | null>(null);
 
@@ -127,6 +128,29 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
                     text-decoration: underline;
                 }
                 
+                .coursera-editor img {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    border-radius: 8px !important;
+                    margin: 12px 0 !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+                    display: block !important;
+                    object-fit: cover;
+                }
+                
+                .coursera-editor img[style] {
+                    max-width: 100% !important;
+                    height: auto !important;
+                }
+                
+                .coursera-editor img:not([src]) {
+                    display: none;
+                }
+                
+                .coursera-editor img[src=""] {
+                    display: none;
+                }
+                
                 .coursera-editor p {
                     margin: 0.5rem 0;
                 }
@@ -152,6 +176,16 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
     useEffect(() => {
         if (editorRef.current && editorRef.current.innerHTML !== value) {
             editorRef.current.innerHTML = value || '';
+            
+            // Add error handling for images after content is set
+            const images = editorRef.current.querySelectorAll('img');
+            images.forEach((img) => {
+                img.onerror = function() {
+                    console.warn('Image failed to load:', img.src);
+                    // Optionally hide broken images
+                    img.style.display = 'none';
+                };
+            });
         }
     }, [value]);
 
@@ -224,24 +258,100 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
         };
     }, [handleSelectionChange]);
 
-    // Handle paste: strip style/background
+    // Handle paste: strip style/background and handle images
     const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
         e.preventDefault();
         const clipboardData = e.clipboardData || (window as any).clipboardData;
+        
+        // Check for images first (from clipboard - screenshot/copied image)
+        const items = Array.from(clipboardData.items);
+        const imageItem = items.find((item: any) => item.type.startsWith('image/'));
+        
+        if (imageItem) {
+            const file = imageItem.getAsFile();
+            if (file) {
+                handleImageUpload(file);
+                return;
+            }
+        }
+        
         let html = clipboardData.getData('text/html');
         let text = clipboardData.getData('text/plain');
 
         if (html) {
-            // Xóa mọi inline style, background, font, v.v.
-            html = html.replace(/ style="[^"]*"/g, '');
-            html = html.replace(/<span[^>]*>/g, '<span>');
-            html = html.replace(/<font[^>]*>/g, '<font>');
-            html = html.replace(/<([a-z]+)[^>]*>/g, '<$1>');
+            // Process HTML content with images
+            html = html
+                // Convert all img tags with proper styling - keep original src
+                .replace(/<img([^>]*?)>/gi, (match, attributes) => {
+                    // Extract src from attributes
+                    const srcMatch = attributes.match(/src=["']([^"']*?)["']/i);
+                    const altMatch = attributes.match(/alt=["']([^"']*?)["']/i);
+                    
+                    const src = srcMatch ? srcMatch[1] : '';
+                    const alt = altMatch ? altMatch[1] : 'Pasted Image';
+                    
+                    if (src) {
+                        return `<img src="${src}" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);" alt="${alt}" />`;
+                    }
+                    return match;
+                })
+                // Clean up other inline styles but preserve structure
+                .replace(/ style="[^"]*"/g, '')
+                .replace(/<span[^>]*?>/g, '<span>')
+                .replace(/<font[^>]*?>/g, '<font>')
+                // Remove unwanted attributes but keep essential ones (src, href, alt)
+                .replace(/<((?!img|a)\w+)[^>]*?>/g, '<$1>')
+                // Clean up excessive whitespace
+                .replace(/\s+/g, ' ')
+                .trim();
+                
             document.execCommand('insertHTML', false, html);
         } else if (text) {
             document.execCommand('insertText', false, text);
         }
-    }, []);
+        
+        handleInput();
+    }, [handleInput]);
+
+    // Handle image upload
+    const handleImageUpload = useCallback((file: File) => {
+        if (!file.type.startsWith('image/')) {
+            alert('Vui lòng chọn file ảnh hợp lệ!');
+            return;
+        }
+
+        // Create object URL for immediate display
+        const imageUrl = URL.createObjectURL(file);
+        
+        // Insert image into editor with proper styling
+        const imgHtml = `<img src="${imageUrl}" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); display: block;" alt="${file.name}" />`;
+        
+        // Focus editor first
+        if (editorRef.current) {
+            editorRef.current.focus();
+        }
+        
+        document.execCommand('insertHTML', false, imgHtml);
+        handleInput();
+        
+        // Clean up object URL after some time to prevent memory leaks
+        setTimeout(() => {
+            URL.revokeObjectURL(imageUrl);
+        }, 60000); // 1 minute
+        
+        // Optional: You can integrate with your upload service here
+        // and replace the object URL with the actual uploaded URL
+    }, [handleInput]);
+
+    // Handle file input change
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleImageUpload(file);
+        }
+        // Reset input
+        e.target.value = '';
+    }, [handleImageUpload]);
 
     const toolbarButtons = [
         {
@@ -284,6 +394,15 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
             icon: '1.',
             title: 'Numbered List',
             isActive: false
+        },
+        {
+            command: 'insertImage',
+            icon: '🖼️',
+            title: 'Upload Image',
+            isActive: false,
+            onClick: () => {
+                fileInputRef.current?.click();
+            }
         },
         {
             command: 'createLink',
@@ -442,6 +561,15 @@ const CourseraEditor: React.FC<CourseraEditorProps> = ({
             <div className="mt-1 text-xs text-gray-400 text-right">
                 {value.replace(/<[^>]*>/g, '').length} ký tự
             </div>
+
+            {/* Hidden file input for image upload */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+            />
         </div>
     );
 };
