@@ -35,6 +35,7 @@ export const ROUTER_URL = {
     BUYER: {
         BASE: "/buyer",
         DASHBOARD: "/buyer/trang-chu",
+        FAVORITE: "/buyer/yeu-thich",
         PROFILE: "/buyer/ho-so",
         ORDERS: "/buyer/don-hang",
         ORDER_HISTORY: "/buyer/lich-su-don-hang",
@@ -91,6 +92,7 @@ export const ROUTER_URL = {
         ACCESSORIES: "/admin/quan-ly-phu-kien",
         NEWS: "/admin/quan-ly-tin-tuc",
         ORDERS: "/admin/quan-ly-don-hang",
+        ORDER_DETAIL: "/admin/quan-ly-don-hang/:id",
         REPORTS: "/admin/bao-cao",
         REVIEWS: "/admin/quan-ly-danh-gia",
         STATISTICS: "/admin/thong-ke",

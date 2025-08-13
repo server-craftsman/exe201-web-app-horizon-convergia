@@ -109,7 +109,7 @@ export const ProductService = {
         });
     },
     removeFavorite(productId: string, userId: string) {
-        return BaseService.remove<ApiResponse<void>>({
+        return BaseService.remove<void>({
             url: API_PATH.PRODUCT.REMOVE_FAVORITE(productId, userId)
         });
     },
