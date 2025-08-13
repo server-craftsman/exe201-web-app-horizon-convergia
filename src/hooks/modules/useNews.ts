@@ -11,6 +11,15 @@ export const useNews = () => {
         queryFn: NewsService.getAllNews,
     });
 
+    // Get blog list with filters
+    const useBlogList = (params?: { categoryId?: string; pageNumber?: number; pageSize?: number }) => {
+        return useQuery({
+            queryKey: ['news', 'blogList', params],
+            queryFn: () => NewsService.getBlogList(params),
+            enabled: true,
+        });
+    };
+
     // Search news
     const useSearchNews = (params: NewsSearchAllParams) => {
         return useQuery({
@@ -56,6 +65,7 @@ export const useNews = () => {
 
     return {
         getAllNews,
+        useBlogList,
         useSearchNews,
         useGetNewsById,
         createNews,
