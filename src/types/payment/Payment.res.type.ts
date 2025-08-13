@@ -1,10 +1,13 @@
 export interface PaymentResponse {
     id: string;
-    orderIds: string[];
+    orderIds?: string[];
+    orderNumbers?: string[];
     amount?: number;
     method?: string;
     description?: string;
     status?: string;
+    paymentUrl?: string;
+    redirectUrl?: string;
     createdAt?: string;
 }
 

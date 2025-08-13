@@ -7,19 +7,39 @@ function mapRawToCart(raw?: RawCartResponse): CartResponse {
     if (!raw) {
         return { id: '', userId: '', totalQuantity: 0, totalPrice: 0, details: [] };
     }
-    const details: CartDetailResponse[] = (raw.cartDetails || []).map(d => ({
-        id: d.id,
-        cartId: d.cartId,
-        productId: d.productId,
-        productName: d.product ? `${d.product.brand || ''} ${d.product.model || ''}`.trim() : undefined,
-        productImage: d.product?.imageUrls?.[0],
-        productDescription: d.product?.description,
-        unitPrice: d.price ?? d.product?.price ?? 0,
-        quantity: d.quantity,
-        subtotal: (d.price ?? d.product?.price ?? 0) * d.quantity,
-    }));
+
+    // Prefer detailed cartDetails when available
+    let details: CartDetailResponse[] = [];
+
+    if (Array.isArray(raw.cartDetails) && raw.cartDetails.length > 0) {
+        details = raw.cartDetails.map(d => ({
+            id: d.id,
+            cartId: d.cartId,
+            productId: d.productId,
+            productName: d.product ? `${d.product.brand || ''} ${d.product.model || ''}`.trim() : undefined,
+            productImage: d.product?.imageUrls?.[0],
+            productDescription: d.product?.description,
+            unitPrice: d.price ?? d.product?.price ?? 0,
+            quantity: d.quantity,
+            subtotal: (d.price ?? d.product?.price ?? 0) * d.quantity,
+        }));
+    } else if (Array.isArray(raw.items) && raw.items.length > 0) {
+        // Map summary shape; unitPrice/subtotal unknown → set 0 and handle display gracefully
+        details = raw.items.map((it) => ({
+            id: `${raw.id}:${it.productId}`,
+            cartId: raw.id,
+            productId: it.productId,
+            productName: it.productName,
+            productImage: undefined,
+            productDescription: undefined,
+            unitPrice: 0,
+            quantity: it.quantity,
+            subtotal: 0,
+        }));
+    }
+
     const totalQuantity = details.reduce((s, x) => s + x.quantity, 0);
-    const totalPrice = details.reduce((s, x) => s + x.subtotal, 0);
+    const totalPrice = details.reduce((s, x) => s + (x.subtotal || 0), 0);
     return {
         id: raw.id,
         userId: raw.buyerId,
@@ -62,8 +82,9 @@ export const CartService = {
 
     // PUT /Carts/detail/{cartDetailId}/quantity/{newQuantity}
     updateCartDetailQuantity(cartDetailId: string, newQuantity: number) {
+        const qty = Math.max(1, Math.trunc(Number(newQuantity) || 0));
         return BaseService.put<ApiResponse<CartDetailResponse>>({
-            url: API_PATH.CART.UPDATE_DETAIL_QUANTITY(cartDetailId, newQuantity),
+            url: API_PATH.CART.UPDATE_DETAIL_QUANTITY(cartDetailId, qty),
         });
     },
 

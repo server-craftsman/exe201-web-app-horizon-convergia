@@ -9,22 +9,22 @@ const OrderHistoryPage = lazy(() => import("../../../pages/buyer/order/History.p
 const OrderDetailPage = lazy(() => import("../../../pages/buyer/order/Detail.page"));
 
 export const BuyerRoutes: RouteObject = {
-    path: ROUTER_URL.BUYER.BASE,
+    path: ROUTER_URL.BUYER.BASE, // '/buyer'
     children: [
         {
             index: true,
             element: <BuyerDashboard />,
         },
         {
-            path: ROUTER_URL.BUYER.SETTINGS,
+            path: "cai-dat", // from '/buyer/cai-dat'
             element: <SettingsPage />,
         },
         {
-            path: ROUTER_URL.BUYER.ORDER_HISTORY,
+            path: "lich-su-don-hang", // from '/buyer/lich-su-don-hang'
             element: <OrderHistoryPage />,
         },
         {
-            path: ROUTER_URL.BUYER.ORDER_DETAIL,
+            path: "don-hang/:id", // from '/buyer/don-hang/:id'
             element: <OrderDetailPage />,
         },
     ],

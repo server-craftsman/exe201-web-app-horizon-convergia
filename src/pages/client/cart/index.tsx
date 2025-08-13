@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react'
 import { useCartStore } from '@hooks/modules/useCartStore'
 import { useUserInfo } from '@hooks/index'
 import { OrderService } from '@services/order/order.service'
-import { PaymentService } from '@services/payment/payment.service'
 import { notificationMessage } from '@utils/helper'
+import { useNavigate } from 'react-router-dom'
+import { ROUTER_URL } from '@consts/router.path.const'
+import { useProduct } from '@hooks/modules/useProduct'
 
 const CartPage: React.FC = () => {
     const user = useUserInfo()
+    const navigate = useNavigate()
     const { cart, isLoading, itemCount, loadCart, updateQuantity, removeDetail } = useCartStore()
+    const { useProductsByIds } = useProduct()
 
     // Selection state
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -15,6 +19,10 @@ const CartPage: React.FC = () => {
     useEffect(() => {
         if (user?.id) loadCart(user.id)
     }, [user?.id])
+
+    // Fetch product details by productIds to enrich cart rows
+    const productIds = (cart?.details || []).map(d => d.productId).filter(Boolean)
+    const { data: productMap } = useProductsByIds(productIds)
 
     // Keep selection in sync with cart changes; default select all on first load
     useEffect(() => {
@@ -54,17 +62,16 @@ const CartPage: React.FC = () => {
                 notificationMessage('Vui lòng chọn sản phẩm để thanh toán', 'warning');
                 return;
             }
-            const ids = Array.from(selectedIds)
 
+            const ids = Array.from(selectedIds)
             const shippingAddress = user.address || 'Địa chỉ nhận hàng'
             const discount = 0;
 
             const orderResp = await OrderService.createFromCart({ cartDetailIds: ids, shippingAddress: shippingAddress || '', discount });
             const raw = (orderResp as any)?.data;
-
-            // Backend may return { message, orderNumbers: [...] } or { data: { id } }
-            const createdOrderId = raw?.data?.id;
-            const orderNumbers: string[] | undefined = raw?.orderNumbers;
+            const orderData = raw?.data;
+            const orderNumbers: string[] | undefined = raw?.orderNumbers || orderData?.orderNumbers;
+            const createdOrderId: string | undefined = orderData?.id;
 
             if (!createdOrderId && (!orderNumbers || orderNumbers.length === 0)) {
                 notificationMessage(raw?.message || 'Không tạo được đơn hàng', 'error');
@@ -73,21 +80,19 @@ const CartPage: React.FC = () => {
 
             if (raw?.message) notificationMessage(raw.message, 'success');
 
-            // Prefer orderNumbers if provided
-            const paymentPayload = orderNumbers && orderNumbers.length > 0
-                ? { orderNumbers, paymentMethod: 'payos', description: 'Thanh toán đơn hàng' }
-                : { orderIds: [createdOrderId], paymentMethod: 'payos', description: 'Thanh toán đơn hàng' };
+            // Persist meta to session for the order review page
+            const snapshot = selectedDetails.map(d => ({ productId: d.productId, quantity: d.quantity }))
+            sessionStorage.setItem('checkout_meta', JSON.stringify({
+                orderId: createdOrderId,
+                orderNumbers: orderNumbers || [],
+                total: selectedTotal,
+                selectedDetailIds: ids,
+            }))
+            sessionStorage.setItem('checkout_items', JSON.stringify(snapshot))
 
-            const paymentResp = await PaymentService.multiPayment(paymentPayload as any);
-            const paymentUrl = (paymentResp as any)?.data?.data?.paymentUrl || (paymentResp as any)?.data?.data?.redirectUrl;
-
-            if (paymentUrl) {
-                window.location.href = paymentUrl;
-            } else {
-                notificationMessage('Không lấy được link thanh toán', 'error');
-            }
+            navigate(ROUTER_URL.CLIENT.ORDER);
         } catch (e: any) {
-            notificationMessage(e?.message || 'Lỗi khi thanh toán', 'error');
+            notificationMessage(e?.message || 'Lỗi khi tạo đơn', 'error');
         }
     }
 
@@ -112,33 +117,34 @@ const CartPage: React.FC = () => {
                                 <div className="text-sm text-gray-600">Đã chọn: <b>{selectedProductsCount} sản phẩm</b> • Tổng tạm tính: <b className="text-amber-600">{selectedTotal.toLocaleString('vi-VN')} ₫</b></div>
                             </div>
 
-                            {(cart.details || []).map(detail => (
-                                <div key={detail.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4">
-                                    <input type="checkbox" className="w-5 h-5" checked={selectedIds.has(detail.id)} onChange={() => toggleOne(detail.id)} />
-                                    <img src={detail.productImage || 'https://via.placeholder.com/120x90?text=No+Image'} alt={detail.productName || 'item'} className="w-24 h-20 object-cover rounded-lg border" />
-                                    <div className="flex-1">
-                                        <div className="font-semibold text-gray-800 line-clamp-2">{detail.productName || 'Sản phẩm'}</div>
-                                        <div className="text-amber-600 font-bold mt-1">{detail.unitPrice.toLocaleString('vi-VN')} ₫</div>
-                                        {detail.productDescription && (
-                                            <div
-                                                className="text-sm text-gray-600 mt-1 line-clamp-2"
-                                                dangerouslySetInnerHTML={{
-                                                    __html: detail.productDescription.length > 120
-                                                        ? `${detail.productDescription.substring(0, 120)}...`
-                                                        : detail.productDescription
-                                                }}
-                                            />
-                                        )}
+                            {(cart.details || []).map(detail => {
+                                const p = productMap?.[detail.productId];
+                                const title = p ? `${p.brand || ''} ${p.model || ''}`.trim() : (detail.productName || 'Sản phẩm');
+                                const price = p?.price ?? detail.unitPrice;
+                                const image = p?.imageUrls?.[0] || detail.productImage || 'https://via.placeholder.com/120x90?text=No+Image';
+                                const description = p?.description || detail.productDescription;
+                                const subtotal = (price || 0) * detail.quantity;
+                                return (
+                                    <div key={detail.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4">
+                                        <input type="checkbox" className="w-5 h-5" checked={selectedIds.has(detail.id)} onChange={() => toggleOne(detail.id)} />
+                                        <img src={image} alt={title} className="w-24 h-20 object-cover rounded-lg border" />
+                                        <div className="flex-1">
+                                            <div className="font-semibold text-gray-800 line-clamp-2">{title}</div>
+                                            <div className="text-amber-600 font-bold mt-1">{(price || 0).toLocaleString('vi-VN')} ₫</div>
+                                            {description && (
+                                                <div className="text-sm text-gray-600 mt-1 line-clamp-2" dangerouslySetInnerHTML={{ __html: description.length > 120 ? `${description.substring(0, 120)}...` : description }} />
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => updateQuantity(detail.id, Math.max(1, detail.quantity - 1))} className="w-8 h-8 border rounded">-</button>
+                                            <span className="w-10 text-center">{detail.quantity}</span>
+                                            <button onClick={() => updateQuantity(detail.id, detail.quantity + 1)} className="w-8 h-8 border rounded">+</button>
+                                        </div>
+                                        <div className="w-32 text-right font-semibold text-gray-800">{subtotal.toLocaleString('vi-VN')} ₫</div>
+                                        <button onClick={() => removeDetail(detail.id, title)} className="text-red-500 hover:text-red-600 ml-2">Xóa</button>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => updateQuantity(detail.id, Math.max(1, detail.quantity - 1))} className="w-8 h-8 border rounded">-</button>
-                                        <span className="w-10 text-center">{detail.quantity}</span>
-                                        <button onClick={() => updateQuantity(detail.id, detail.quantity + 1)} className="w-8 h-8 border rounded">+</button>
-                                    </div>
-                                    <div className="w-32 text-right font-semibold text-gray-800">{detail.subtotal.toLocaleString('vi-VN')} ₫</div>
-                                    <button onClick={() => removeDetail(detail.id, detail.productName)} className="text-red-500 hover:text-red-600 ml-2">Xóa</button>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                         <div className="lg:col-span-4">
                             <div className="bg-white border border-gray-200 rounded-2xl p-6 sticky top-24">
@@ -155,7 +161,7 @@ const CartPage: React.FC = () => {
                                     <span>Tổng</span>
                                     <span className="text-amber-600">{selectedTotal.toLocaleString('vi-VN')} ₫</span>
                                 </div>
-                                <button onClick={handleCheckout} className="w-full mt-4 bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-3 font-semibold" disabled={selectedIds.size === 0}>Thanh toán</button>
+                                <button onClick={handleCheckout} className="w-full mt-4 bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-3 font-semibold" disabled={selectedIds.size === 0}>Tạo đơn hàng</button>
                                 <div className="text-xs text-gray-400 mt-2">(Tổng số lượng đã chọn: {selectedQuantityTotal})</div>
                             </div>
                         </div>

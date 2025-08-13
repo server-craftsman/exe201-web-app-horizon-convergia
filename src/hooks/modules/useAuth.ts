@@ -89,15 +89,17 @@ export const useAuth = () => {
         }
     });
 
+    // Logout: no API call, just clear storage and redirect
     const logout = useMutation({
-        mutationFn: AuthService.logout,
+        mutationFn: async () => true,
         onSuccess: () => {
             helpers.notificationMessage("Đăng xuất thành công!", "success");
             clearStorage();
             window.location.href = ROUTER_URL.AUTH.LOGIN;
         },
-        onError: (error: any) => {
-            console.error('Logout error:', error);
+        onError: () => {
+            clearStorage();
+            window.location.href = ROUTER_URL.AUTH.LOGIN;
         }
     });
 
@@ -116,7 +118,7 @@ export const useAuth = () => {
 };
 
 export const useLogin = () => {
-    const { setItem } = useLocalStorage();
+    const { setItem, clearStorage } = useLocalStorage();
     const navigate = useNavigate();
 
     return useMutation({
@@ -160,8 +162,8 @@ export const useLogin = () => {
                 }
             } catch (error) {
                 console.error("Failed to fetch user info after login:", error);
-                // Clear auth data on error
-                AuthService.logout();
+                // Clear auth data on error (no API call)
+                clearStorage();
                 helpers.notificationMessage("Failed to fetch user info", "error");
             }
         },

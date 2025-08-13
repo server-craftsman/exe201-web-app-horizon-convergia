@@ -13,6 +13,7 @@ export const ROUTER_URL = {
         CONTACT: "/contact",
         FAQ: "/faq",
         PAYMENT_CALLBACK: "/payments/payos-callback",
+        PAYMENT_CALLBACK_API: "/api/Payments/payos-callback",
     },
     CLIENT: {
         BUY_MOTOR: "/mua-xe",
@@ -24,7 +25,9 @@ export const ROUTER_URL = {
         PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
         PRODUCT_DETAIL: "/san-pham/:id",
         CART: "/gio-hang",
-        ORDER_HISTORY: "/don-hang",
+        ORDER: "/tao-don-hang",
+        PAYMENT: "/tao-thanh-toan",
+        ORDER_HISTORY: "/lich-su-don-hang",
         ORDER_DETAIL: "/don-hang/:id",
     },
     // BUYER ROUTES

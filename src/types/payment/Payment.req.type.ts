@@ -3,6 +3,7 @@ export interface MultiPaymentRequest {
     orderNumbers?: string[];
     paymentMethod: string; // ví dụ: payos, cod, bank-transfer
     description?: string;
+    amount?: number;
 }
 
 export interface PayOsCallbackQuery {

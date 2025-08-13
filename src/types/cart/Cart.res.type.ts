@@ -30,6 +30,12 @@ export interface RawCartProduct {
     description?: string;
 }
 
+export interface RawCartItemSummary {
+    productId: string;
+    productName?: string;
+    quantity: number;
+}
+
 export interface RawCartDetailResponse {
     id: string;
     quantity: number;
@@ -49,5 +55,6 @@ export interface RawCartResponse {
     isDeleted?: boolean;
     createdAt?: string;
     updatedAt?: string;
-    cartDetails: RawCartDetailResponse[];
+    cartDetails?: RawCartDetailResponse[]; // old detailed shape
+    items?: RawCartItemSummary[]; // new summary shape per user’s response
 }

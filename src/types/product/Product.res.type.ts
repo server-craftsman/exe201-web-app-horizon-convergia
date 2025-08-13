@@ -22,6 +22,7 @@ export interface ProductResponse {
     sellerId: string;
     categoryId: string;
     imageUrls: string[];
+    updatedAt: string;
     // ... any extra dynamic fields
 }
 

@@ -47,18 +47,18 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
     console.log('EditProductAdminComponent - Product data:', product);
 
     const [formData, setFormData] = useState<UpdateProduct>({
-        brand: product.brand,
-        model: product.model,
-        year: product.year,
-        price: product.price,
-        description: product.description,
-        location: product.location,
-        condition: product.condition,
-        quantity: product.quantity,
-        categoryId: product.categoryId.toString(),
+        brand: product.brand || '',
+        model: product.model || '',
+        year: product.year || new Date().getFullYear(),
+        price: product.price || 0,
+        description: product.description || '',
+        location: product.location || '',
+        condition: product.condition || 'Mới',
+        quantity: product.quantity || 1,
+        categoryId: product.categoryId?.toString() || '',
         imageUrls: product.imageUrls || [],
         engineCapacity: product.engineCapacity || undefined,
-        fuelType: product.fuelType || '',
+        fuelType: product.fuelType || 'gasoline',
         mileage: product.mileage || undefined,
         color: product.color || '',
         accessoryType: product.accessoryType || '',
@@ -81,9 +81,8 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
     const [brands, setBrands] = useState<string[]>([]);
     const [models, setModels] = useState<string[]>([]);
 
-    // const UNIVERSAL_MODELS = [
-    //     'Tất cả', 'Xe ga', 'Xe số', 'Xe côn tay', 'Xe phân khối lớn', 'Xe điện', 'Khác'
-    // ];
+    // Thêm state để theo dõi việc categories đã được load
+    const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
     /* ---------------- Địa chỉ ---------------- */
     const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
@@ -154,6 +153,14 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragActive, setIsDragActive] = useState(false);
     const isInitialMount = useRef(true);
+
+    // Theo dõi khi categories được load
+    useEffect(() => {
+        if (categories.length > 0 && !categoriesLoaded) {
+            setCategoriesLoaded(true);
+            console.log('Categories loaded successfully:', categories.length, 'categories');
+        }
+    }, [categories, categoriesLoaded]);
 
     // Khởi tạo địa chỉ từ product.location hiện tại
     useEffect(() => {
@@ -260,7 +267,7 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
 
     // Khởi tạo brands và models dựa trên dữ liệu product khi categories được load
     useEffect(() => {
-        if (categories.length > 0 && formData.categoryId) {
+        if (categoriesLoaded && formData.categoryId) {
             console.log('Initializing brands/models for category:', formData.categoryId);
             console.log('Product brand:', formData.brand, 'Product model:', formData.model);
 
@@ -290,11 +297,11 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                 setModels(Array.from(msList));
             }
         }
-    }, [categories, formData.categoryId, formData.brand, formData.model]);
+    }, [categoriesLoaded, formData.categoryId, product.brand, product.model]);
 
-    // Cập nhật danh sách thương hiệu và model khi thay đổi danh mục
+    // Cập nhật danh sách thương hiệu và model khi thay đổi danh mục (chỉ khi không phải lần đầu load)
     useEffect(() => {
-        if (categories.length > 0 && formData.categoryId) {
+        if (categoriesLoaded && formData.categoryId && !isInitialMount.current) {
             const categoryType = getCategoryType(formData.categoryId);
 
             if (categoryType === 'accessory') {
@@ -305,29 +312,29 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                 setModels(SPAREPART_MODELS);
             } else {
                 setBrands(MOTORCYCLE_BRANDS);
-                setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
+                setModels([]);
             }
-            if (categories.length > 0 && !isInitialMount.current) {
-                setFormData(prev => ({ ...prev, brand: '', model: '' }));
-            }
+
+            // Reset brand và model khi thay đổi category (chỉ khi không phải lần đầu)
+            setFormData(prev => ({ ...prev, brand: '', model: '' }));
         }
-        if (categories.length > 0) {
-            isInitialMount.current = false;
-        }
-    }, [formData.categoryId, categories, formData.brand, formData.model]);
+    }, [formData.categoryId, categoriesLoaded]);
 
     // Khi chọn brand, cập nhật models (chỉ với xe máy)
     useEffect(() => {
-        if (categories.length > 0 && formData.categoryId) {
+        if (categoriesLoaded && formData.categoryId) {
             const categoryType = getCategoryType(formData.categoryId);
             if (categoryType === 'motorcycle') {
-                setModels(formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : []);
+                const newModels = formData.brand ? MOTORCYCLE_BRANDS_MODELS[formData.brand] || [] : [];
+                setModels(newModels);
+
+                // Reset model khi thay đổi brand (chỉ khi không phải lần đầu)
                 if (!isInitialMount.current) {
                     setFormData(prev => ({ ...prev, model: '' }));
                 }
             }
         }
-    }, [formData.brand, formData.categoryId, categories]);
+    }, [formData.brand, formData.categoryId, categoriesLoaded]);
 
     // Fix default marker icon for leaflet
     useEffect(() => {
@@ -498,16 +505,26 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
 
     // Update product mutation
     const updateProductMutation = useMutation({
-        mutationFn: (data: UpdateProduct) => ProductService.updateProduct(product.id, data),
-        onSuccess: () => {
+        mutationFn: (data: UpdateProduct) => {
+            console.log('🚀 Sending update request with data:', data);
+            return ProductService.updateProduct(product.id, data);
+        },
+        onSuccess: (response) => {
+            console.log('✅ Update successful:', response);
             queryClient.invalidateQueries({ queryKey: ['admin-products'] });
             helpers.notificationMessage('Cập nhật sản phẩm thành công!', 'success');
             onSuccess();
             onClose();
         },
         onError: (error: any) => {
-            console.error('Error updating product:', error);
-            const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật sản phẩm';
+            console.error('❌ Error updating product:', error);
+            console.error('Error details:', {
+                message: error?.message,
+                response: error?.response?.data,
+                status: error?.response?.status
+            });
+
+            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi cập nhật sản phẩm';
             helpers.notificationMessage(errorMessage, 'error');
             setErrors({
                 general: errorMessage
@@ -538,27 +555,20 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
 
-        console.log('Validating form with data:', formData);
+        console.log('🔍 Validating form with data:', formData);
 
-        // Brand/model validation động
-        const currentCategoryType = getCategoryType(formData.categoryId || '');
-        const isCurrentAccessory = currentCategoryType === 'accessory';
-        const isCurrentSparePart = currentCategoryType === 'sparepart';
+        if (!formData.categoryId) {
+            newErrors.categoryId = 'Danh mục là bắt buộc';
+        }
 
         if (!formData.brand?.trim()) {
             newErrors.brand = 'Thương hiệu là bắt buộc';
-        } else if (
-            (isCurrentAccessory && !ACCESSORY_BRANDS.includes(formData.brand)) ||
-            (isCurrentSparePart && !SPAREPART_BRANDS.includes(formData.brand)) ||
-            (!isCurrentAccessory && !isCurrentSparePart && !MOTORCYCLE_BRANDS.includes(formData.brand))
-        ) {
-            newErrors.brand = 'Thương hiệu không hợp lệ';
         }
 
-        if (!formData.model?.trim()) {
+        // Chỉ bắt buộc Model với danh mục xe máy
+        const categoryTypeForValidation = getCategoryType(formData.categoryId || '');
+        if (categoryTypeForValidation === 'motorcycle' && !formData.model?.trim()) {
             newErrors.model = 'Model là bắt buộc';
-        } else if (!models.includes(formData.model)) {
-            newErrors.model = 'Model không hợp lệ';
         }
 
         if (!formData.year || formData.year < 1900 || formData.year > new Date().getFullYear() + 1) {
@@ -585,24 +595,20 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
             newErrors.quantity = 'Số lượng phải lớn hơn 0';
         }
 
-        if (!formData.categoryId) {
-            newErrors.categoryId = 'Danh mục là bắt buộc';
-        }
-
-        console.log('Validation errors:', newErrors);
+        console.log('❗ Validation errors:', newErrors);
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleInputChange = (field: keyof UpdateProduct, value: any) => {
-        console.log(`Updating field ${field} with value:`, value);
+        console.log(`📝 Updating field ${field} with value:`, value);
 
         setFormData(prev => {
             const newData = {
                 ...prev,
                 [field]: value
             };
-            console.log('New form data:', newData);
+            console.log('🔄 New form data:', newData);
             return newData;
         });
 
@@ -646,12 +652,44 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        console.log('🔥 Form submission started');
+        console.log('📋 Current form data:', formData);
+
         if (!validateForm()) {
+            console.log('❌ Validation failed, stopping submission');
             return;
         }
 
+        console.log('✅ Validation passed, preparing data for submission');
+
+        // Clean and prepare data for submission
+        const submissionData: UpdateProduct = {
+            ...formData,
+            categoryId: formData.categoryId || product.categoryId?.toString() || '',
+            brand: formData.brand?.trim() || '',
+            model: formData.model?.trim() || '',
+            year: formData.year || new Date().getFullYear(),
+            price: formData.price || 0,
+            description: formData.description?.trim() || '',
+            location: formData.location?.trim() || '',
+            condition: formData.condition || 'Mới',
+            quantity: formData.quantity || 1,
+            imageUrls: formData.imageUrls || [],
+            // Optional fields - only include if they have values
+            ...(formData.engineCapacity && { engineCapacity: formData.engineCapacity }),
+            ...(formData.fuelType && { fuelType: formData.fuelType }),
+            ...(formData.mileage && { mileage: formData.mileage }),
+            ...(formData.color && { color: formData.color }),
+            ...(formData.accessoryType && { accessoryType: formData.accessoryType }),
+            ...(formData.size && { size: formData.size }),
+            ...(formData.sparePartType && { sparePartType: formData.sparePartType }),
+            ...(formData.vehicleCompatible && { vehicleCompatible: formData.vehicleCompatible })
+        };
+
+        console.log('🚀 Final submission data:', submissionData);
+
         setErrors({});
-        updateProductMutation.mutate(formData);
+        updateProductMutation.mutate(submissionData);
     };
 
     const handleDelete = () => {
@@ -1051,11 +1089,6 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
         return null;
     };
 
-    // const getCategoryName = (categoryId: string) => {
-    //     const cat = categories.find((c) => c.id.toString() === categoryId);
-    //     return cat ? cat.name : 'Không xác định';
-    // };
-
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -1085,16 +1118,12 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                 <div className="border-b bg-gradient-to-r from-amber-500 to-amber-600 border-gray-700 px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center space-x-4">
                         <h2 className="text-2xl font-bold text-white">Chỉnh sửa sản phẩm</h2>
-                        {isInitialMount.current && (
+                        {!categoriesLoaded && (
                             <div className="flex items-center text-white text-sm">
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                 Đang tải dữ liệu...
                             </div>
                         )}
-                        {/* <div className="flex items-center space-x-2">
-                            {getStatusDisplay(product.status)}
-                            <span className="text-sm text-gray-500">ID: {product.id}</span>
-                        </div> */}
                     </div>
                     <button
                         onClick={onClose}
@@ -1210,21 +1239,6 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                                         )}
                                     </div>
                                 )}
-
-                                {/* Hiển thị placeholder cho phụ kiện/phụ tùng */}
-                                {/* {(getCategoryType(formData.categoryId) === 'accessory' || getCategoryType(formData.categoryId) === 'sparepart') && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-white mb-2">
-                                            {getCategoryType(formData.categoryId) === 'accessory' ? 'Dòng xe tương thích' : 'Dòng xe tương thích'}
-                                        </label>
-                                        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-sm">
-                                            {getCategoryType(formData.categoryId) === 'accessory'
-                                                ? 'Model sẽ tự động được đặt theo loại phụ kiện'
-                                                : 'Model sẽ tự động được đặt theo loại phụ tùng'
-                                            }
-                                        </div>
-                                    </div>
-                                )} */}
                             </div>
                         </div>
 
@@ -1502,16 +1516,16 @@ export const EditProductAdminComponent: React.FC<EditProductAdminProps> = ({
                             <h3 className="text-lg font-semibold text-white mb-4">Thông tin thời gian</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <span className="font-medium text-gray-700">Tạo:</span>
-                                    <span className="ml-2 text-gray-600">
+                                    <span className="font-medium text-gray-300">Tạo:</span>
+                                    <span className="ml-2 text-gray-400">
                                         {new Date(product.createdAt).toLocaleString('vi-VN')}
                                     </span>
                                 </div>
-                                {product.createdAt !== product.createdAt && (
+                                {product.createdAt !== product.updatedAt && (
                                     <div>
-                                        <span className="font-medium text-gray-700">Cập nhật:</span>
-                                        <span className="ml-2 text-gray-600">
-                                            {new Date(product.createdAt).toLocaleString('vi-VN')}
+                                        <span className="font-medium text-gray-300">Cập nhật:</span>
+                                        <span className="ml-2 text-gray-400">
+                                            {new Date(product.updatedAt).toLocaleString('vi-VN')}
                                         </span>
                                     </div>
                                 )}
