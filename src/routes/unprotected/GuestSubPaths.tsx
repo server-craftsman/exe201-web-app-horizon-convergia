@@ -10,6 +10,7 @@ const SellMotorPage = lazy(() => import("../../pages/client/sell_motor"));
 const AccessoriesPage = lazy(() => import("../../pages/client/accessories"));
 const NewsPage = lazy(() => import("../../pages/client/news"));
 const NewsDetailPage = lazy(() => import("../../pages/client/news/detail"));
+const NewsCategoryPage = lazy(() => import("../../pages/client/news/category"));
 // auth pages
 const LoginPage = lazy(() => import("../../pages/auth/login"));
 const RegisterPage = lazy(() => import("../../pages/auth/register"));
@@ -67,6 +68,10 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
         {
           path: ROUTER_URL.CLIENT.NEWS_DETAIL,
           element: <NewsDetailPage />
+        },
+        {
+          path: ROUTER_URL.CLIENT.NEWS_CATEGORY,
+          element: <NewsCategoryPage />
         },
         {
           path: ROUTER_URL.AUTH.VERIFY_EMAIL,

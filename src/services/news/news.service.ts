@@ -12,6 +12,18 @@ export const NewsService = {
         });
     },
 
+    // Get blog list with filters (new API)
+    getBlogList(params?: { categoryId?: string; pageNumber?: number; pageSize?: number }) {
+        const queryParams = new URLSearchParams();
+        if (params?.categoryId) queryParams.append('categoryId', params.categoryId);
+        if (params?.pageNumber) queryParams.append('pageNumber', params.pageNumber.toString());
+        if (params?.pageSize) queryParams.append('pageSize', params.pageSize.toString());
+        
+        return BaseService.get<NewsResponse[]>({
+            url: `${API_PATH.NEWS.GET_ALL}?${queryParams.toString()}`
+        });
+    },
+
     // Search news with parameters
     searchNews(params: NewsSearchAllParams) {
         const queryParams = new URLSearchParams();

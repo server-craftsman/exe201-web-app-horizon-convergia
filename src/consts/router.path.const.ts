@@ -21,6 +21,7 @@ export const ROUTER_URL = {
         FAVORITE: "/yeu-thich",
         NEWS: "/tin-tuc",
         NEWS_DETAIL: "/tin-tuc/:id",
+        NEWS_CATEGORY: "/tin-tuc/category/:categoryId",
         PRODUCT_LIST_BY_CATEGORY_ID: "/san-pham",
         PRODUCT_DETAIL: "/san-pham/:id",
         CART: "/gio-hang",
