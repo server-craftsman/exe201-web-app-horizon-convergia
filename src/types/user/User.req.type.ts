@@ -35,6 +35,13 @@ export interface UpdateUserRequest {
     address: string,
     avatarUrl: string,
     dob: Date,
+    gender?: number,
+    shopName?: string,
+    shopDescription?: string,
+    businessType?: string,
+    bankName?: string,
+    bankAccountNumber?: string,
+    bankAccountHolder?: string
 }
 
 export type UserSearchAllParams = Partial<import('./User.res.type').UserSearchParams> & {

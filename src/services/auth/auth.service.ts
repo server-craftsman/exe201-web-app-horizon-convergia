@@ -50,7 +50,7 @@ export const AuthService = {
 
     updateUserInfo(user: UpdateUserRequest) {
         return BaseService.put<UserInfo>({
-            url: API_PATH.USER.UPDATE_USER_PROFILE.replace(":id", user.id?.toString() || ""),
+            url: API_PATH.USER.UPDATE_USER(user.id?.toString() || ""),
             payload: user
         })
     },

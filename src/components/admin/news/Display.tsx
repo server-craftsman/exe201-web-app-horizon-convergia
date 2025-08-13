@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNews } from "@hooks/modules/useNews";
+import { useCategory } from '../../../hooks/modules/useCategory';
 import type { NewsResponse } from '../../../types/news/News.res.type';
 import { motion } from 'framer-motion';
 import { helpers } from "@utils/index.ts";
@@ -11,23 +12,30 @@ import { memo } from 'react';
 
 export const NewsDisplayCom = () => {
     const [news, setNews] = useState<NewsResponse[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
     const [searchInput, setSearchInput] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [isLoading, setIsLoading] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('');
+    const [categoryFilter, setCategoryFilter] = useState<string>('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedNewsId, setSelectedNewsId] = useState<string>('');
 
     const { getAllNews } = useNews();
+    const { useGetAllCategories } = useCategory();
+
+    // Get all categories
+    const { data: categoriesData } = useGetAllCategories({ pageSize: 100 });
 
     // Sử dụng data trực tiếp từ react-query
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const response = await fetch("https://horizon-convergia.onrender.com/api/Blog", {
+                // Call API với pageSize lớn để lấy tất cả bài viết
+                const response = await fetch("https://horizon-convergia.onrender.com/api/Blog?pageSize=1000", {
                     headers: {
                         "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
                     }
@@ -62,6 +70,13 @@ export const NewsDisplayCom = () => {
         }
     }, [getAllNews.data, getAllNews.isLoading, getAllNews.error]);
 
+    // Load categories
+    useEffect(() => {
+        if (categoriesData) {
+            setCategories(categoriesData);
+        }
+    }, [categoriesData]);
+
     // Trigger initial fetch
     useEffect(() => {
         getAllNews.refetch();
@@ -80,6 +95,11 @@ export const NewsDisplayCom = () => {
         return isDeleted ? 'Đã xóa' : 'Hoạt động';
     };
 
+    const getCategoryName = (categoryId: string) => {
+        const category = categories.find(cat => cat.id === categoryId);
+        return category ? category.name : 'Không có danh mục';
+    };
+
     const filteredNews = news.filter(item => {
         const matchesSearch = searchTerm === '' || 
             item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,7 +113,9 @@ export const NewsDisplayCom = () => {
         }
         // Nếu statusFilter === '' thì matchesStatus = true (hiển thị tất cả)
 
-        return matchesSearch && matchesStatus;
+        const matchesCategory = categoryFilter === '' || item.categoryId === categoryFilter;
+
+        return matchesSearch && matchesStatus && matchesCategory;
     });
 
     console.log('Total news:', news.length);
@@ -126,7 +148,7 @@ export const NewsDisplayCom = () => {
             </div>
 
             {/* Search and Filters */}
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
                 <SearchCommon
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
@@ -142,6 +164,19 @@ export const NewsDisplayCom = () => {
                     <option value="">Tất cả trạng thái</option>
                     <option value="active">Hoạt động</option>
                     <option value="deleted">Đã xóa</option>
+                </select>
+
+                <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="">Tất cả danh mục</option>
+                    {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                            {category.name}
+                        </option>
+                    ))}
                 </select>
 
                 <select
@@ -172,6 +207,9 @@ export const NewsDisplayCom = () => {
                                     Nội dung
                                 </th>
                                 <th className="px-6 py-3 text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                    Danh mục
+                                </th>
+                                <th className="px-6 py-3 text-xs font-medium text-gray-300 uppercase tracking-wider">
                                     Trạng thái
                                 </th>
                                 <th className="px-6 py-3 text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -185,13 +223,13 @@ export const NewsDisplayCom = () => {
                         <tbody className="bg-gray-800 divide-y divide-gray-700">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-gray-400">
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-400">
                                         Đang tải... (Loading: {getAllNews.isLoading ? 'true' : 'false'}, Error: {getAllNews.error ? 'có lỗi' : 'không'})
                                     </td>
                                 </tr>
                             ) : paginatedNews.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-gray-400">
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-400">
                                         Không có tin tức nào (Total: {news.length}, Filtered: {filteredNews.length})
                                     </td>
                                 </tr>
@@ -251,6 +289,11 @@ export const NewsDisplayCom = () => {
                                                     })()
                                                 }}
                                             />
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-300 max-w-xs truncate">
+                                                {getCategoryName(item.categoryId)}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
