@@ -7,7 +7,8 @@ const BuyerDashboard = lazy(() => import("../../../pages/buyer/overview/Dashboar
 const SettingsPage = lazy(() => import("../../../pages/auth/settings"));
 const OrderHistoryPage = lazy(() => import("../../../pages/buyer/order/History.page"));
 const OrderDetailPage = lazy(() => import("../../../pages/buyer/order/Detail.page"));
-
+// favorite
+const FavoritePage = lazy(() => import("../../../pages/client/favorite"));
 export const BuyerRoutes: RouteObject = {
     path: ROUTER_URL.BUYER.BASE, // '/buyer'
     children: [
@@ -16,16 +17,20 @@ export const BuyerRoutes: RouteObject = {
             element: <BuyerDashboard />,
         },
         {
-            path: "cai-dat", // from '/buyer/cai-dat'
+            path: ROUTER_URL.BUYER.SETTINGS, // from '/buyer/cai-dat'
             element: <SettingsPage />,
         },
         {
-            path: "lich-su-don-hang", // from '/buyer/lich-su-don-hang'
+            path: ROUTER_URL.BUYER.ORDER_HISTORY, // from '/buyer/lich-su-don-hang'
             element: <OrderHistoryPage />,
         },
         {
-            path: "don-hang/:id", // from '/buyer/don-hang/:id'
+            path: ROUTER_URL.BUYER.ORDER_DETAIL, // from '/buyer/don-hang/:id'
             element: <OrderDetailPage />,
+        },
+        {
+            path: ROUTER_URL.BUYER.FAVORITE, // from '/buyer/yeu-thich'
+            element: <FavoritePage />,
         },
     ],
 };

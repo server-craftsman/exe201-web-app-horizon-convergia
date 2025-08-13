@@ -54,15 +54,19 @@ const RunRoutes = () => {
                     }
                 />
                 {AdminRoutes.children?.filter(route => !route.index).map(route => {
-                    // Extract the relative path part after the admin base URL
-                    const relativePath = route.path?.includes('/')
-                        ? route.path?.split('/').slice(-1)[0]
-                        : route.path;
+                    // Compute relative path after the admin base (e.g., 'quan-ly-don-hang' or 'quan-ly-don-hang/:id')
+                    let relativePath = route.path;
+                    const base = ROUTER_URL.ADMIN.BASE + '/';
+                    if (relativePath?.startsWith(base)) {
+                        relativePath = relativePath.slice(base.length);
+                    } else if (relativePath?.startsWith('/')) {
+                        relativePath = relativePath.slice(1);
+                    }
 
                     return (
                         <Route
                             key={route.path}
-                            path={relativePath}
+                            path={relativePath as string}
                             element={
                                 <Suspense>
                                     {route.element}
@@ -128,7 +132,6 @@ const RunRoutes = () => {
                     }
                 />
                 {SellerRoutes.children?.filter(route => !route.index).map(route => {
-                    // Extract the relative path part after the seller base URL
                     const relativePath = route.path?.includes('/')
                         ? route.path?.split('/').slice(-1)[0]
                         : route.path;
@@ -165,7 +168,6 @@ const RunRoutes = () => {
                     }
                 />
                 {ShipperRoutes.children?.filter(route => !route.index).map(route => {
-                    // Extract the relative path part after the shipper base URL
                     const relativePath = route.path?.includes('/')
                         ? route.path?.split('/').slice(-1)[0]
                         : route.path;
@@ -184,8 +186,8 @@ const RunRoutes = () => {
                 })}
             </Route>
 
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to={ROUTER_URL.COMMON.HOME} replace />} />
         </Routes>
     );
 };

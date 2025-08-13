@@ -3,25 +3,32 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '../../consts/router.path.const';
 import { useAuth } from '../../hooks/useAuth';
 import { useCartStore } from '@hooks/modules/useCartStore';
+import { useUserInfo } from '../../hooks';
 
 const BuyerHeader: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const auth = useAuth();
+    const user = useUserInfo();
     const itemCount = useCartStore(s => s.itemCount);
 
     const handleLogout = () => {
-        logout();
-        navigate(ROUTER_URL.AUTH.LOGIN);
+        try {
+            const lg: any = (auth as any)?.logout;
+            if (typeof lg?.mutate === 'function') lg.mutate();
+            else if (typeof lg === 'function') lg();
+        } finally {
+            navigate(ROUTER_URL.AUTH.LOGIN);
+        }
     };
 
     const buyerNavItems = [
-        { name: 'Trang chủ', href: ROUTER_URL.BUYER.DASHBOARD },
+        { name: 'Trang chủ', href: ROUTER_URL.BUYER.BASE },
         { name: 'Mua xe', href: ROUTER_URL.CLIENT.BUY_MOTOR },
         { name: 'Phụ kiện', href: ROUTER_URL.CLIENT.ACCESSORIES },
         { name: 'Đơn hàng', href: ROUTER_URL.BUYER.ORDER_HISTORY },
-        { name: 'Yêu thích', href: ROUTER_URL.CLIENT.FAVORITE },
+        { name: 'Yêu thích', href: ROUTER_URL.BUYER.FAVORITE },
     ];
 
     return (

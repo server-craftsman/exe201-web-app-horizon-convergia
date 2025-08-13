@@ -2,8 +2,54 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ROUTER_URL } from '../../../consts/router.path.const';
+import { useUserInfo } from '../../../hooks';
+import { useQuery } from '@tanstack/react-query';
+import { OrderService } from '@services/order/order.service';
 
 const BuyerDashboard: React.FC = () => {
+    const user = useUserInfo();
+
+    const { data: orderData, isLoading } = useQuery({
+        queryKey: ['buyer', 'orders', user?.id],
+        enabled: !!user?.id,
+        queryFn: async () => {
+            const resp = await OrderService.search({ buyerId: user!.id, page: 1, pageSize: 10 });
+            const raw = (resp as any)?.data;
+            const list = raw?.data?.items || raw?.items || raw?.data || [];
+            const totalItems = raw?.data?.totalItems || raw?.totalItems || list.length;
+            return { list, totalItems } as { list: any[]; totalItems: number };
+        },
+        staleTime: 60 * 1000,
+    });
+
+    const recentOrders = (orderData?.list || []).slice(0, 5).map((o: any) => ({
+        id: o?.id,
+        code: o?.orderNo || o?.orderCode || o?.code || o?.orderNumber || '#',
+        amount: (o?.total ?? o?.totalAmount ?? o?.amount ?? 0) as number,
+        date: o?.createdAt || o?.createdDate || '',
+        status: o?.status || o?.orderStatus || 'Unknown',
+    }));
+
+    const totalOrders = orderData?.totalItems || 0;
+
+    const isPaidStatus = (order: any): boolean => {
+        const code = order?.statusCode ?? order?.orderStatusCode;
+        if (typeof code === 'number') return code === 1;
+        const st = order?.status ?? order?.orderStatus;
+        if (typeof st === 'number') return st === 1;
+        if (typeof st === 'string') {
+            const s = st.trim().toLowerCase();
+            return s === 'paid' || s === 'đã thanh toán' || s.includes('paid');
+        }
+        return false;
+    };
+
+    const coalesceAmount = (order: any): number => Number(order?.total ?? order?.totalAmount ?? order?.amount ?? 0);
+
+    const totalSpent = (orderData?.list || [])
+        .filter(isPaidStatus)
+        .reduce((sum: number, o: any) => sum + coalesceAmount(o), 0);
+
     const quickActions = [
         {
             title: 'Mua Xe Máy',
@@ -23,32 +69,15 @@ const BuyerDashboard: React.FC = () => {
             title: 'Đơn Hàng',
             description: 'Theo dõi tình trạng đơn hàng',
             icon: '📦',
-            href: ROUTER_URL.BUYER.ORDERS,
+            href: ROUTER_URL.BUYER.ORDER_HISTORY,
             color: 'from-purple-500 to-purple-600',
         },
         {
             title: 'Yêu Thích',
             description: 'Sản phẩm bạn đã lưu',
             icon: '❤️',
-            href: ROUTER_URL.BUYER.FAVORITES,
+            href: ROUTER_URL.CLIENT.FAVORITE,
             color: 'from-red-500 to-red-600',
-        },
-    ];
-
-    const recentOrders = [
-        {
-            id: '#DH001',
-            product: 'Honda Wave Alpha',
-            status: 'Đang giao',
-            date: '2024-01-15',
-            amount: '35,000,000₫',
-        },
-        {
-            id: '#DH002',
-            product: 'Yamaha Exciter 155',
-            status: 'Đã giao',
-            date: '2024-01-10',
-            amount: '47,000,000₫',
         },
     ];
 
@@ -108,7 +137,7 @@ const BuyerDashboard: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm">Tổng đơn hàng</p>
-                                <p className="text-2xl font-bold text-white">12</p>
+                                <p className="text-2xl font-bold text-white">{isLoading ? '…' : totalOrders}</p>
                             </div>
                             <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,8 +150,8 @@ const BuyerDashboard: React.FC = () => {
                     <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-gray-400 text-sm">Tổng chi tiêu</p>
-                                <p className="text-2xl font-bold text-white">125M₫</p>
+                                <p className="text-gray-400 text-sm">Tổng chi tiêu (đơn đã thanh toán)</p>
+                                <p className="text-2xl font-bold text-white">{isLoading ? '…' : `${totalSpent.toLocaleString('vi-VN')}₫`}</p>
                             </div>
                             <div className="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +165,7 @@ const BuyerDashboard: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-gray-400 text-sm">Yêu thích</p>
-                                <p className="text-2xl font-bold text-white">8</p>
+                                <p className="text-2xl font-bold text-white">—</p>
                             </div>
                             <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,40 +186,45 @@ const BuyerDashboard: React.FC = () => {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-white">Đơn hàng gần đây</h2>
                         <Link
-                            to={ROUTER_URL.BUYER.ORDERS}
+                            to={ROUTER_URL.BUYER.ORDER_HISTORY}
                             className="text-amber-400 hover:text-amber-300 text-sm font-medium transition-colors"
                         >
                             Xem tất cả →
                         </Link>
                     </div>
 
-                    <div className="space-y-4">
-                        {recentOrders.map((order) => (
-                            <div
-                                key={order.id}
-                                className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-600/30"
-                            >
-                                <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
-                                        <span className="text-white font-bold">🏍️</span>
+                    {isLoading ? (
+                        <div className="text-gray-400">Đang tải đơn hàng…</div>
+                    ) : (
+                        <div className="space-y-4">
+                            {recentOrders.length === 0 ? (
+                                <div className="text-gray-400">Chưa có đơn hàng nào</div>
+                            ) : (
+                                recentOrders.map((order) => (
+                                    <div
+                                        key={order.id || order.code}
+                                        className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-600/30"
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
+                                                <span className="text-white font-bold">🏍️</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-white">{order.code}</p>
+                                                <p className="text-sm text-gray-400">{order.date ? new Date(order.date).toLocaleString('vi-VN') : ''}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-semibold text-white">{order.amount.toLocaleString('vi-VN')}₫</p>
+                                            <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                                                {String(order.status)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-semibold text-white">{order.product}</p>
-                                        <p className="text-sm text-gray-400">{order.id} • {order.date}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-white">{order.amount}</p>
-                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${order.status === 'Đã giao'
-                                        ? 'bg-green-500/20 text-green-400'
-                                        : 'bg-blue-500/20 text-blue-400'
-                                        }`}>
-                                        {order.status}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </motion.div>
             </div>
         </div>

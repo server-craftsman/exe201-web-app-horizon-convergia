@@ -67,11 +67,11 @@ const getRoleSpecificMenuItems = (role: UserRole) => {
             ];
         case UserRole.BUYER:
             return [
-                { label: 'Giỏ hàng', path: ROUTER_URL.BUYER.CART, icon: '🛒' },
-                { label: 'Yêu thích', path: ROUTER_URL.CLIENT.FAVORITE, icon: '❤️' },
+                { label: 'Giỏ hàng', path: ROUTER_URL.CLIENT.CART, icon: '🛒' },
+                { label: 'Yêu thích', path: ROUTER_URL.BUYER.FAVORITE, icon: '❤️' },
                 { label: 'Lịch sử đơn hàng', path: ROUTER_URL.BUYER.ORDER_HISTORY, icon: '📜' },
-                { label: 'Ví tiền', path: ROUTER_URL.BUYER.WALLET, icon: '💰' },
-                { label: 'Thông báo', path: ROUTER_URL.BUYER.NOTIFICATIONS, icon: '🔔' }
+                // { label: 'Ví tiền', path: ROUTER_URL.BUYER.WALLET, icon: '💰' },
+                // { label: 'Thông báo', path: ROUTER_URL.BUYER.NOTIFICATIONS, icon: '🔔' }
             ];
         case UserRole.SELLER:
             return [

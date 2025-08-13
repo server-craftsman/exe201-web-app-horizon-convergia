@@ -12,6 +12,7 @@ const NewsManagementPage = lazy(() => import("../../../pages/admin/news"));
 const OrderManagementPage = lazy(() => import("../../../pages/admin/order"));
 const ReviewManagementPage = lazy(() => import("../../../pages/admin/review"));
 const StatisticsPage = lazy(() => import("../../../pages/admin/statistics"));
+const AdminOrderDetailPage = lazy(() => import("../../../pages/admin/order/Detail.page"));
 
 export const AdminRoutes: RouteObject = {
     path: ROUTER_URL.ADMIN.BASE,
@@ -49,6 +50,11 @@ export const AdminRoutes: RouteObject = {
             index: false,
             path: ROUTER_URL.ADMIN.ORDERS,
             element: <OrderManagementPage />,
+        },
+        {
+            index: false,
+            path: ROUTER_URL.ADMIN.ORDER_DETAIL,
+            element: <AdminOrderDetailPage />,
         },
         {
             index: false,
