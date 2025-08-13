@@ -5,12 +5,13 @@ import { ROUTER_URL } from '@consts/router.path.const';
 const PayosCallback: React.FC = () => {
     const location = useLocation();
     const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
-    const orderCode = params.get('OrderCode');
-    const status = params.get('Status');
+    const orderCode = params.get('orderCode') || params.get('OrderCode');
+    const status = params.get('status') || params.get('Status');
 
     useEffect(() => {
-        // Handle analytics or additional verification if needed
-    }, [orderCode, status]);
+        // Cleanup transient checkout state
+        sessionStorage.removeItem('checkout_meta');
+    }, []);
 
     const ok = (status || '').toLowerCase() === 'success' || (status || '').toLowerCase() === 'paid';
 

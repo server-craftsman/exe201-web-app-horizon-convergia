@@ -20,7 +20,7 @@ const BuyerHeader: React.FC = () => {
         { name: 'Trang chủ', href: ROUTER_URL.BUYER.DASHBOARD },
         { name: 'Mua xe', href: ROUTER_URL.CLIENT.BUY_MOTOR },
         { name: 'Phụ kiện', href: ROUTER_URL.CLIENT.ACCESSORIES },
-        { name: 'Đơn hàng', href: ROUTER_URL.CLIENT.ORDER_HISTORY },
+        { name: 'Đơn hàng', href: ROUTER_URL.BUYER.ORDER_HISTORY },
         { name: 'Yêu thích', href: ROUTER_URL.CLIENT.FAVORITE },
     ];
 
@@ -65,7 +65,7 @@ const BuyerHeader: React.FC = () => {
                             <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-xl">
                                 <div className="py-1 text-sm">
                                     <Link to={ROUTER_URL.BUYER.SETTINGS} className="block px-4 py-2 text-gray-700 hover:bg-gray-50">Hồ sơ</Link>
-                                    <Link to={ROUTER_URL.CLIENT.ORDER_HISTORY} className="block px-4 py-2 text-gray-700 hover:bg-gray-50">Đơn hàng</Link>
+                                    <Link to={ROUTER_URL.BUYER.ORDER_HISTORY} className="block px-4 py-2 text-gray-700 hover:bg-gray-50">Đơn hàng</Link>
                                     <Link to={ROUTER_URL.CLIENT.FAVORITE} className="block px-4 py-2 text-gray-700 hover:bg-gray-50">Yêu thích</Link>
                                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50">Đăng xuất</button>
                                 </div>

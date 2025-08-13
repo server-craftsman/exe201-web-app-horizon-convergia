@@ -381,32 +381,104 @@ const Accessories: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {accessories.map((item, index) => (
                     <div key={item.id} className="group">
-                      <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', item.id)} className="block">
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: index * 0.1 }} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:border-amber-200 transition-all duration-500 flex flex-col h-full">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:border-amber-200 transition-all duration-500 flex flex-col h-full"
+                      >
+                        {/* Image section */}
+                        <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', item.id)} className="block">
                           <div className="relative h-48">
-                            <img src={item.image || 'https://via.placeholder.com/400x300?text=No+Image'} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Image'; }} />
-                            {item.discount && (<div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">-{item.discount}%</div>)}
-                            {item.isNew && !item.discount && (<div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">Mới</div>)}
-                            {favoriteIds.has(item.id) && (<div className="absolute bottom-3 left-3 bg-rose-500/90 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">Đã thích</div>)}
-                            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(item.id, item.title); }} className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow">
+                            <img
+                              src={item.image || 'https://via.placeholder.com/400x300?text=No+Image'}
+                              alt={item.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                              onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/400x300?text=No+Image'; }}
+                            />
+                            {/* Badges */}
+                            {item.discount && (
+                              <div className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                -{item.discount}%
+                              </div>
+                            )}
+                            {item.isNew && !item.discount && (
+                              <div className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                Mới
+                              </div>
+                            )}
+                            {favoriteIds.has(item.id) && (
+                              <div className="absolute bottom-3 left-3 bg-rose-500/90 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                                Đã thích
+                              </div>
+                            )}
+                            {/* Favorite button */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleFavorite(item.id, item.title);
+                              }}
+                              className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 hover:bg-white shadow"
+                            >
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 ${favoriteIds.has(item.id) ? 'text-rose-600' : 'text-gray-400'}`}>
                                 <path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.187 25.18 25.18 0 01-4.244-2.62C4.688 16.182 2.25 13.555 2.25 10.5 2.25 7.462 4.714 5 7.75 5a5.5 5.5 0 013.9 1.64A5.5 5.5 0 0115.55 5c3.036 0 5.5 2.462 5.5 5.5 0 3.055-2.438 5.682-4.739 7.59a25.175 25.175 0 01-4.244 2.62 15.247 15.247 0 01-.383.187l-.022.01-.007.003a.75.75 0 01-.61 0z" />
                               </svg>
                             </button>
                           </div>
-                          <div className="p-5 flex flex-col flex-grow">
-                            <h3 className="font-bold text-lg mb-2 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 line-clamp-2">{item.title}</h3>
-                            <div className="flex-grow">
-                              <p className="text-amber-600 font-bold text-xl mb-1">{item.price.toLocaleString('vi-VN')} ₫</p>
-                              {item.originalPrice && (<p className="text-gray-400 text-sm line-through mb-3">{item.originalPrice.toLocaleString('vi-VN')} ₫</p>)}
-                            </div>
-                            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full bg-gray-800 hover:bg-amber-500 text-white font-medium py-2 rounded-lg transition-colors duration-300 mt-auto">Xem chi tiết</motion.button>
+                        </Link>
+
+                        {/* Content section */}
+                        <div className="p-4 flex flex-col flex-grow">
+                          <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', item.id)} className="block">
+                            <h3 className="font-bold text-lg mb-3 text-gray-800 group-hover:text-amber-600 transition-colors duration-300 line-clamp-2">
+                              {item.title}
+                            </h3>
+                          </Link>
+
+                          {/* Price section */}
+                          <div className="mb-4">
+                            <p className="text-amber-600 font-bold text-xl mb-1">
+                              {item.price.toLocaleString('vi-VN')} ₫
+                            </p>
+                            {item.originalPrice && (
+                              <p className="text-gray-400 text-sm line-through">
+                                {item.originalPrice.toLocaleString('vi-VN')} ₫
+                              </p>
+                            )}
                           </div>
-                        </motion.div>
-                      </Link>
-                      <div className="px-1 sm:px-0 mt-2">
-                        <button onClick={() => user?.id && addItem(user.id, item.id, 1, item.title)} className="w-full text-sm bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium">Thêm vào giỏ</button>
-                      </div>
+
+                          {/* Action buttons */}
+                          <div className="mt-auto space-y-2">
+                            {/* <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', item.id)}>
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full bg-gray-800 hover:bg-amber-500 text-white font-medium py-2.5 rounded-lg transition-colors duration-300"
+                              >
+                                Xem chi tiết
+                              </motion.button>
+                            </Link> */}
+
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (user?.id) {
+                                  addItem(user.id, item.id, 1, item.title);
+                                } else {
+                                  notificationMessage('Vui lòng đăng nhập để thêm vào giỏ hàng', 'warning');
+                                }
+                              }}
+                              className="w-full text-sm bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium"
+                            >
+                              Thêm vào giỏ
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
                     </div>
                   ))}
                 </div>

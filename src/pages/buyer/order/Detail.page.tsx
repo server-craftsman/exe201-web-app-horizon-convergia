@@ -2,7 +2,6 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { OrderService } from '@services/order/order.service';
-import { ROUTER_URL } from '@consts/router.path.const';
 
 const Detail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -18,7 +17,7 @@ const Detail: React.FC = () => {
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Chi tiết đơn hàng</h1>
-                    <Link to={ROUTER_URL.CLIENT.ORDER_HISTORY} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Về danh sách</Link>
+                    <Link to="../lich-su-don-hang" className="text-amber-600 hover:text-amber-700 text-sm font-medium">Về danh sách</Link>
                 </div>
                 {isLoading || !data ? (
                     <div className="text-center py-12 text-gray-500">Đang tải...</div>

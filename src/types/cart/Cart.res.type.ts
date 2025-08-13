@@ -4,6 +4,7 @@ export interface CartDetailResponse {
     productId: string;
     productName?: string;
     productImage?: string;
+    productDescription?: string;
     unitPrice: number;
     quantity: number;
     subtotal: number; // unitPrice * quantity
@@ -26,6 +27,13 @@ export interface RawCartProduct {
     model?: string;
     price?: number;
     imageUrls?: string[];
+    description?: string;
+}
+
+export interface RawCartItemSummary {
+    productId: string;
+    productName?: string;
+    quantity: number;
 }
 
 export interface RawCartDetailResponse {
@@ -47,5 +55,6 @@ export interface RawCartResponse {
     isDeleted?: boolean;
     createdAt?: string;
     updatedAt?: string;
-    cartDetails: RawCartDetailResponse[];
+    cartDetails?: RawCartDetailResponse[]; // old detailed shape
+    items?: RawCartItemSummary[]; // new summary shape per user’s response
 }

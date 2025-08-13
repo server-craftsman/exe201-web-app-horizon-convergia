@@ -85,6 +85,32 @@ export const useProduct = () => {
         });
     };
 
+    // Fetch multiple products by IDs (for cart enrichment)
+    const useProductsByIds = (ids: string[]) => {
+        const key = [...ids].sort().join(',');
+        return useQuery({
+            queryKey: ['products', 'by-ids', key],
+            enabled: Array.isArray(ids) && ids.length > 0,
+            queryFn: async () => {
+                const uniq = Array.from(new Set(ids.filter(Boolean)));
+                const results = await Promise.all(
+                    uniq.map(async (id) => {
+                        const r = await ProductService.getProductById(id);
+                        const payload = (r as any)?.data;
+                        const product = (payload && typeof payload === 'object' && 'data' in payload)
+                            ? (payload as any).data as ProductResponse
+                            : payload as ProductResponse;
+                        return product;
+                    })
+                );
+                const map: Record<string, ProductResponse> = {};
+                for (const p of results) { if (p?.id) map[p.id] = p; }
+                return map;
+            },
+            staleTime: 2 * 60 * 1000,
+        });
+    };
+
     // Favorites by user
     const useFavorites = (userId: string, filter?: Partial<FavoriteFilter>) => {
         return useQuery({
@@ -253,6 +279,7 @@ export const useProduct = () => {
         // Products data
         useProducts,
         useFavorites,
+        useProductsByIds,
         isLoadingProducts: useProducts().isLoading, // This will be undefined as useProducts is a hook
         productsError: useProducts().error, // This will be undefined
         refetchProducts: useProducts().refetch, // This will be undefined

@@ -448,7 +448,7 @@ export default HeaderLayout;
 const CartIcon: React.FC = () => {
     const itemCount = useCartStore(s => s.itemCount);
     return (
-        <Link to={ROUTER_URL.CLIENT.CART} className="relative ml-2">
+        <Link to={ROUTER_URL.CLIENT.CART} className="relative ml-2" title={`Số mặt hàng trong giỏ: ${itemCount || 0}`}>
             <span className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-gray-900 transition">
                 🛒
             </span>

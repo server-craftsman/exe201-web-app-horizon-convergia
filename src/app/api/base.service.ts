@@ -204,10 +204,10 @@ axiosInstance.interceptors.response.use(
                     break;
                 case HTTP_STATUS.FORBIDDEN:
                     helpers.notificationMessage("Bạn không có quyền truy cập vào trang này.", "error");
-                    clearLocalStorage();
-                    setTimeout(() => {
-                        window.location.href = ROUTER_URL.AUTH.LOGIN;
-                    }, 3000);
+                    // clearLocalStorage();
+                    // setTimeout(() => {
+                    //     window.location.href = ROUTER_URL.AUTH.LOGIN;
+                    // }, 3000);
                     break;
                 case HTTP_STATUS.NOT_FOUND:
                     helpers.notificationMessage("Trang bạn đang tìm kiếm không tồn tại.", "error");

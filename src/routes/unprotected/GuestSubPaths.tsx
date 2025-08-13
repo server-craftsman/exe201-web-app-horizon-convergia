@@ -26,9 +26,10 @@ const PaymentCallbackPage = lazy(() => import("../../pages/client/payment/PayosC
 const CartPage = lazy(() => import("../../pages/client/cart"));
 // favorite
 const FavoritePage = lazy(() => import("../../pages/client/favorite"));
-// orders
-const OrderHistoryPage = lazy(() => import("../../pages/client/order/History.page"));
-const OrderDetailPage = lazy(() => import("../../pages/client/order/Detail.page"));
+// order
+const OrderPage = lazy(() => import("../../pages/client/order"));
+// payment
+const PaymentPage = lazy(() => import("../../pages/client/payment"));
 //======================================================
 //export public sub paths
 export const publicSubPaths: Record<string, RouteObject[]> = {
@@ -94,12 +95,12 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
           element: <FavoritePage />
         },
         {
-          path: ROUTER_URL.CLIENT.ORDER_HISTORY,
-          element: <OrderHistoryPage />
+          path: ROUTER_URL.CLIENT.ORDER,
+          element: <OrderPage />
         },
         {
-          path: ROUTER_URL.CLIENT.ORDER_DETAIL,
-          element: <OrderDetailPage />
+          path: ROUTER_URL.CLIENT.PAYMENT,
+          element: <PaymentPage />
         }
       ]
     }

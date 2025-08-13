@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ROUTER_URL } from '../../consts/router.path.const';
+import { ROUTER_URL } from '../../../consts/router.path.const';
 
 const BuyerDashboard: React.FC = () => {
     const quickActions = [
@@ -182,8 +182,8 @@ const BuyerDashboard: React.FC = () => {
                                 <div className="text-right">
                                     <p className="font-semibold text-white">{order.amount}</p>
                                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${order.status === 'Đã giao'
-                                            ? 'bg-green-500/20 text-green-400'
-                                            : 'bg-blue-500/20 text-blue-400'
+                                        ? 'bg-green-500/20 text-green-400'
+                                        : 'bg-blue-500/20 text-blue-400'
                                         }`}>
                                         {order.status}
                                     </span>
