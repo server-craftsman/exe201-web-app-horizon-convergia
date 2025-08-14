@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCategory } from '../../../hooks/modules/useCategory';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
 import { DisplayDetailComponent } from '../../../components/admin/product/DisplayDetail.com';
+import { UserSerice } from '../../../services/user/user.service';
 
 interface SellerProductsFilter {
     categoryId: string;
@@ -76,40 +77,62 @@ const SellerProductsPage: React.FC = () => {
         
         const loadSellers = async () => {
             try {
-                const token = localStorage.getItem('accessToken');
-                const response = await fetch(
-                    'https://horizon-convergia.onrender.com/api/Users?Role=Seller&PageNumber=1&PageSize=1000',
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'accept': '*/*'
-                        }
-                    }
-                );
+                // Cách 1: Sử dụng UserService để search sellers
+                const result = await UserSerice.searchUsers({
+                    role: 1, // 1 = SELLER role integer
+                    pageIndex: 1,
+                    pageSize: 1000
+                });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    // API trả về { data: User[], totalCount: number }
-                    if (data && data.data) {
-                        const sellerList = data.data.map((user: any) => ({
-                            id: user.id,
-                            name: user.name || user.email // Sử dụng name, fallback sang email nếu không có name
-                        }));
-                        setSellers(sellerList);
-                    }
+                if (result?.data?.data?.items) {
+                    const sellerList = result.data.data.items.map((user: any) => ({
+                        id: user.id,
+                        name: user.name || user.email || user.username || 'Không có tên'
+                    }));
+                    setSellers(sellerList);
                 } else {
-                    console.error('Failed to fetch sellers:', response.status);
-                    // Fallback to mock data if API fails
+                    throw new Error('No sellers found in search result');
+                }
+            } catch (searchError) {
+                console.warn('UserService.searchUsers failed, trying direct API call:', searchError);
+                
+                try {
+                    // Cách 2: Thử gọi trực tiếp API với endpoint khác
+                    const token = localStorage.getItem('accessToken');
+                    const response = await fetch(
+                        'https://horizon-convergia.onrender.com/api/Users/search?role=1&pageIndex=1&pageSize=1000',
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                                'accept': '*/*'
+                            }
+                        }
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data?.data?.items) {
+                            const sellerList = data.data.items.map((user: any) => ({
+                                id: user.id,
+                                name: user.name || user.email || 'Seller ' + user.id.slice(0, 8)
+                            }));
+                            setSellers(sellerList);
+                        } else {
+                            throw new Error('Invalid API response structure');
+                        }
+                    } else {
+                        throw new Error(`API returned ${response.status}`);
+                    }
+                } catch (directApiError) {
+                    console.error('Both API approaches failed:', directApiError);
+                    // Fallback to mock data if all APIs fail
                     setSellers([
                         { id: 'be4f601e-ec6d-4ac4-8c33-2a687846e326', name: 'Seller Thượng Đẳng' },
+                        { id: 'seller-2', name: 'Seller Demo 2' },
+                        { id: 'seller-3', name: 'Seller Demo 3' },
                     ]);
                 }
-            } catch (error) {
-                console.error('Failed to load sellers:', error);
-                // Fallback to mock data if API fails
-                setSellers([
-                    { id: 'be4f601e-ec6d-4ac4-8c33-2a687846e326', name: 'Seller Thượng Đẳng' },
-                ]);
             }
         };
         
