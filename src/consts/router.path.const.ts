@@ -89,6 +89,7 @@ export const ROUTER_URL = {
         USERS: "/admin/quan-ly-nguoi-dung",
         CATEGORIES: "/admin/quan-ly-danh-muc",
         PRODUCTS: "/admin/quan-ly-san-pham",
+        SELLER_PRODUCTS: "/admin/san-pham-nguoi-ban",
         ACCESSORIES: "/admin/quan-ly-phu-kien",
         NEWS: "/admin/quan-ly-tin-tuc",
         ORDERS: "/admin/quan-ly-don-hang",
