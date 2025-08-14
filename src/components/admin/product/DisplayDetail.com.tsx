@@ -30,10 +30,22 @@ export const DisplayDetailComponent: React.FC<DisplayDetailProps> = ({ productId
 
     const getStatusText = (status: number) => {
         // Assuming ProductStatus enum exists, mapping number to text
-        if (status === 1) return { text: 'Đang hoạt động', className: 'bg-green-500/10 text-green-400' };
-        if (status === 2) return { text: 'Hết hàng', className: 'bg-yellow-500/10 text-yellow-400' };
-        if (status === 3) return { text: 'Tạm ngưng', className: 'bg-red-500/10 text-red-400' };
+        if (status === 0) return { text: 'Khả dụng', className: 'bg-green-500/10 text-green-400' };
+        if (status === 1) return { text: 'Không khả dụng', className: 'bg-red-500/10 text-red-400' };
+        if (status === 2) return { text: 'Chờ thanh toán', className: 'bg-yellow-500/10 text-yellow-400' };
+        if (status === 3) return { text: 'Đã thanh toán', className: 'bg-blue-500/10 text-blue-400' };
         return { text: 'Không xác định', className: 'bg-gray-500/10 text-gray-400' };
+    };
+
+    const getConditionText = (condition: string) => {
+        const conditionMap: { [key: string]: string } = {
+            'NEW': 'Mới',
+            'LIKE_NEW': 'Như mới', 
+            'GOOD': 'Tốt',
+            'FAIR': 'Khá',
+            'POOR': 'Cũ'
+        };
+        return conditionMap[condition] || condition;
     };
 
 
@@ -96,13 +108,27 @@ export const DisplayDetailComponent: React.FC<DisplayDetailProps> = ({ productId
                                             <p><span className="font-semibold text-gray-400">Model:</span> {product.model}</p>
                                             <p><span className="font-semibold text-gray-400">Năm:</span> {product.year}</p>
                                             <p><span className="font-semibold text-gray-400">Giá:</span> <span className="text-amber-500 font-bold">{formatPrice(product.price)}</span></p>
-                                            <p><span className="font-semibold text-gray-400">Tình trạng:</span> {product.condition}</p>
+                                            <p><span className="font-semibold text-gray-400">Tình trạng:</span> {getConditionText(product.condition || '')}</p>
                                             <p><span className="font-semibold text-gray-400">Số lượng:</span> {product.quantity}</p>
                                             <p><span className="font-semibold text-gray-400">Địa điểm:</span> {product.location}</p>
                                             <p><span className="font-semibold text-gray-400">Danh mục:</span> {getCategoryName(product.categoryId)}</p>
-                                            <div className="flex items-center"><span className="font-semibold text-gray-400 mr-2">Trạng thái:</span>
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusText(product.status).className}`}>
+                                        </div>
+                                    </div>
+
+                                    {/* Status Information */}
+                                    <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                                        <h3 className="text-lg font-semibold text-amber-400 mb-3">Trạng thái sản phẩm</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-gray-400 mb-1">Trạng thái thanh toán</span>
+                                                <span className={`px-3 py-2 rounded-lg text-sm font-medium ${getStatusText(product.status).className} border border-gray-600`}>
                                                     {getStatusText(product.status).text}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-gray-400 mb-1">Trạng thái xác minh</span>
+                                                <span className={`px-3 py-2 rounded-lg text-sm font-medium border border-gray-600 ${product.isVerified ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                    {product.isVerified ? '✓ Đã xác minh' : '✗ Chưa xác minh'}
                                                 </span>
                                             </div>
                                         </div>
