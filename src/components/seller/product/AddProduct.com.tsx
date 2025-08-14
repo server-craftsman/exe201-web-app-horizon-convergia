@@ -6,6 +6,66 @@ import { ROUTER_URL } from '@consts/router.path.const';
 import type { CreateProduct } from '../../../types/product/Product.req.type';
 import CourseraEditor from '../../common/CourseraEditor';
 import { BaseService } from '../../../app/api/base.service';
+import { MOTORCYCLE_BRANDS_MODELS, MOTORCYCLE_BRANDS } from '@consts/productBrandsModels';
+
+// Function to convert number to Vietnamese words
+const numberToVietnamese = (num: number): string => {
+    if (num === 0) return 'không đồng';
+    
+    const units = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+    const scales = ['', 'nghìn', 'triệu', 'tỷ'];
+    
+    const convertThreeDigits = (n: number): string => {
+        if (n === 0) return '';
+        
+        let result = '';
+        const hundreds = Math.floor(n / 100);
+        const remainder = n % 100;
+        const tensDigit = Math.floor(remainder / 10);
+        const unitsDigit = remainder % 10;
+        
+        if (hundreds > 0) {
+            result += units[hundreds] + ' trăm ';
+        }
+        
+        if (tensDigit === 1) {
+            result += 'mười ';
+            if (unitsDigit > 0) {
+                result += units[unitsDigit] + ' ';
+            }
+        } else if (tensDigit > 1) {
+            result += units[tensDigit] + ' mười ';
+            if (unitsDigit > 0) {
+                result += units[unitsDigit] + ' ';
+            }
+        } else if (unitsDigit > 0) {
+            if (hundreds > 0) result += 'lẻ ';
+            result += units[unitsDigit] + ' ';
+        }
+        
+        return result.trim();
+    };
+    
+    const groups = [];
+    let tempNum = num;
+    
+    while (tempNum > 0) {
+        groups.push(tempNum % 1000);
+        tempNum = Math.floor(tempNum / 1000);
+    }
+    
+    let result = '';
+    for (let i = groups.length - 1; i >= 0; i--) {
+        if (groups[i] > 0) {
+            result += convertThreeDigits(groups[i]);
+            if (i > 0) {
+                result += ' ' + scales[i] + ' ';
+            }
+        }
+    }
+    
+    return result.trim() + ' đồng';
+};
 
 // Thêm type cho prop onSuccess
 interface AddProductProps {
@@ -50,6 +110,10 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
         sparePartType: '',
         vehicleCompatible: '',
     });
+
+    // Thêm state cho brands/models động
+    const [brands, setBrands] = useState<string[]>([]);
+    const [models, setModels] = useState<string[]>([]);
 
     const [selectedProvince, setSelectedProvince] = useState('');
     const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -123,6 +187,28 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
         }
     }, [selectedProvince, selectedDistrict, selectedWard, streetAddress, selectedProvinceName, selectedDistrictName, selectedWardName]);
 
+    // Cập nhật danh sách thương hiệu khi thay đổi danh mục (chỉ xe máy)
+    useEffect(() => {
+        if (categories.length > 0 && formData.categoryId) {
+            // Vì seller chỉ bán xe máy, luôn set brands cho xe máy
+            setBrands(MOTORCYCLE_BRANDS);
+            // Reset brand và model khi thay đổi category
+            setFormData(prev => ({ ...prev, brand: '', model: '' }));
+            setModels([]);
+        }
+    }, [formData.categoryId, categories]);
+
+    // Khi chọn brand, cập nhật models
+    useEffect(() => {
+        if (formData.brand && MOTORCYCLE_BRANDS_MODELS[formData.brand]) {
+            setModels(MOTORCYCLE_BRANDS_MODELS[formData.brand]);
+            // Reset model khi thay đổi brand
+            setFormData(prev => ({ ...prev, model: '' }));
+        } else {
+            setModels([]);
+        }
+    }, [formData.brand]);
+
     const validateForm = (): boolean => {
         const newErrors: { [key: string]: string } = {};
 
@@ -134,8 +220,8 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
             newErrors.model = 'Dòng xe không được để trống';
         }
 
-        if (formData.year < 1980 || formData.year > new Date().getFullYear()) {
-            newErrors.year = 'Năm sản xuất không hợp lệ';
+        if (!formData.year || formData.year < 1980 || formData.year > new Date().getFullYear()) {
+            newErrors.year = 'Năm sản xuất không hợp lệ (1980 - ' + new Date().getFullYear() + ')';
         }
 
         if (formData.price <= 0) {
@@ -226,8 +312,25 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
             return;
         }
 
-        // imageUrls đã luôn là mảng string url
-        const submitData = { ...formData, imageUrls: uploadedImages };
+        // Prepare submit data with proper type conversion and cleanup
+        const { videoUrl, ...cleanFormData } = formData;
+        const submitData = { 
+            ...cleanFormData, 
+            imageUrls: uploadedImages,
+            year: typeof formData.year === 'string' ? parseInt(formData.year) : formData.year,
+            // Ensure numeric fields are proper numbers or 0
+            engineCapacity: formData.engineCapacity || 0,
+            mileage: formData.mileage || 0,
+            // Ensure string fields are proper strings or empty
+            fuelType: formData.fuelType || "",
+            color: formData.color || "",
+            accessoryType: formData.accessoryType || "",
+            size: formData.size || "",
+            sparePartType: formData.sparePartType || "",
+            vehicleCompatible: formData.vehicleCompatible || ""
+        };
+
+        console.log('Submitting product data:', submitData);
 
         try {
             await createProductBySeller(submitData);
@@ -255,9 +358,14 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
             });
         }
 
+        // Skip price handling here as it has custom logic in the component
+        if (name === 'price') return;
+
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'price' || name === 'year' || name === 'quantity' || name === 'engineCapacity' || name === 'mileage'
+            [name]: name === 'year' 
+                ? (value === '' ? new Date().getFullYear() : parseInt(value) || new Date().getFullYear())
+                : name === 'quantity' || name === 'engineCapacity' || name === 'mileage'
                 ? parseFloat(value) || 0
                 : value
         }));
@@ -271,7 +379,18 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
         { value: 'POOR', label: 'Cũ' }
     ];
 
-    const categoryOptions = categories.map(cat => ({
+    // Lọc chỉ danh mục xe máy (seller chỉ được bán xe máy)
+    const motorcycleCategories = categories.filter(cat => {
+        // Kiểm tra tên danh mục có chứa từ "xe máy", "mô tô", "motor" (không phân biệt hoa thường)
+        const normalizedName = cat.name.toLowerCase();
+        return normalizedName.includes('xe máy') || 
+               normalizedName.includes('mô tô') || 
+               normalizedName.includes('motor') ||
+               normalizedName.includes('xe moto') ||
+               normalizedName.includes('xe mo to');
+    });
+
+    const categoryOptions = motorcycleCategories.map(cat => ({
         value: cat.id,
         label: (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -284,9 +403,29 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
         cat, // giữ lại object gốc nếu cần
     }));
 
+    // Tự động chọn danh mục xe máy đầu tiên khi load categories
+    useEffect(() => {
+        if (motorcycleCategories.length > 0 && !formData.categoryId) {
+            setFormData(prev => ({
+                ...prev,
+                categoryId: motorcycleCategories[0].id
+            }));
+        }
+    }, [categories]);
+
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-6">Thêm Sản Phẩm Mới</h2>
+            
+            {/* Note for sellers */}
+            <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500 rounded-lg">
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 text-blue-400">ℹ️</div>
+                    <p className="text-blue-300 text-sm">
+                        <strong>Lưu ý:</strong> Người bán chỉ có thể tạo sản phẩm xe máy. Danh mục đã được tự động chọn cho bạn.
+                    </p>
+                </div>
+            </div>
 
             {/* Display general errors */}
             {(errors.sellerId || errors.categories || errors.submit) && (
@@ -298,76 +437,485 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Brand */}
-                    <div>
-                        <label className="block text-white mb-2">Thương hiệu *</label>
-                        <input
-                            type="text"
-                            name="brand"
-                            value={formData.brand}
-                            onChange={handleChange}
-                            className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.brand ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
-                                } focus:outline-none`}
-                            placeholder="Honda, Yamaha, Suzuki..."
-                            required
-                        />
-                        {errors.brand && <p className="text-red-400 text-sm mt-1">{errors.brand}</p>}
-                    </div>
+                {/* Thông tin cơ bản */}
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                        <span>📝</span> Thông tin cơ bản
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Category - Chỉ xe máy */}
+                        <div>
+                            <label className="block text-white mb-2">Danh mục xe máy *</label>
+                            <Select
+                                options={categoryOptions}
+                                value={categoryOptions.find(opt => opt.value === formData.categoryId) || null}
+                                onChange={option => setFormData(prev => ({ ...prev, categoryId: option?.value || '' }))}
+                                placeholder="Chọn loại xe máy"
+                                isClearable={false}
+                                isDisabled={categoryOptions.length === 1}
+                                styles={{
+                                    control: (provided) => ({
+                                        ...provided,
+                                        backgroundColor: '#1f2937',
+                                        borderColor: '#374151',
+                                        '&:hover': { borderColor: '#10b981' }
+                                    }),
+                                    option: (provided, state) => ({
+                                        ...provided,
+                                        backgroundColor: state.isFocused ? '#374151' : '#1f2937',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8
+                                    }),
+                                    singleValue: (provided) => ({
+                                        ...provided,
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8
+                                    }),
+                                    menu: (provided) => ({
+                                        ...provided,
+                                        backgroundColor: '#1f2937',
+                                        border: '1px solid #374151'
+                                    })
+                                }}
+                            />
+                            <p className="text-gray-400 text-xs mt-1">
+                                Chỉ hiển thị danh mục xe máy cho người bán
+                            </p>
+                            {/* Hiển thị ảnh khi chọn */}
+                            {formData.categoryId && (() => {
+                                const cat = motorcycleCategories.find(c => c.id === formData.categoryId);
+                                return cat && cat.imageUrl ? (
+                                    <div className="mt-2 flex items-center gap-2">
+                                        <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 object-cover rounded" />
+                                        <span className="text-white text-sm">{cat.name}</span>
+                                    </div>
+                                ) : null;
+                            })()}
+                            {errors.categoryId && <p className="text-red-400 text-sm mt-1">{errors.categoryId}</p>}
+                        </div>
 
-                    {/* Model */}
-                    <div>
-                        <label className="block text-white mb-2">Dòng xe *</label>
-                        <input
-                            type="text"
-                            name="model"
-                            value={formData.model}
-                            onChange={handleChange}
-                            className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.model ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
-                                } focus:outline-none`}
-                            placeholder="Wave Alpha, Exciter 155..."
-                            required
-                        />
-                        {errors.model && <p className="text-red-400 text-sm mt-1">{errors.model}</p>}
-                    </div>
+                        {/* Brand */}
+                        <div>
+                            <label className="block text-white mb-2">Thương hiệu *</label>
+                            {brands.length > 0 ? (
+                                <select
+                                    name="brand"
+                                    value={formData.brand}
+                                    onChange={handleChange}
+                                    className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.brand ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                        } focus:outline-none`}
+                                    required
+                                >
+                                    <option value="">Chọn thương hiệu</option>
+                                    {brands.map(brand => (
+                                        <option key={brand} value={brand}>{brand}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    name="brand"
+                                    value={formData.brand}
+                                    onChange={handleChange}
+                                    className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.brand ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                        } focus:outline-none`}
+                                    placeholder="Honda, Yamaha, Suzuki..."
+                                    required
+                                />
+                            )}
+                            {errors.brand && <p className="text-red-400 text-sm mt-1">{errors.brand}</p>}
+                        </div>
 
-                    {/* Year */}
-                    <div>
-                        <label className="block text-white mb-2">Năm sản xuất *</label>
-                        <input
-                            type="number"
-                            name="year"
-                            value={formData.year}
-                            onChange={handleChange}
-                            min="1980"
-                            max={new Date().getFullYear()}
-                            className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.year ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
-                                } focus:outline-none`}
-                            required
-                        />
-                        {errors.year && <p className="text-red-400 text-sm mt-1">{errors.year}</p>}
+                        {/* Model */}
+                        <div>
+                            <label className="block text-white mb-2">Mẫu xe *</label>
+                            {models.length > 0 ? (
+                                <select
+                                    name="model"
+                                    value={formData.model}
+                                    onChange={handleChange}
+                                    className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.model ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                        } focus:outline-none`}
+                                    required
+                                    disabled={!formData.brand}
+                                >
+                                    <option value="">Chọn mẫu xe</option>
+                                    {models.map(model => (
+                                        <option key={model} value={model}>{model}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    name="model"
+                                    value={formData.model}
+                                    onChange={handleChange}
+                                    className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.model ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                        } focus:outline-none`}
+                                    placeholder="Wave Alpha, Exciter 155..."
+                                    required
+                                    disabled={!formData.brand}
+                                />
+                            )}
+                            {errors.model && <p className="text-red-400 text-sm mt-1">{errors.model}</p>}
+                        </div>
                     </div>
+                </div>
 
-                    {/* Price */}
-                    <div>
-                        <label className="block text-white mb-2">Giá (VNĐ) *</label>
-                        <input
-                            type="number"
-                            name="price"
-                            value={formData.price || ''}
-                            onChange={handleChange}
-                            min="0"
-                            className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.price ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
-                                } focus:outline-none`}
-                            placeholder="25000000"
-                            required
-                        />
-                        {errors.price && <p className="text-red-400 text-sm mt-1">{errors.price}</p>}
+                {/* Thông số sản phẩm */}
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                        <span>⚙️</span> Thông số sản phẩm
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Engine Capacity */}
+                        <div>
+                            <label className="block text-white mb-2">Dung tích xi-lanh (cc)</label>
+                            <select
+                                name="engineCapacity"
+                                value={formData.engineCapacity || ''}
+                                onChange={handleChange}
+                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
+                            >
+                                <option value="">Chọn dung tích xi-lanh</option>
+                                <optgroup label="Xe số & Tay ga">
+                                    <option value="50">50cc - Xe máy điện/50cc</option>
+                                    <option value="110">110cc - Wave Alpha, Future Neo</option>
+                                    <option value="125">125cc - Wave RSX, Janus, Grande</option>
+                                </optgroup>
+                                <optgroup label="Xe ga & Scooter">
+                                    <option value="110">110cc - Vision, Vario, Lead</option>
+                                    <option value="125">125cc - SH Mode, PCX 125</option>
+                                    <option value="150">150cc - SH 150i, PCX 150</option>
+                                    <option value="160">160cc - FreeGo, Latte</option>
+                                </optgroup>
+                                <optgroup label="Xe thể thao">
+                                    <option value="150">150cc - Exciter 150, Winner X</option>
+                                    <option value="155">155cc - NVX 155, Exciter 155 VVA</option>
+                                    <option value="175">175cc - CBR150R, GSX-R150</option>
+                                </optgroup>
+                                <optgroup label="Xe phân khối lớn">
+                                    <option value="250">250cc - CBR250RR, Ninja 250</option>
+                                    <option value="300">300cc - Ninja 300, Duke 390</option>
+                                    <option value="350">350cc - SH 350i, Forza 350</option>
+                                    <option value="400">400cc - CB400, Ninja 400</option>
+                                    <option value="500">500cc - CB500F, Rebel 500</option>
+                                    <option value="600">600cc - CBR600RR, GSX-R600</option>
+                                    <option value="650">650cc - Ninja 650, MT-07</option>
+                                    <option value="750">750cc - Forza 750, GSX-S750</option>
+                                    <option value="1000">1000cc - CBR1000RR, GSX-R1000</option>
+                                </optgroup>
+                                <optgroup label="Khác">
+                                    <option value="other">Dung tích khác</option>
+                                </optgroup>
+                            </select>
+                            {formData.engineCapacity && formData.engineCapacity.toString() !== 'other' && (
+                                <p className="text-gray-400 text-xs mt-1 flex items-center gap-1">
+                                    <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Dung tích: {formData.engineCapacity}cc
+                                </p>
+                            )}
+                            {formData.engineCapacity?.toString() === 'other' && (
+                                <div className="mt-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Nhập dung tích (cc)"
+                                        onChange={e => setFormData(prev => ({ ...prev, engineCapacity: parseInt(e.target.value) || undefined }))}
+                                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Fuel Type */}
+                        <div>
+                            <label className="block text-white mb-2">Loại nhiên liệu</label>
+                            <select
+                                name="fuelType"
+                                value={formData.fuelType || ''}
+                                onChange={handleChange}
+                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
+                            >
+                                <option value="">Chọn loại nhiên liệu</option>
+                                <option value="Xăng">Xăng</option>
+                                <option value="Điện">Điện</option>
+                                <option value="Dầu">Dầu</option>
+                                <option value="Hybrid">Hybrid</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+
+                        {/* Mileage */}
+                        <div>
+                            <label className="block text-white mb-2">Số km đã đi</label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    name="mileage"
+                                    value={formData.mileage || ''}
+                                    onChange={handleChange}
+                                    min="0"
+                                    placeholder="Nhập số km đã đi"
+                                    className="w-full pl-10 pr-12 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
+                                />
+                                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                </div>
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <span className="text-gray-400 text-xs">km</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Color */}
+                        <div>
+                            <label className="block text-white mb-2">Màu sắc</label>
+                            <div className="space-y-3">
+                                {/* Color Picker Grid */}
+                                <div className="grid grid-cols-6 gap-2">
+                                    {[
+                                        { name: 'Đen', value: 'Đen', color: '#000000' },
+                                        { name: 'Trắng', value: 'Trắng', color: '#FFFFFF' },
+                                        { name: 'Vàng', value: 'Vàng', color: '#FFD700' },
+                                        { name: 'Hồng', value: 'Hồng', color: '#FF69B4' },
+                                        { name: 'Xanh dương', value: 'Xanh dương', color: '#1E90FF' },
+                                        { name: 'Xanh lá', value: 'Xanh lá', color: '#32CD32' },
+                                        { name: 'Cam', value: 'Cam', color: '#FF6347' },
+                                        { name: 'Đỏ', value: 'Đỏ', color: '#DC143C' },
+                                        { name: 'Xám', value: 'Xám', color: '#808080' },
+                                        { name: 'Nâu', value: 'Nâu', color: '#8B4513' },
+                                        { name: 'Bạc', value: 'Bạc', color: '#C0C0C0' },
+                                        { name: 'Xanh', value: 'Xanh', color: '#008B8B' }
+                                    ].map((colorOption) => {
+                                        const selectedColors = formData.color ? formData.color.split(', ').map(c => c.trim()) : [];
+                                        const isSelected = selectedColors.includes(colorOption.value);
+
+                                        return (
+                                            <button
+                                                key={colorOption.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    const currentColors = formData.color ? formData.color.split(', ').map(c => c.trim()).filter(c => c) : [];
+
+                                                    if (isSelected) {
+                                                        // Remove color
+                                                        const newColors = currentColors.filter(c => c !== colorOption.value);
+                                                        setFormData(prev => ({ ...prev, color: newColors.join(', ') }));
+                                                    } else {
+                                                        // Add color
+                                                        const newColors = [...currentColors, colorOption.value];
+                                                        setFormData(prev => ({ ...prev, color: newColors.join(', ') }));
+                                                    }
+                                                }}
+                                                className={`w-8 h-8 rounded-full border-2 transition-all relative ${isSelected
+                                                    ? 'border-amber-500 scale-110 shadow-lg'
+                                                    : 'border-gray-300 hover:border-gray-400'
+                                                    }`}
+                                                style={{ backgroundColor: colorOption.color }}
+                                                title={colorOption.name}
+                                            >
+                                                {isSelected && (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {/* Custom Color Input */}
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        value={formData.color || ''}
+                                        onChange={e => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                                        placeholder="Hoặc nhập màu tùy chỉnh"
+                                        className="flex-1 p-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none text-sm"
+                                    />
+                                </div>
+                                {formData.color && (
+                                    <p className="text-gray-400 text-xs mt-1">
+                                        Màu đã chọn: <span className="text-amber-300">{formData.color}</span>
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Chi tiết sản phẩm */}
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                        <span>📋</span> Chi tiết sản phẩm
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Year */}
+                        <div>
+                            <label className="block text-white mb-2">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    Năm sản xuất *
+                                </span>
+                            </label>
+                            <input
+                                type="number"
+                                name="year"
+                                value={formData.year || ''}
+                                onChange={e => {
+                                    // Clear error for year field
+                                    if (errors.year) {
+                                        setErrors(prev => {
+                                            const { year: removed, ...rest } = prev;
+                                            return rest;
+                                        });
+                                    }
+                                    
+                                    const value = e.target.value;
+                                    // Allow empty or valid numbers
+                                    if (value === '' || !isNaN(Number(value))) {
+                                        setFormData(prev => ({ 
+                                            ...prev, 
+                                            year: value === '' ? '' as any : parseInt(value) || ''
+                                        }));
+                                    }
+                                }}
+                                min="1980"
+                                max={new Date().getFullYear()}
+                                className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.year ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                    } focus:outline-none`}
+                                placeholder={`VD: ${new Date().getFullYear()}`}
+                                required
+                            />
+                            {errors.year && <p className="text-red-400 text-sm mt-1">{errors.year}</p>}
+                        </div>
+
+                        {/* Condition */}
+                        <div>
+                            <label className="block text-white mb-2">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Tình trạng *
+                                </span>
+                            </label>
+                            <select
+                                name="condition"
+                                value={formData.condition}
+                                onChange={handleChange}
+                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
+                                required
+                            >
+                                {conditionOptions.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Price - Admin style with formatting */}
+                        <div>
+                            <label className="block text-white mb-2">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                    </svg>
+                                    Giá (VNĐ) *
+                                </span>
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={formData.price ? formData.price.toLocaleString('vi-VN') : ''}
+                                    onChange={e => {
+                                        // Clear error for price field
+                                        if (errors.price) {
+                                            setErrors(prev => {
+                                                const { price: removed, ...rest } = prev;
+                                                return rest;
+                                            });
+                                        }
+                                        
+                                        // Remove all non-numeric characters and convert back to number
+                                        const numericValue = e.target.value.replace(/[^\d]/g, '');
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            price: numericValue ? parseInt(numericValue) : 0
+                                        }));
+                                    }}
+                                    className={`w-full pl-8 pr-12 p-3 rounded-lg bg-gray-800 text-white border ${errors.price ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                        } focus:outline-none`}
+                                    placeholder="VD: 50,000,000"
+                                    required
+                                />
+                                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                                    <span className="text-gray-400 text-sm">₫</span>
+                                </div>
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <span className="text-gray-400 text-xs">VNĐ</span>
+                                </div>
+                            </div>
+                            {errors.price && <p className="text-red-400 text-sm mt-1">{errors.price}</p>}
+                            {formData.price && formData.price > 0 && (
+                                <p className="text-gray-400 text-xs mt-1">
+                                    <span className="text-amber-300 font-medium">
+                                        {numberToVietnamese(formData.price)}
+                                    </span>
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Quantity */}
+                        <div>
+                            <label className="block text-white mb-2">
+                                <span className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                    </svg>
+                                    Số lượng *
+                                </span>
+                            </label>
+                            <input
+                                type="number"
+                                name="quantity"
+                                value={formData.quantity}
+                                onChange={handleChange}
+                                min="1"
+                                className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.quantity ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
+                                    } focus:outline-none`}
+                                required
+                            />
+                            {errors.quantity && <p className="text-red-400 text-sm mt-1">{errors.quantity}</p>}
+                        </div>
                     </div>
 
                     {/* Location - Địa chỉ động */}
-                    <div>
-                        <label className="block text-white mb-2">Địa chỉ *</label>
+                    <div className="mt-6">
+                        <label className="block text-white mb-2">
+                            <span className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Địa chỉ *
+                            </span>
+                        </label>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                             <input
                                 type="text"
@@ -431,187 +979,24 @@ const AddProduct: React.FC<AddProductProps> = ({ onSuccess }) => {
                         )}
                     </div>
 
-                    {/* Condition */}
-                    <div>
-                        <label className="block text-white mb-2">Tình trạng *</label>
-                        <select
-                            name="condition"
-                            value={formData.condition}
-                            onChange={handleChange}
-                            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                            required
-                        >
-                            {conditionOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Quantity */}
-                    <div>
-                        <label className="block text-white mb-2">Số lượng *</label>
-                        <input
-                            type="number"
-                            name="quantity"
-                            value={formData.quantity}
-                            onChange={handleChange}
-                            min="1"
-                            className={`w-full p-3 rounded-lg bg-gray-800 text-white border ${errors.quantity ? 'border-red-500' : 'border-gray-700 focus:border-green-500'
-                                } focus:outline-none`}
-                            required
+                    {/* Description - Full width */}
+                    <div className="mt-6">
+                        <label className="block text-white mb-2">
+                            <span className="flex items-center">
+                                <svg className="w-4 h-4 mr-2 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                                </svg>
+                                Mô tả *
+                            </span>
+                        </label>
+                        <CourseraEditor
+                            value={formData.description}
+                            onChange={val => setFormData(prev => ({ ...prev, description: val }))}
+                            placeholder="Mô tả chi tiết về sản phẩm..."
+                            className="bg-gray-800"
                         />
-                        {errors.quantity && <p className="text-red-400 text-sm mt-1">{errors.quantity}</p>}
+                        {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
                     </div>
-
-                    {/* Category - Hiển thị cả ảnh */}
-                    <div>
-                        <label className="block text-white mb-2">Danh mục *</label>
-                        <Select
-                            options={categoryOptions}
-                            value={categoryOptions.find(opt => opt.value === formData.categoryId) || null}
-                            onChange={option => setFormData(prev => ({ ...prev, categoryId: option?.value || '' }))}
-                            placeholder="Chọn danh mục"
-                            isClearable
-                            styles={{
-                                option: (provided) => ({ ...provided, display: 'flex', alignItems: 'center', gap: 8 }),
-                                singleValue: (provided) => ({ ...provided, display: 'flex', alignItems: 'center', gap: 8 }),
-                            }}
-                        />
-                        {/* Hiển thị ảnh khi chọn */}
-                        {formData.categoryId && (() => {
-                            const cat = categories.find(c => c.id === formData.categoryId);
-                            return cat && cat.imageUrl ? (
-                                <div className="mt-2 flex items-center gap-2">
-                                    <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 object-cover rounded" />
-                                    <span className="text-white text-sm">{cat.name}</span>
-                                </div>
-                            ) : null;
-                        })()}
-                        {errors.categoryId && <p className="text-red-400 text-sm mt-1">{errors.categoryId}</p>}
-                    </div>
-                </div>
-
-                {/* Description - CourseraEditor */}
-                <div>
-                    <label className="block text-white mb-2">Mô tả *</label>
-                    <CourseraEditor
-                        value={formData.description}
-                        onChange={val => setFormData(prev => ({ ...prev, description: val }))}
-                        placeholder="Mô tả chi tiết về sản phẩm..."
-                        className="bg-gray-800"
-                    />
-                    {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
-                </div>
-                {/* Engine Capacity */}
-                <div>
-                    <label className="block text-white mb-2">Dung tích động cơ (cc)</label>
-                    <input
-                        type="number"
-                        name="engineCapacity"
-                        value={formData.engineCapacity || ''}
-                        onChange={handleChange}
-                        min="0"
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="110, 125, 150..."
-                    />
-                </div>
-
-                {/* Fuel Type */}
-                <div>
-                    <label className="block text-white mb-2">Loại nhiên liệu</label>
-                    <select
-                        name="fuelType"
-                        value={formData.fuelType || ''}
-                        onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                    >
-                        <option value="">Chọn loại nhiên liệu</option>
-                        <option value="Xăng">Xăng</option>
-                        <option value="Điện">Điện</option>
-                        <option value="Dầu">Dầu</option>
-                        <option value="Khác">Khác</option>
-                    </select>
-                </div>
-
-                {/* Mileage */}
-                <div>
-                    <label className="block text-white mb-2">Số km đã đi</label>
-                    <input
-                        type="number"
-                        name="mileage"
-                        value={formData.mileage || ''}
-                        onChange={handleChange}
-                        min="0"
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="10000, 20000..."
-                    />
-                </div>
-
-                {/* Color */}
-                <div>
-                    <label className="block text-white mb-2">Màu sắc</label>
-                    <input
-                        type="text"
-                        name="color"
-                        value={formData.color || ''}
-                        onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="Đỏ, Đen, Trắng..."
-                    />
-                </div>
-
-                {/* Accessory Type */}
-                <div>
-                    <label className="block text-white mb-2">Loại phụ kiện (nếu là phụ kiện)</label>
-                    <input
-                        type="text"
-                        name="accessoryType"
-                        value={formData.accessoryType || ''}
-                        onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="Gương, Đèn, ..."
-                    />
-                </div>
-
-                {/* Size */}
-                <div>
-                    <label className="block text-white mb-2">Kích thước (nếu là phụ tùng/phụ kiện)</label>
-                    <input
-                        type="text"
-                        name="size"
-                        value={formData.size || ''}
-                        onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="M, L, XL, 17 inch..."
-                    />
-                </div>
-
-                {/* Spare Part Type */}
-                <div>
-                    <label className="block text-white mb-2">Loại phụ tùng (nếu là phụ tùng)</label>
-                    <input
-                        type="text"
-                        name="sparePartType"
-                        value={formData.sparePartType || ''}
-                        onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="Lọc gió, Lốp, ..."
-                    />
-                </div>
-
-                {/* Vehicle Compatible */}
-                <div>
-                    <label className="block text-white mb-2">Phù hợp với xe (nếu là phụ tùng/phụ kiện)</label>
-                    <input
-                        type="text"
-                        name="vehicleCompatible"
-                        value={formData.vehicleCompatible || ''}
-                        onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-green-500 focus:outline-none"
-                        placeholder="Wave, Sirius, ..."
-                    />
                 </div>
 
                 {/* Image Upload */}

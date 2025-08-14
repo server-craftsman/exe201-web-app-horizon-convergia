@@ -8,6 +8,7 @@ const UserManagementPage = lazy(() => import("../../../pages/admin/user"));
 const SettingManagementPage = lazy(() => import("../../../pages/auth/settings"));
 const CategoryManagementPage = lazy(() => import("../../../pages/admin/category"));
 const ProductManagementPage = lazy(() => import("../../../pages/admin/product"));
+const SellerProductsPage = lazy(() => import("../../../pages/admin/product/SellerProducts.page"));
 const NewsManagementPage = lazy(() => import("../../../pages/admin/news"));
 const OrderManagementPage = lazy(() => import("../../../pages/admin/order"));
 const ReviewManagementPage = lazy(() => import("../../../pages/admin/review"));
@@ -40,6 +41,11 @@ export const AdminRoutes: RouteObject = {
             index: false,
             path: ROUTER_URL.ADMIN.PRODUCTS,
             element: <ProductManagementPage />,
+        },
+        {
+            index: false,
+            path: ROUTER_URL.ADMIN.SELLER_PRODUCTS,
+            element: <SellerProductsPage />,
         },
         {
             index: false,
