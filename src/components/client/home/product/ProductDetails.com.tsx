@@ -1,13 +1,14 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useProduct } from '@hooks/modules/useProduct'
 import { ROUTER_URL } from '@consts/router.path.const'
 import { useCartStore } from '@hooks/modules/useCartStore'
 import { useUserInfo } from '@hooks/index'
-import { useEffect } from 'react'
 import { ProductService } from '@services/product/product.service'
 import { notificationMessage } from '@utils/helper'
+import ReviewManagement from './ReviewManagement.com'
+import ShareSocialMedia from './ShareSocialMediacom'
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <section className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
@@ -25,6 +26,15 @@ const ProductDetails: React.FC = () => {
 
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [isFavorite, setIsFavorite] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
+    const [dragIndex, setDragIndex] = useState(selectedIndex)
+
+    const productType: 'motor' | 'accessory' | 'spare' = useMemo(() => {
+        if (!product) return 'motor'
+        if ((product as any).sparePartType) return 'spare'
+        if ((product as any).accessoryType) return 'accessory'
+        return 'motor'
+    }, [product])
 
     useEffect(() => {
         (async () => {
@@ -36,6 +46,16 @@ const ProductDetails: React.FC = () => {
             } catch { /* ignore */ }
         })()
     }, [user?.id, id])
+
+    const openChatWithSeller = () => {
+        if (!user?.id) { notificationMessage('Vui lòng đăng nhập để chat với người bán', 'warning'); return }
+        // In absence of explicit sellerId, try to use product.sellerId
+        const receiverId = (product as any)?.sellerId || ''
+        if (!receiverId) { notificationMessage('Không tìm thấy người bán để liên hệ', 'error'); return }
+        const message = `Xin chào, tôi quan tâm sản phẩm ${product?.brand || ''} ${product?.model || ''}.`;
+        const event = new CustomEvent('hc:open-chat', { detail: { senderId: user.id, receiverId, message } })
+        window.dispatchEvent(event)
+    }
 
     const toggleFavorite = async () => {
         try {
@@ -67,12 +87,16 @@ const ProductDetails: React.FC = () => {
         return parts[parts.length - 1]
     }
 
-    const productType: 'motor' | 'accessory' | 'spare' = useMemo(() => {
-        if (!product) return 'motor'
-        if ((product as any).sparePartType) return 'spare'
-        if ((product as any).accessoryType) return 'accessory'
-        return 'motor'
-    }, [product])
+    // 360 viewer handlers
+    const onDragStart = () => setIsDragging(true)
+    const onDragEnd = () => { setIsDragging(false); setSelectedIndex(dragIndex) }
+    const onDragMove = (dx: number) => {
+        const step = Math.abs(dx) < 5 ? 0 : Math.sign(dx)
+        if (step !== 0) {
+            const next = (dragIndex + step + (images?.length || 0)) % (images?.length || 1)
+            setDragIndex(next)
+        }
+    }
 
     if (isLoading) {
         return (
@@ -133,6 +157,30 @@ const ProductDetails: React.FC = () => {
                                 )}
                             </div>
                         </motion.div>
+                        {/* 360 viewer */}
+                        {moreImages.length > 8 && (
+                            <div className="mt-3 bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <div className="px-4 py-2 flex items-center justify-between">
+                                    <div className="text-sm font-semibold text-gray-800">Xoay 360°</div>
+                                    <div className="text-xs text-gray-500">Kéo trái/phải để xoay</div>
+                                </div>
+                                <div
+                                    className="relative h-72 select-none cursor-grab active:cursor-grabbing"
+                                    onMouseDown={(e) => { onDragStart(); (e.currentTarget as any)._x = e.clientX; setDragIndex(selectedIndex) }}
+                                    onMouseUp={onDragEnd}
+                                    onMouseLeave={() => isDragging && onDragEnd()}
+                                    onMouseMove={(e) => {
+                                        if (!isDragging) return
+                                        const prev = (e.currentTarget as any)._x || e.clientX
+                                        const dx = e.clientX - prev
+                                            ; (e.currentTarget as any)._x = e.clientX
+                                        onDragMove(Math.sign(dx))
+                                    }}
+                                >
+                                    <img src={moreImages[dragIndex]} alt="360" className="absolute inset-0 w-full h-full object-cover" />
+                                </div>
+                            </div>
+                        )}
                         {moreImages.length > 0 && (
                             <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 mt-3">
                                 {moreImages.map((img, idx) => (
@@ -158,26 +206,22 @@ const ProductDetails: React.FC = () => {
                                     <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">Kho: {product.quantity > 0 ? `${product.quantity}` : 'Hết hàng'}</span>
                                     <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{shortLocation(product.location)}</span>
                                 </div>
-                                <div className="hidden md:flex items-center gap-2">
-                                    <button onClick={toggleFavorite} className={`p-2 rounded-full border hover:bg-gray-50 transition-colors ${isFavorite ? 'bg-rose-50 border-rose-200' : ''}`} title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-5 h-5 ${isFavorite ? 'text-rose-600' : 'text-gray-400'}`}><path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.187 25.18 25.18 0 01-4.244-2.62C4.688 16.182 2.25 13.555 2.25 10.5 2.25 7.462 4.714 5 7.75 5a5.5 5.5 0 013.9 1.64A5.5 5.5 0 0115.55 5c3.036 0 5.5 2.462 5.5 5.5 0 3.055-2.438 5.682-4.739 7.59a25.175 25.175 0 01-4.244 2.62 15.247 15.247 0 01-.383.187l-.022.01-.007.003a.75.75 0 01-.61 0z" /></svg>
-                                    </button>
-                                    <button className="p-2 rounded-full border hover:bg-gray-50 transition-colors" title="Chia sẻ">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-gray-600">
-                                            <path d="M8.5 14.5L15.5 9.5" />
-                                            <path d="M15.5 14.5L8.5 9.5" />
-                                            <circle cx="18" cy="5" r="3" />
-                                            <circle cx="6" cy="12" r="3" />
-                                            <circle cx="18" cy="19" r="3" />
-                                        </svg>
-                                    </button>
-                                </div>
+                            </div>
+                            {/* Share and Favorite buttons on same line */}
+                            <div className="flex items-end gap-3 mb-4">
+                                <ShareSocialMedia url={window.location.href} title={`${product.brand} ${product.model}`} image={primaryImage} />
+                                <button onClick={toggleFavorite} className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-200 ${isFavorite ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-700'}`} title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                                        <path d="M11.645 20.91l-.007-.003-.022-.01a15.247 15.247 0 01-.383-.187 25.18 25.18 0 01-4.244-2.62C4.688 16.182 2.25 13.555 2.25 10.5 2.25 7.462 4.714 5 7.75 5a5.5 5.5 0 013.9 1.64A5.5 5.5 0 0115.55 5c3.036 0 5.5 2.462 5.5 5.5 0 3.055-2.438 5.682-4.739 7.59a25.175 25.175 0 01-4.244 2.62 15.247 15.247 0 01-.383.187l-.022.01-.007.003a.75.75 0 01-.61 0z" />
+                                    </svg>
+                                    <span className="font-medium">{isFavorite ? 'Đã thích' : 'Yêu thích'}</span>
+                                </button>
                             </div>
                             <div className="text-3xl md:text-4xl font-extrabold text-amber-600 mb-1">{product.price.toLocaleString('vi-VN')} ₫</div>
                             <div className="text-sm text-gray-500">Giá đã bao gồm VAT (nếu có)</div>
 
                             <div className="mt-6 grid grid-cols-2 gap-3">
-                                <button className="w-full bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium transition-colors">Liên hệ người bán</button>
+                                <button onClick={openChatWithSeller} className="w-full bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium transition-colors">Liên hệ người bán</button>
                                 <button onClick={() => user?.id && addItem(user.id, product.id, 1, `${product.brand} ${product.model}`)} className="w-full border border-gray-300 hover:bg-gray-50 rounded-lg py-2 font-medium">Thêm vào giỏ</button>
                             </div>
                         </motion.div>
@@ -187,6 +231,9 @@ const ProductDetails: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Reviews */}
+                {id && <ReviewManagement productId={id} className="mt-10" />}
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
                     <div className="lg:col-span-8 space-y-4">

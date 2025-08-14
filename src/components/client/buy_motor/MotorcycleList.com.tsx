@@ -295,7 +295,7 @@ const MotorcycleList: React.FC<MotorcycleListProps> = ({ filters }) => {
                       {motorcycle.price.toLocaleString('vi-VN')} ₫
                     </p>
                   </div>
-                  <Link to={`${ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID}/${motorcycle.categoryId}`}>
+                  <Link to={ROUTER_URL.CLIENT.PRODUCT_DETAIL.replace(':id', motorcycle.id)}>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}

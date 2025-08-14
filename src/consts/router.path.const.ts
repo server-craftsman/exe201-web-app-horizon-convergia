@@ -30,6 +30,7 @@ export const ROUTER_URL = {
         PAYMENT: "/tao-thanh-toan",
         ORDER_HISTORY: "/lich-su-don-hang",
         ORDER_DETAIL: "/don-hang/:id",
+        CHAT: "/chat",
     },
     // BUYER ROUTES
     BUYER: {

@@ -51,7 +51,7 @@ const History: React.FC = () => {
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Đơn hàng của bạn</h1>
-                    <Link to={ROUTER_URL.COMMON.HOME} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Trang chủ</Link>
+                    <Link to={ROUTER_URL.BUYER.BASE} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Trang chủ</Link>
                 </div>
                 {isLoading ? (
                     <div className="text-center py-12 text-gray-500">Đang tải...</div>
@@ -77,7 +77,7 @@ const History: React.FC = () => {
                                     </span>
                                 </div>
                                 <div className="col-span-2 text-right">
-                                    <Link to={`../don-hang/${order.id}`} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Xem chi tiết</Link>
+                                    <Link to={ROUTER_URL.BUYER.ORDER_DETAIL.replace(':id', order.id)} className="text-amber-600 hover:text-amber-700 text-sm font-medium">Xem chi tiết</Link>
                                 </div>
                             </div>
                         ))}
