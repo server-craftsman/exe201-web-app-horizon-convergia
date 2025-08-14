@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { AuthService } from '@services/auth/auth.service';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { AuthService } from '../../../services/auth/auth.service';
 import type { UpdateUserRequest } from '../../../types/user/User.req.type';
 import type { UserInfo } from '../../../types/user/User.res.type';
-import { UserRole } from '@app/enums/userRole.enum';
-import { useBank } from '../../../hooks/other/useBank';
 import { useVietnamAddress } from '../../../hooks/other/useVietnamAddress';
-import Select from 'react-select';
 
 interface UpdateUserProps {
     onClose: () => void;
@@ -27,16 +25,8 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
     onUpdate,
     currentUser
 }) => {
-    const { banks } = useBank();
-    const { provinces, getDistricts, getWards } = useVietnamAddress();
-    
-    const [formData, setFormData] = useState<UpdateUserRequest & { 
-        provinceCode?: string; 
-        districtCode?: string; 
-        wardCode?: string; 
-        streetAddress?: string;
-        bankOption?: any;
-    }>({
+    // All useState hooks must be called in the same order every render
+    const [formData, setFormData] = useState<UpdateUserRequest>({
         id: currentUser.id?.toString() || '',
         name: currentUser.name || '',
         email: currentUser.email || '',
@@ -44,103 +34,82 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
         address: currentUser.address || '',
         avatarUrl: currentUser.avatarUrl || '',
         dob: currentUser.dob ? new Date(currentUser.dob) : new Date(),
-        gender: currentUser.gender || 0,
-        shopName: currentUser.shopName || '',
-        shopDescription: currentUser.shopDescription || '',
-        businessType: currentUser.businessType || '',
-        bankName: currentUser.bankName || '',
-        bankAccountNumber: currentUser.bankAccountNumber || '',
-        bankAccountHolder: currentUser.bankAccountHolder || (currentUser as any).bankAccountName || '',
-        provinceCode: '',
-        districtCode: '',
-        wardCode: '',
-        streetAddress: '',
-        bankOption: null,
     });
-
-    const districts = getDistricts(formData.provinceCode || '');
-    const wards = getWards(formData.districtCode || '');
 
     const [errors, setErrors] = useState<FormErrors>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarError, setAvatarError] = useState<string | null>(null);
+    const [street, setStreet] = useState<string>("");
+    const [province, setProvince] = useState<any>(null);
+    const [district, setDistrict] = useState<any>(null);
+    const [ward, setWard] = useState<any>(null);
 
-    // Helper cho react-select options
-    const getBankOptions = (banks: Array<{ code: string; name: string; logo?: string }>) =>
-        banks.map((bank) => ({
-            value: bank.code,
-            label: (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {bank.logo && (
-                        <img src={bank.logo} alt={bank.name} style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
-                    )}
-                    <span>{bank.name}</span>
-                </div>
-            ),
-            bank,
-        }));
+    // All useRef hooks
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const bankOptions = useMemo(() => getBankOptions(banks), [banks]);
+    // All custom hooks - must be called unconditionally
+    const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
 
-    // Địa chỉ preview cho UI
-    const getNameByCode = (list: any[], code: string) => {
-        if (!Array.isArray(list) || !code) return '';
-        const found = list.find((item: any) => item.code?.toString() === code?.toString());
-        return found?.name || '';
-    };
+    // Always call these hooks, even if the data might not be used
+    const districtsQuery = getDistricts(province?.code || '');
+    const wardsQuery = getWards(district?.code || '');
 
-    const wardName = getNameByCode(wards.data, String(formData.wardCode ?? ''));
-    const districtName = getNameByCode(districts.data, String(formData.districtCode ?? ''));
-    const provinceName = getNameByCode(provinces.data, String(formData.provinceCode ?? ''));
+    // All useEffect hooks
+    useEffect(() => {
+        setDistrict(null);
+        setWard(null);
+    }, [province]);
 
-    const previewAddress = [
-        formData.streetAddress?.trim(),
-        wardName?.trim(),
-        districtName?.trim(),
-        provinceName?.trim()
-    ].filter(Boolean).join(', ');
+    useEffect(() => {
+        setWard(null);
+    }, [district]);
 
-    const handleInputChange = (field: string, value: string | Date | number | any) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-
-        // Clear error when user starts typing
-        if (errors[field as keyof FormErrors]) {
-            setErrors(prev => ({
-                ...prev,
-                [field]: undefined
-            }));
+    useEffect(() => {
+        if (currentUser.address) {
+            const parts = currentUser.address.split(',').map(s => s?.trim() || "");
+            if (parts.length >= 4) {
+                setStreet(parts[0] ?? "");
+            }
         }
+    }, [currentUser.address]);
 
-        // Handle address selections
-        if (field === 'provinceCode') {
-            setFormData(prev => ({ ...prev, districtCode: '', wardCode: '' }));
-        } else if (field === 'districtCode') {
-            setFormData(prev => ({ ...prev, wardCode: '' }));
+    useEffect(() => {
+        if (provinces.data && currentUser.address) {
+            const parts = currentUser.address.split(',').map(s => s.trim());
+            if (parts.length >= 4) {
+                const provinceName = parts[3];
+                const foundProvince = provinces.data.find((p: any) => p.name === provinceName);
+                setProvince(foundProvince || null);
+            }
         }
+    }, [provinces.data, currentUser.address]);
 
-        // Handle bank selection - chỉ lưu thông tin cần thiết
-        if (field === 'bankOption' && value) {
-            setFormData(prev => ({
-                ...prev,
-                bankOption: {
-                    value: value.value,
-                    label: value.bank?.name || '',
-                    bank: {
-                        name: value.bank?.name || '',
-                        code: value.bank?.code || value.value,
-                        logo: value.bank?.logo || ''
-                    }
-                }
-            }));
+    useEffect(() => {
+        if (districtsQuery.data && province && currentUser.address) {
+            const parts = currentUser.address.split(',').map(s => s.trim());
+            if (parts.length >= 4) {
+                const districtName = parts[2];
+                const foundDistrict = districtsQuery.data.find((d: any) => d.name === districtName);
+                setDistrict(foundDistrict || null);
+            }
         }
-    };
+    }, [districtsQuery.data, province, currentUser.address]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    useEffect(() => {
+        if (wardsQuery.data && district && currentUser.address) {
+            const parts = currentUser.address.split(',').map(s => s.trim());
+            if (parts.length >= 4) {
+                const wardName = parts[1];
+                const foundWard = wardsQuery.data.find((w: any) => w.name === wardName);
+                setWard(foundWard || null);
+            }
+        }
+    }, [wardsQuery.data, district, currentUser.address]);
 
-        // Enhanced validation
+    // Validation function
+    const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
 
         if (!formData.name?.trim()) {
@@ -157,8 +126,64 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
             newErrors.phoneNumber = 'Số điện thoại phải có 10-11 chữ số';
         }
 
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
+        if (!street?.trim()) {
+            newErrors.address = 'Địa chỉ là bắt buộc';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleInputChange = (field: keyof UpdateUserRequest, value: string | Date) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+
+        // Clear error when user starts typing
+        if (errors[field as keyof FormErrors]) {
+            setErrors(prev => ({
+                ...prev,
+                [field]: undefined
+            }));
+        }
+    };
+
+    const handleAvatarDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        handleAvatarFile(file);
+    };
+
+    const handleAvatarFile = (file: File) => {
+        if (!file) return;
+        if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+            setAvatarError('Chỉ chấp nhận ảnh JPG, PNG, WEBP');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            setAvatarError('Kích thước ảnh tối đa 2MB');
+            return;
+        }
+        setAvatarError(null);
+        setAvatarFile(file);
+        // Preview
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            handleInputChange('avatarUrl', ev.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleAvatarRemove = () => {
+        setAvatarFile(null);
+        handleInputChange('avatarUrl', '');
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validateForm()) {
             return;
         }
 
@@ -166,29 +191,25 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
         setErrors({});
 
         try {
-            // Xử lý địa chỉ từ các trường riêng biệt
-            const addressParts = [
-                formData.streetAddress?.trim(),
-                wardName?.trim(),
-                districtName?.trim(),
-                provinceName?.trim()
-            ].filter(Boolean);
-
-            const finalAddress = addressParts.length > 0 ? addressParts.join(', ') : formData.address;
-
+            let avatarUrl = formData.avatarUrl;
+            if (avatarFile) {
+                setUploadingAvatar(true);
+                avatarUrl = await AuthService.uploadAvatar(avatarFile) || '';
+                setUploadingAvatar(false);
+            }
+            // Compose address
+            const address = formatAddress(
+                street,
+                ward?.name || '',
+                district?.name || '',
+                province?.name || ''
+            );
             const updateData: UpdateUserRequest = {
                 ...formData,
                 phoneNumber: formData.phoneNumber || '',
                 dob: formData.dob,
-                avatarUrl: formData.avatarUrl,
-                address: finalAddress,
-                gender: formData.gender !== null && formData.gender !== undefined ? formData.gender : 0,
-                shopName: formData.shopName || '',
-                shopDescription: formData.shopDescription || '',
-                businessType: formData.businessType || '',
-                bankName: formData.bankOption?.bank?.name || formData.bankName || '',
-                bankAccountNumber: formData.bankAccountNumber || '',
-                bankAccountHolder: formData.bankAccountHolder || '',
+                avatarUrl,
+                address,
             };
 
             await AuthService.updateUserInfo(updateData);
@@ -199,21 +220,12 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
                 name: formData.name,
                 email: formData.email,
                 phoneNumber: formData.phoneNumber || null,
-                address: finalAddress,
-                avatarUrl: formData.avatarUrl,
+                address,
+                avatarUrl,
                 dob: formData.dob.toISOString(),
-                gender: formData.gender !== null && formData.gender !== undefined ? formData.gender : 0,
-                shopName: formData.shopName || undefined,
-                shopDescription: formData.shopDescription || undefined,
-                businessType: formData.businessType || undefined,
-                bankName: formData.bankOption?.bank?.name || formData.bankName || undefined,
-                bankAccountNumber: formData.bankAccountNumber || undefined,
-                bankAccountHolder: formData.bankAccountHolder || undefined,
             };
 
-            // Tạo một object clean không có circular reference để lưu localStorage
-            const cleanUserInfo = JSON.parse(JSON.stringify(updatedUserInfo));
-            localStorage.setItem('userInfo', JSON.stringify(cleanUserInfo));
+            localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
             onUpdate(updatedUserInfo);
             onClose();
         } catch (error: any) {
@@ -223,671 +235,268 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
             });
         } finally {
             setIsLoading(false);
+            setUploadingAvatar(false);
         }
     };
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 9999,
-                padding: '1rem'
-            }}
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         >
-            <div
-                style={{
-                    backgroundColor: '#1f2937',
-                    borderRadius: '1rem',
-                    padding: '2rem',
-                    width: '100%',
-                    maxWidth: '800px',
-                    maxHeight: '90vh',
-                    overflow: 'auto',
-                    border: '1px solid #374151',
-                    color: 'white'
-                }}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", damping: 20 }}
+                className="bg-gray-800 text-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
             >
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #374151', paddingBottom: '1rem' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>Cập nhật thông tin</h2>
-                    <button
+                <div className="border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-white">Cập nhật thông tin</h2>
+                    <motion.button
+                        whileHover={{ scale: 1.1, rotate: 90 }}
+                        transition={{ duration: 0.2 }}
                         onClick={onClose}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#9CA3AF',
-                            fontSize: '2rem',
-                            cursor: 'pointer',
-                            padding: '0.25rem'
-                        }}
+                        className="text-gray-400 hover:text-white text-3xl font-light"
                         disabled={isLoading}
                     >
-                        ×
-                    </button>
+                        &times;
+                    </motion.button>
                 </div>
 
-                {/* Error Message */}
-                {errors.general && (
-                    <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#FEE2E2', border: '1px solid #F87171', color: '#B91C1C', borderRadius: '0.375rem' }}>
-                        {errors.general}
-                    </div>
-                )}
-
-                {/* Simple Test Form */}
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {/* Section 1: Thông tin cá nhân */}
-                    <div style={{ 
-                        backgroundColor: 'rgba(31, 41, 55, 0.7)', 
-                        border: '1px solid #374151', 
-                        borderRadius: '0.75rem', 
-                        padding: '1.5rem' 
-                    }}>
-                        <h4 style={{ 
-                            fontSize: '1.125rem', 
-                            fontWeight: '600', 
-                            color: '#F59E0B', 
-                            marginBottom: '1rem',
-                            margin: '0 0 1rem 0'
-                        }}>
-                            Thông tin cá nhân
-                        </h4>
-                        
-                        <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-                            gap: '1rem' 
-                        }}>
-                            {/* Name Field */}
-                            <div>
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                                    <span style={{ color: '#EF4444' }}>*</span> Họ và tên
-                                </label>
-                                <input
-                                    type="text"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '0.5rem',
-                                        border: errors.name ? '1px solid #EF4444' : '1px solid #4B5563',
-                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                        color: 'white',
-                                        fontSize: '1rem'
-                                    }}
-                                    placeholder="Nhập họ và tên của bạn"
-                                    value={formData.name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                    disabled={isLoading}
-                                />
-                                {errors.name && (
-                                    <p style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.name}</p>
-                                )}
-                            </div>
-
-                            {/* Email Field */}
-                            <div>
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                                    <span style={{ color: '#EF4444' }}>*</span> Email
-                                </label>
-                                <input
-                                    type="email"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '0.5rem',
-                                        border: errors.email ? '1px solid #EF4444' : '1px solid #4B5563',
-                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                        color: 'white',
-                                        fontSize: '1rem'
-                                    }}
-                                    placeholder="Nhập email của bạn"
-                                    value={formData.email}
-                                    onChange={(e) => handleInputChange('email', e.target.value)}
-                                    disabled={isLoading}
-                                />
-                                {errors.email && (
-                                    <p style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.email}</p>
-                                )}
-                            </div>
-
-                            {/* Phone Number Field */}
-                            <div>
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                                    Số điện thoại
-                                </label>
-                                <input
-                                    type="tel"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '0.5rem',
-                                        border: errors.phoneNumber ? '1px solid #EF4444' : '1px solid #4B5563',
-                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                        color: 'white',
-                                        fontSize: '1rem'
-                                    }}
-                                    placeholder="Nhập số điện thoại của bạn"
-                                    value={formData.phoneNumber}
-                                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                                    disabled={isLoading}
-                                />
-                                {errors.phoneNumber && (
-                                    <p style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.phoneNumber}</p>
-                                )}
-                            </div>
-
-                            {/* Date of Birth Field */}
-                            <div>
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                                    Ngày sinh
-                                </label>
-                                <input
-                                    type="date"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '0.5rem',
-                                        border: errors.dob ? '1px solid #EF4444' : '1px solid #4B5563',
-                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                        color: 'white',
-                                        fontSize: '1rem'
-                                    }}
-                                    value={formData.dob ? formData.dob.toISOString().split('T')[0] : ''}
-                                    onChange={(e) => handleInputChange('dob', new Date(e.target.value))}
-                                    disabled={isLoading}
-                                />
-                                {errors.dob && (
-                                    <p style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.dob}</p>
-                                )}
-                            </div>
-
-                            {/* Gender Field */}
-                            <div>
-                                <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.5rem' }}>
-                                    Giới tính
-                                </label>
-                                <select
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '0.5rem',
-                                        border: '1px solid #4B5563',
-                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                        color: 'white',
-                                        fontSize: '1rem'
-                                    }}
-                                    value={formData.gender !== null && formData.gender !== undefined ? formData.gender : 0}
-                                    onChange={(e) => handleInputChange('gender', parseInt(e.target.value))}
-                                    disabled={isLoading}
-                                >
-                                    <option value={0}>Nam</option>
-                                    <option value={1}>Nữ</option>
-                                    <option value={2}>Khác</option>
-                                </select>
-                            </div>
+                <div className="p-6">
+                    {errors.general && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                            {errors.general}
                         </div>
-
-                        {/* Địa chỉ chi tiết section */}
-                        <div style={{ marginTop: '1.5rem' }}>
-                            <h5 style={{ 
-                                fontSize: '1rem', 
-                                fontWeight: '600', 
-                                color: '#D1D5DB', 
-                                marginBottom: '1rem',
-                                margin: '0 0 1rem 0'
-                            }}>
-                                Địa chỉ chi tiết
-                            </h5>
-                            
-                            <div style={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                                gap: '1rem',
-                                marginBottom: '1rem'
-                            }}>
-                                {/* Tỉnh/Thành phố */}
-                                <div>
-                                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                        Tỉnh/Thành phố
-                                    </label>
-                                    <select
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            borderRadius: '0.5rem',
-                                            border: '1px solid #4B5563',
-                                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                            color: 'white',
-                                            fontSize: '0.875rem'
-                                        }}
-                                        value={formData.provinceCode || ''}
-                                        onChange={(e) => handleInputChange('provinceCode', e.target.value)}
-                                        disabled={isLoading}
-                                    >
-                                        <option value="">Chọn tỉnh/thành phố</option>
-                                        {provinces.data?.map((province: any) => (
-                                            <option key={province.code} value={province.code}>
-                                                {province.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Quận/Huyện */}
-                                <div>
-                                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                        Quận/Huyện
-                                    </label>
-                                    <select
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            borderRadius: '0.5rem',
-                                            border: '1px solid #4B5563',
-                                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                            color: 'white',
-                                            fontSize: '0.875rem'
-                                        }}
-                                        value={formData.districtCode || ''}
-                                        onChange={(e) => handleInputChange('districtCode', e.target.value)}
-                                        disabled={isLoading || !formData.provinceCode}
-                                    >
-                                        <option value="">Chọn quận/huyện</option>
-                                        {districts.data?.map((district: any) => (
-                                            <option key={district.code} value={district.code}>
-                                                {district.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Phường/Xã */}
-                                <div>
-                                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                        Phường/Xã
-                                    </label>
-                                    <select
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            borderRadius: '0.5rem',
-                                            border: '1px solid #4B5563',
-                                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                            color: 'white',
-                                            fontSize: '0.875rem'
-                                        }}
-                                        value={formData.wardCode || ''}
-                                        onChange={(e) => handleInputChange('wardCode', e.target.value)}
-                                        disabled={isLoading || !formData.districtCode}
-                                    >
-                                        <option value="">Chọn phường/xã</option>
-                                        {wards.data?.map((ward: any) => (
-                                            <option key={ward.code} value={ward.code}>
-                                                {ward.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Địa chỉ chi tiết */}
-                            <div>
-                                <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                    Địa chỉ chi tiết (số nhà, tên đường)
-                                </label>
-                                <input
-                                    type="text"
-                                    style={{
-                                        width: '100%',
-                                        padding: '0.75rem',
-                                        borderRadius: '0.5rem',
-                                        border: '1px solid #4B5563',
-                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                        color: 'white',
-                                        fontSize: '0.875rem'
-                                    }}
-                                    placeholder="Nhập số nhà, tên đường"
-                                    value={formData.streetAddress || ''}
-                                    onChange={(e) => handleInputChange('streetAddress', e.target.value)}
-                                    disabled={isLoading}
-                                />
-                            </div>
-
-                            {/* Address Preview */}
-                            {previewAddress && (
-                                <div style={{ marginTop: '0.75rem' }}>
-                                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                        Địa chỉ đầy đủ:
-                                    </label>
-                                    <div style={{ 
-                                        padding: '0.75rem', 
-                                        backgroundColor: 'rgba(59, 130, 246, 0.1)', 
-                                        border: '1px solid #3B82F6', 
-                                        borderRadius: '0.5rem', 
-                                        fontSize: '0.875rem',
-                                        color: '#93C5FD'
-                                    }}>
-                                        {previewAddress}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Địa chỉ hiện tại fallback */}
-                            {!previewAddress && formData.address && (
-                                <div style={{ marginTop: '0.75rem' }}>
-                                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                        Địa chỉ hiện tại:
-                                    </label>
-                                    <input
-                                        type="text"
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            borderRadius: '0.5rem',
-                                            border: '1px solid #4B5563',
-                                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                            color: 'white',
-                                            fontSize: '0.875rem'
-                                        }}
-                                        placeholder="Nhập địa chỉ của bạn"
-                                        value={formData.address}
-                                        onChange={(e) => handleInputChange('address', e.target.value)}
-                                        disabled={isLoading}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Seller-specific fields */}
-                    {((currentUser.role as any) === UserRole.SELLER || (currentUser.role as any) === 'Seller' || (currentUser.role as any) === 1) && (
-                        <>
-                            {/* Section 2: Thông tin cửa hàng */}
-                            <div style={{ 
-                                backgroundColor: 'rgba(31, 41, 55, 0.7)', 
-                                border: '1px solid #374151', 
-                                borderRadius: '0.75rem', 
-                                padding: '1.5rem' 
-                            }}>
-                                <h4 style={{ 
-                                    fontSize: '1.125rem', 
-                                    fontWeight: '600', 
-                                    color: '#F59E0B', 
-                                    marginBottom: '1rem',
-                                    margin: '0 0 1rem 0'
-                                }}>
-                                    🏪 Thông tin cửa hàng
-                                </h4>
-                                
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-                                    gap: '1rem' 
-                                }}>
-                                    {/* Shop Name */}
-                                    <div>
-                                        <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                            Tên cửa hàng
-                                        </label>
-                                        <input
-                                            type="text"
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.75rem',
-                                                borderRadius: '0.5rem',
-                                                border: '1px solid #4B5563',
-                                                backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                                color: 'white',
-                                                fontSize: '1rem'
-                                            }}
-                                            placeholder="Nhập tên cửa hàng của bạn"
-                                            value={formData.shopName || ''}
-                                            onChange={(e) => handleInputChange('shopName', e.target.value)}
-                                            disabled={isLoading}
-                                        />
-                                    </div>
-
-                                    {/* Business Type */}
-                                    <div>
-                                        <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                            Loại hình kinh doanh
-                                        </label>
-                                        <select
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.75rem',
-                                                borderRadius: '0.5rem',
-                                                border: '1px solid #4B5563',
-                                                backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                                color: 'white',
-                                                fontSize: '1rem'
-                                            }}
-                                            value={formData.businessType || ''}
-                                            onChange={(e) => handleInputChange('businessType', e.target.value)}
-                                            disabled={isLoading}
-                                        >
-                                            <option value="">Chọn loại hình kinh doanh</option>
-                                            <option value="motorcycle-parts">Phụ tùng xe máy</option>
-                                            <option value="motorcycle-accessories">Phụ kiện xe máy</option>
-                                            <option value="motorcycle-maintenance">Bảo dưỡng sửa chữa</option>
-                                            <option value="motorcycle-sales">Mua bán xe máy</option>
-                                            <option value="motorcycle-rental">Cho thuê xe máy</option>
-                                            <option value="other">Khác</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Shop Description - full width */}
-                                <div style={{ marginTop: '1rem' }}>
-                                    <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                        Mô tả cửa hàng
-                                    </label>
-                                    <textarea
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem',
-                                            borderRadius: '0.5rem',
-                                            border: '1px solid #4B5563',
-                                            backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                            color: 'white',
-                                            fontSize: '1rem',
-                                            minHeight: '100px',
-                                            resize: 'vertical'
-                                        }}
-                                        placeholder="Mô tả về cửa hàng của bạn..."
-                                        value={formData.shopDescription || ''}
-                                        onChange={(e) => handleInputChange('shopDescription', e.target.value)}
-                                        disabled={isLoading}
-                                        rows={4}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Section 3: Thông tin ngân hàng */}
-                            <div style={{ 
-                                backgroundColor: 'rgba(31, 41, 55, 0.7)', 
-                                border: '1px solid #374151', 
-                                borderRadius: '0.75rem', 
-                                padding: '1.5rem' 
-                            }}>
-                                <h4 style={{ 
-                                    fontSize: '1.125rem', 
-                                    fontWeight: '600', 
-                                    color: '#F59E0B', 
-                                    marginBottom: '1rem',
-                                    margin: '0 0 1rem 0'
-                                }}>
-                                    🏦 Thông tin ngân hàng
-                                </h4>
-                                
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-                                    gap: '1rem' 
-                                }}>
-                                    {/* Bank Name với Select */}
-                                    <div style={{ gridColumn: 'span 2' }}>
-                                        <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                            Ngân hàng
-                                        </label>
-                                        <div style={{ position: 'relative' }}>
-                                            <Select
-                                                options={bankOptions}
-                                                value={formData.bankOption}
-                                                onChange={(selectedOption) => handleInputChange('bankOption', selectedOption)}
-                                                placeholder="Chọn ngân hàng..."
-                                                isDisabled={isLoading}
-                                                styles={{
-                                                    control: (provided) => ({
-                                                        ...provided,
-                                                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                                        border: '1px solid #4B5563',
-                                                        borderRadius: '0.5rem',
-                                                        minHeight: '48px',
-                                                        color: 'white'
-                                                    }),
-                                                    singleValue: (provided) => ({
-                                                        ...provided,
-                                                        color: 'white'
-                                                    }),
-                                                    placeholder: (provided) => ({
-                                                        ...provided,
-                                                        color: '#9CA3AF'
-                                                    }),
-                                                    input: (provided) => ({
-                                                        ...provided,
-                                                        color: 'white'
-                                                    }),
-                                                    menu: (provided) => ({
-                                                        ...provided,
-                                                        backgroundColor: '#1F2937',
-                                                        border: '1px solid #374151'
-                                                    }),
-                                                    option: (provided, state) => ({
-                                                        ...provided,
-                                                        backgroundColor: state.isFocused ? '#374151' : '#1F2937',
-                                                        color: 'white',
-                                                        cursor: 'pointer'
-                                                    })
-                                                }}
-                                            />
-                                        </div>
-                                        {/* Fallback input nếu không chọn từ select */}
-                                        {!formData.bankOption && (
-                                            <input
-                                                type="text"
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '0.75rem',
-                                                    borderRadius: '0.5rem',
-                                                    border: '1px solid #4B5563',
-                                                    backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                                    color: 'white',
-                                                    fontSize: '1rem',
-                                                    marginTop: '0.5rem'
-                                                }}
-                                                placeholder="Hoặc nhập tên ngân hàng khác"
-                                                value={formData.bankName || ''}
-                                                onChange={(e) => handleInputChange('bankName', e.target.value)}
-                                                disabled={isLoading}
-                                            />
-                                        )}
-                                    </div>
-
-                                    {/* Bank Account Number */}
-                                    <div>
-                                        <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                            Số tài khoản
-                                        </label>
-                                        <input
-                                            type="text"
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.75rem',
-                                                borderRadius: '0.5rem',
-                                                border: '1px solid #4B5563',
-                                                backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                                color: 'white',
-                                                fontSize: '1rem'
-                                            }}
-                                            placeholder="Nhập số tài khoản ngân hàng"
-                                            value={formData.bankAccountNumber || ''}
-                                            onChange={(e) => handleInputChange('bankAccountNumber', e.target.value)}
-                                            disabled={isLoading}
-                                        />
-                                    </div>
-
-                                    {/* Bank Account Holder */}
-                                    <div>
-                                        <label style={{ display: 'block', fontWeight: '500', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#9CA3AF' }}>
-                                            Chủ tài khoản
-                                        </label>
-                                        <input
-                                            type="text"
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.75rem',
-                                                borderRadius: '0.5rem',
-                                                border: '1px solid #4B5563',
-                                                backgroundColor: 'rgba(17, 24, 39, 0.8)',
-                                                color: 'white',
-                                                fontSize: '1rem'
-                                            }}
-                                            placeholder="Nhập tên chủ tài khoản"
-                                            value={formData.bankAccountHolder || ''}
-                                            onChange={(e) => handleInputChange('bankAccountHolder', e.target.value)}
-                                            disabled={isLoading}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </>
                     )}
 
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid #374151', marginTop: '1rem' }}>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            disabled={isLoading}
-                            style={{
-                                padding: '0.75rem 1.5rem',
-                                backgroundColor: '#4B5563',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.5rem',
-                                cursor: 'pointer',
-                                fontSize: '1rem'
-                            }}
-                        >
-                            Huỷ
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            style={{
-                                padding: '0.75rem 1.5rem',
-                                backgroundColor: '#F59E0B',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.5rem',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                                opacity: isLoading ? 0.5 : 1
-                            }}
-                        >
-                            {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Avatar Section - Professional UI */}
+                        <div className="flex flex-col items-center mb-6">
+                            <div
+                                className={`relative h-32 w-32 rounded-full overflow-hidden border-2 border-amber-400 bg-gray-100 flex items-center justify-center group transition-shadow duration-200 ${avatarError ? 'border-red-500' : ''}`}
+                                onDragOver={e => e.preventDefault()}
+                                onDrop={handleAvatarDrop}
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {formData.avatarUrl ? (
+                                    <img
+                                        className="h-full w-full object-cover"
+                                        src={formData.avatarUrl}
+                                        alt="Avatar Preview"
+                                    />
+                                ) : (
+                                    <img
+                                        className="h-full w-full object-cover"
+                                        src={`https://ui-avatars.com/api/?name=${formData.name}&background=FBBF24&size=128`}
+                                        alt="Avatar Preview"
+                                    />
+                                )}
+                                {uploadingAvatar && (
+                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                    </div>
+                                )}
+                                {formData.avatarUrl && (
+                                    <button
+                                        type="button"
+                                        className="absolute top-1 right-1 bg-black bg-opacity-60 rounded-full p-1 text-white hover:bg-opacity-90 transition"
+                                        onClick={e => { e.stopPropagation(); handleAvatarRemove(); }}
+                                        tabIndex={-1}
+                                    >
+                                        &times;
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                accept="image/jpeg,image/png,image/jpg,image/webp"
+                                disabled={uploadingAvatar || isLoading}
+                                onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleAvatarFile(file);
+                                }}
+                            />
+                            <div className="mt-2 text-xs text-gray-400 text-center">
+                                Kéo & thả hoặc nhấn để chọn ảnh (JPG, PNG, WEBP, tối đa 2MB)
+                            </div>
+                            {avatarError && <div className="text-red-400 text-xs mt-1">{avatarError}</div>}
+                        </div>
+
+                        {/* Name Field */}
+                        <div>
+                            <label className="block font-semibold mb-2">
+                                Họ và tên <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                className={`input-primary w-full ${errors.name ? 'border-red-500' : ''}`}
+                                placeholder="Nhập họ và tên của bạn"
+                                value={formData.name}
+                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                disabled={isLoading}
+                            />
+                            {errors.name && (
+                                <p className="text-red-400 text-sm mt-1">{errors.name}</p>
+                            )}
+                        </div>
+
+                        {/* Email Field */}
+                        <div>
+                            <label className="block font-semibold mb-2">
+                                Email <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                                type="email"
+                                className={`input-primary w-full ${errors.email ? 'border-red-500' : ''}`}
+                                placeholder="Nhập email của bạn"
+                                value={formData.email}
+                                onChange={(e) => handleInputChange('email', e.target.value)}
+                                disabled={isLoading}
+                            />
+                            {errors.email && (
+                                <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+                            )}
+                        </div>
+
+                        {/* Phone Number Field */}
+                        <div>
+                            <label className="block font-semibold mb-2">Số điện thoại</label>
+                            <input
+                                type="tel"
+                                className={`input-primary w-full ${errors.phoneNumber ? 'border-red-500' : ''}`}
+                                placeholder="Nhập số điện thoại của bạn"
+                                value={formData.phoneNumber}
+                                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                                disabled={isLoading}
+                            />
+                            {errors.phoneNumber && (
+                                <p className="text-red-400 text-sm mt-1">{errors.phoneNumber}</p>
+                            )}
+                        </div>
+
+                        {/* Address Field - Professional Vietnam Address Selector */}
+                        <div>
+                            <label className="block font-semibold mb-2">
+                                Địa chỉ <span className="text-red-400">*</span>
+                            </label>
+                            <div className="flex flex-col gap-2">
+                                <input
+                                    type="text"
+                                    className={`input-primary w-full ${errors.address ? 'border-red-500' : ''}`}
+                                    placeholder="Số nhà, tên đường..."
+                                    value={street}
+                                    onChange={e => setStreet(e.target.value)}
+                                    disabled={isLoading}
+                                />
+                                <div className="flex gap-2">
+                                    <select
+                                        className="input-primary flex-1"
+                                        value={province?.code || ''}
+                                        onChange={e => {
+                                            const code = e.target.value;
+                                            const found = provinces.data?.find((p: any) => p.code === code);
+                                            setProvince(found || null);
+                                        }}
+                                        disabled={isLoading || provinces.isLoading}
+                                    >
+                                        <option value="">Tỉnh/Thành phố</option>
+                                        {provinces.data?.map((p: any) => (
+                                            <option key={p.code} value={p.code}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        className="input-primary flex-1"
+                                        value={district?.code || ''}
+                                        onChange={e => {
+                                            const code = e.target.value;
+                                            const found = districtsQuery.data?.find((d: any) => d.code === code);
+                                            setDistrict(found || null);
+                                        }}
+                                        disabled={isLoading || !province || districtsQuery.isLoading}
+                                    >
+                                        <option value="">Quận/Huyện</option>
+                                        {districtsQuery.isLoading && <option value="">Đang tải...</option>}
+                                        {districtsQuery.data?.map((d: any) => (
+                                            <option key={d.code} value={d.code}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        className="input-primary flex-1"
+                                        value={ward?.code || ''}
+                                        onChange={e => {
+                                            const code = e.target.value;
+                                            const found = wardsQuery.data?.find((w: any) => w.code === code);
+                                            setWard(found || null);
+                                        }}
+                                        disabled={isLoading || !district || wardsQuery.isLoading}
+                                    >
+                                        <option value="">Phường/Xã</option>
+                                        {wardsQuery.isLoading && <option value="">Đang tải...</option>}
+                                        {wardsQuery.data?.map((w: any) => (
+                                            <option key={w.code} value={w.code}>{w.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            {errors.address && (
+                                <p className="text-red-400 text-sm mt-1">{errors.address}</p>
+                            )}
+                        </div>
+
+                        {/* Date of Birth Field */}
+                        <div>
+                            <label className="block font-semibold mb-2">Ngày sinh</label>
+                            <input
+                                type="date"
+                                className={`input-primary w-full ${errors.dob ? 'border-red-500' : ''}`}
+                                value={formData.dob ? formData.dob.toISOString().split('T')[0] : ''}
+                                onChange={(e) => handleInputChange('dob', new Date(e.target.value))}
+                                disabled={isLoading}
+                            />
+                            {errors.dob && (
+                                <p className="text-red-400 text-sm mt-1">{errors.dob}</p>
+                            )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex justify-end space-x-3 pt-4">
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                type="button"
+                                onClick={onClose}
+                                disabled={isLoading}
+                                className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg shadow hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75 transition disabled:opacity-50"
+                            >
+                                Huỷ
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                type="submit"
+                                disabled={isLoading || uploadingAvatar}
+                                className="px-6 py-2.5 bg-secondary text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-opacity-75 transition disabled:opacity-50"
+                            >
+                                {isLoading ? (
+                                    <div className="flex items-center">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Đang lưu...
+                                    </div>
+                                ) : (
+                                    'Lưu thay đổi'
+                                )}
+                            </motion.button>
+                        </div>
+                    </form>
+                </div>
+            </motion.div>
+        </motion.div>
     );
 }; 

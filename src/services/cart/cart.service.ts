@@ -55,6 +55,7 @@ export const CartService = {
     // GET /Carts/user/{userId}
     getCartByUser(userId: string) {
         return BaseService.get<RawCartResponse>({
+            isLoading: false,
             url: API_PATH.CART.GET_BY_USER(userId),
         });
     },
@@ -70,6 +71,7 @@ export const CartService = {
     getCartDetails(cartId: string) {
         return BaseService.get<ApiResponse<CartDetailResponse[]>>({
             url: API_PATH.CART.GET_DETAILS(cartId),
+            isLoading: false,
         });
     },
 

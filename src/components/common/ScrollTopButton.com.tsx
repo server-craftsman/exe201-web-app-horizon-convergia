@@ -35,7 +35,7 @@ const ScrollTopButton: React.FC = () => {
       {isVisible && (
         <motion.button
           onClick={handleScrollTop}
-          className="fixed bottom-6 right-6 bg-amber-500 text-white p-3 rounded-full shadow-lg hover:bg-amber-600 transition-all duration-500 ease-in-out opacity-80 hover:opacity-100"
+          className="fixed bottom-40 right-7 bg-amber-500 text-white p-2 rounded-lg shadow-lg hover:bg-amber-600 transition-all duration-500 ease-in-out opacity-80 hover:opacity-100 flex flex-col items-center gap-1"
           aria-label="Scroll to top"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -46,6 +46,9 @@ const ScrollTopButton: React.FC = () => {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
           </svg>
+          <div className="text-xs font-medium leading-none">
+            <div>Lên Đầu</div>
+          </div>
         </motion.button>
       )}
     </AnimatePresence>

@@ -10,7 +10,7 @@ const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
     return (
         <div className="min-h-screen bg-gray-50">
             <BuyerHeader />
-            <main className="pt-16">
+            <main className="">
                 {children || <Outlet />}
             </main>
         </div>

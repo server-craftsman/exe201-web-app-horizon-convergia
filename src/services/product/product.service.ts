@@ -62,6 +62,7 @@ export const ProductService = {
         if (typeof anyParams.status !== 'undefined') queryParams.append('status', String(anyParams.status));
         if (typeof anyParams.isVerified !== 'undefined') queryParams.append('isVerified', String(anyParams.isVerified));
         return BaseService.get<ProductResponse[]>({
+            isLoading: false,
             url: `${API_PATH.PRODUCT.GET_ALL_PRODUCTS}?${queryParams.toString()}`,
         });
     },
@@ -83,7 +84,8 @@ export const ProductService = {
     // Get product by ID
     getProductById(id: string) {
         return BaseService.get<ApiResponse<ProductResponse>>({
-            url: API_PATH.PRODUCT.GET_PRODUCT_BY_ID(id)
+            url: API_PATH.PRODUCT.GET_PRODUCT_BY_ID(id),
+            isLoading: false,
         });
     },
 
@@ -124,6 +126,7 @@ export const ProductService = {
             }
         }
         return BaseService.get<ProductResponse[]>({
+            isLoading: false,
             url: API_PATH.PRODUCT.GET_FAVORITES(userId),
             payload
         });
