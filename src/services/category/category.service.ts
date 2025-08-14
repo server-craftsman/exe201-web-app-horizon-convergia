@@ -40,12 +40,14 @@ export const CategoryService = {
         }
 
         return BaseService.get<CategoryResponse[]>({
+            isLoading: false,
             url: url
         });
     },
 
     getCategory(id: string) {
         return BaseService.get<CategoryResponse>({
+            isLoading: false,
             url: API_PATH.CATEGORY.GET_BY_ID(id)
         });
     },

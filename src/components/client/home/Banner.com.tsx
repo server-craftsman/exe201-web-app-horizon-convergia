@@ -42,7 +42,9 @@ const sliderData = [
 
 // Category mapping for better background selection
 const categoryBackgroundMap = {
-  // Lốp xe categories
+  // Vỏ xe categories - prioritize "Vỏ chính hãng"
+  'vỏ chính hãng': voChinhHang,
+  'vo chinh hang': voChinhHang,
   'lốp xe': voChinhHang,
   'lốp': voChinhHang,
   'lop': voChinhHang,
@@ -54,8 +56,6 @@ const categoryBackgroundMap = {
   'vỏ': voChinhHang,
   'vo xe': voChinhHang,
   'vo': voChinhHang,
-  'vỏ chính hãng': voChinhHang,
-  'vo chinh hang': voChinhHang,
 
   // Dầu nhớt categories
   'dầu nhớt': nhotChinhHang,
@@ -133,6 +133,16 @@ const Banner: React.FC = () => {
     // Add special categories
     const specialCategories: CategoryWithChildren[] = [
       {
+        id: 'vo-chinh-hang-special',
+        name: 'Vỏ chính hãng',
+        description: 'Vỏ xe chính hãng chất lượng cao',
+        imageUrl: '',
+        parentCategoryId: null,
+        children: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
         id: 'dau-nhot-chinh-hang-special',
         name: 'Dầu nhớt chính hãng',
         description: 'Dầu nhớt chính hãng bảo vệ động cơ',
@@ -175,10 +185,10 @@ const Banner: React.FC = () => {
     const normalize = (s?: string) => (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
     const isLopName = (name: string) => {
       const n = normalize(name);
-      return n.includes('lop') || n.includes('vo');
+      return n.includes('lop') || n.includes('vo') || n.includes('vỏ') || n.includes('lốp');
     };
 
-    // Try find any 'Lốp' category (could be parent or child)
+    // Try find any 'Lốp' or 'Vỏ' category (could be parent or child)
     const lopAny = fetchedCategories.find((c: ICategory) => isLopName(c.name));
 
     const ordered = [...mapToTree];
@@ -187,14 +197,14 @@ const Banner: React.FC = () => {
       const lopChildren = fetchedCategories.filter((c: ICategory) => c.parentCategoryId === lopAny.id);
       const idxParent = ordered.findIndex(cat => cat.id === lopAny.id);
       if (idxParent !== -1) {
-        // Lốp is a parent category: ensure children exactly match by parent id and move to top
+        // Lốp/Vỏ is a parent category: ensure children exactly match by parent id and move to top
         ordered[idxParent] = { ...ordered[idxParent], children: lopChildren } as CategoryWithChildren;
         if (idxParent > 0) {
           const [lopCat] = ordered.splice(idxParent, 1);
           ordered.unshift(lopCat);
         }
       } else if (lopAny.parentCategoryId) {
-        // Lốp is a child: synthesize a top-level entry with its children and prepend
+        // Lốp/Vỏ is a child: synthesize a top-level entry with its children and prepend
         const lopTopLevel: CategoryWithChildren = {
           ...(lopAny as any),
           children: lopChildren,
@@ -316,7 +326,7 @@ const Banner: React.FC = () => {
     const lowerName = categoryName.toLowerCase();
     const asciiName = lowerName.normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
-    // Check exact matches first
+    // Check exact matches first - prioritize "Vỏ chính hãng"
     for (const [key, background] of Object.entries(categoryBackgroundMap)) {
       const keyLower = key.toLowerCase();
       const keyAscii = keyLower.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -325,8 +335,13 @@ const Banner: React.FC = () => {
       }
     }
 
-    // Additional specific mappings
-    if (lowerName.includes('lốp') || asciiName.includes('lop') || lowerName.includes('vỏ') || asciiName.includes('vo')) {
+    // Additional specific mappings - prioritize "Vỏ chính hãng"
+    if (
+      lowerName.includes('vỏ chính hãng') || asciiName.includes('vo chinh hang') ||
+      lowerName.includes('lốp') || asciiName.includes('lop') ||
+      lowerName.includes('vỏ') || asciiName.includes('vo') ||
+      lowerName.includes('tire')
+    ) {
       return voChinhHang;
     }
     else if (
@@ -416,7 +431,7 @@ const Banner: React.FC = () => {
                           // Enhanced fallback icon based on category name
                           (() => {
                             const lowerName = parent.name.toLowerCase();
-                            if (lowerName.includes('lốp') || lowerName.includes('lop') || lowerName.includes('vỏ') || lowerName.includes('vo') || lowerName.includes('vỏ chính hãng') || lowerName.includes('vo chinh hang')) {
+                            if (lowerName.includes('vỏ chính hãng') || lowerName.includes('vo chinh hang') || lowerName.includes('lốp') || lowerName.includes('lop') || lowerName.includes('vỏ') || lowerName.includes('vo')) {
                               return (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-amber-500 group-hover:text-amber-600 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -534,7 +549,7 @@ const Banner: React.FC = () => {
                                     {/* Enhanced fallback icon based on category name */}
                                     {(() => {
                                       const lowerName = parent.name.toLowerCase();
-                                      if (lowerName.includes('lốp') || lowerName.includes('lop') || lowerName.includes('vỏ') || lowerName.includes('vo') || lowerName.includes('vỏ chính hãng') || lowerName.includes('vo chinh hang')) {
+                                      if (lowerName.includes('vỏ chính hãng') || lowerName.includes('vo chinh hang') || lowerName.includes('lốp') || lowerName.includes('lop') || lowerName.includes('vỏ') || lowerName.includes('vo')) {
                                         return (
                                           <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-800 rounded flex items-center justify-center">
                                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

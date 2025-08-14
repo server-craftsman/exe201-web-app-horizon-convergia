@@ -23,9 +23,10 @@ export const NewsService = {
         if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
         if (params.sortBy) queryParams.append('sortBy', params.sortBy);
         if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-        
+
         return BaseService.get<ApiResponse<NewsSearchResponse>>({
-            url: `${API_PATH.NEWS.SEARCH}?${queryParams.toString()}`
+            url: `${API_PATH.NEWS.SEARCH}?${queryParams.toString()}`,
+            isLoading: false,
         });
     },
 
@@ -44,7 +45,8 @@ export const NewsService = {
     // Get news by ID
     getNewsById(id: string) {
         return BaseService.get<NewsInfo>({
-            url: API_PATH.NEWS.GET_BY_ID(id)
+            url: API_PATH.NEWS.GET_BY_ID(id),
+            isLoading: false,
         });
     },
 

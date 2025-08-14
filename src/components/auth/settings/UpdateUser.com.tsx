@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AuthService } from '../../../services/auth/auth.service';
 import type { UpdateUserRequest } from '../../../types/user/User.req.type';
 import type { UserInfo } from '../../../types/user/User.res.type';
 import { useVietnamAddress } from '../../../hooks/other/useVietnamAddress';
-import { useRef } from 'react';
 
 interface UpdateUserProps {
     onClose: () => void;
@@ -26,6 +25,7 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
     onUpdate,
     currentUser
 }) => {
+    // All useState hooks must be called in the same order every render
     const [formData, setFormData] = useState<UpdateUserRequest>({
         id: currentUser.id?.toString() || '',
         name: currentUser.name || '',
@@ -39,34 +39,34 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
     const [errors, setErrors] = useState<FormErrors>({});
     const [isLoading, setIsLoading] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-    // Avatar state
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarError, setAvatarError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Address state
     const [street, setStreet] = useState<string>("");
     const [province, setProvince] = useState<any>(null);
     const [district, setDistrict] = useState<any>(null);
     const [ward, setWard] = useState<any>(null);
 
-    const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
-    const districts = province ? getDistricts(province.code) : { data: [], isLoading: false };
-    const wards = district ? getWards(district.code) : { data: [], isLoading: false };
+    // All useRef hooks
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Reset district and ward when province changes
-    React.useEffect(() => {
+    // All custom hooks - must be called unconditionally
+    const { provinces, getDistricts, getWards, formatAddress } = useVietnamAddress();
+
+    // Always call these hooks, even if the data might not be used
+    const districtsQuery = getDistricts(province?.code || '');
+    const wardsQuery = getWards(district?.code || '');
+
+    // All useEffect hooks
+    useEffect(() => {
         setDistrict(null);
         setWard(null);
     }, [province]);
-    // Reset ward when district changes
-    React.useEffect(() => {
+
+    useEffect(() => {
         setWard(null);
     }, [district]);
 
-    // On mount, parse address if available
-    React.useEffect(() => {
+    useEffect(() => {
         if (currentUser.address) {
             const parts = currentUser.address.split(',').map(s => s?.trim() || "");
             if (parts.length >= 4) {
@@ -74,8 +74,8 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
             }
         }
     }, [currentUser.address]);
-    // Set province/district/ward after provinces load
-    React.useEffect(() => {
+
+    useEffect(() => {
         if (provinces.data && currentUser.address) {
             const parts = currentUser.address.split(',').map(s => s.trim());
             if (parts.length >= 4) {
@@ -85,26 +85,28 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
             }
         }
     }, [provinces.data, currentUser.address]);
-    React.useEffect(() => {
-        if (districts.data && province && currentUser.address) {
+
+    useEffect(() => {
+        if (districtsQuery.data && province && currentUser.address) {
             const parts = currentUser.address.split(',').map(s => s.trim());
             if (parts.length >= 4) {
                 const districtName = parts[2];
-                const foundDistrict = districts.data.find((d: any) => d.name === districtName);
+                const foundDistrict = districtsQuery.data.find((d: any) => d.name === districtName);
                 setDistrict(foundDistrict || null);
             }
         }
-    }, [districts.data, province, currentUser.address]);
-    React.useEffect(() => {
-        if (wards.data && district && currentUser.address) {
+    }, [districtsQuery.data, province, currentUser.address]);
+
+    useEffect(() => {
+        if (wardsQuery.data && district && currentUser.address) {
             const parts = currentUser.address.split(',').map(s => s.trim());
             if (parts.length >= 4) {
                 const wardName = parts[1];
-                const foundWard = wards.data.find((w: any) => w.name === wardName);
+                const foundWard = wardsQuery.data.find((w: any) => w.name === wardName);
                 setWard(foundWard || null);
             }
         }
-    }, [wards.data, district, currentUser.address]);
+    }, [wardsQuery.data, district, currentUser.address]);
 
     // Validation function
     const validateForm = (): boolean => {
@@ -152,6 +154,7 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
         const file = e.dataTransfer.files[0];
         handleAvatarFile(file);
     };
+
     const handleAvatarFile = (file: File) => {
         if (!file) return;
         if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
@@ -171,6 +174,7 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
         };
         reader.readAsDataURL(file);
     };
+
     const handleAvatarRemove = () => {
         setAvatarFile(null);
         handleInputChange('avatarUrl', '');
@@ -412,14 +416,14 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
                                         value={district?.code || ''}
                                         onChange={e => {
                                             const code = e.target.value;
-                                            const found = districts.data?.find((d: any) => d.code === code);
+                                            const found = districtsQuery.data?.find((d: any) => d.code === code);
                                             setDistrict(found || null);
                                         }}
-                                        disabled={isLoading || !province || districts.isLoading}
+                                        disabled={isLoading || !province || districtsQuery.isLoading}
                                     >
                                         <option value="">Quận/Huyện</option>
-                                        {districts.isLoading && <option value="">Đang tải...</option>}
-                                        {districts.data?.map((d: any) => (
+                                        {districtsQuery.isLoading && <option value="">Đang tải...</option>}
+                                        {districtsQuery.data?.map((d: any) => (
                                             <option key={d.code} value={d.code}>{d.name}</option>
                                         ))}
                                     </select>
@@ -428,14 +432,14 @@ export const UpdateUserComponent: React.FC<UpdateUserProps> = ({
                                         value={ward?.code || ''}
                                         onChange={e => {
                                             const code = e.target.value;
-                                            const found = wards.data?.find((w: any) => w.code === code);
+                                            const found = wardsQuery.data?.find((w: any) => w.code === code);
                                             setWard(found || null);
                                         }}
-                                        disabled={isLoading || !district || wards.isLoading}
+                                        disabled={isLoading || !district || wardsQuery.isLoading}
                                     >
                                         <option value="">Phường/Xã</option>
-                                        {wards.isLoading && <option value="">Đang tải...</option>}
-                                        {wards.data?.map((w: any) => (
+                                        {wardsQuery.isLoading && <option value="">Đang tải...</option>}
+                                        {wardsQuery.data?.map((w: any) => (
                                             <option key={w.code} value={w.code}>{w.name}</option>
                                         ))}
                                     </select>
