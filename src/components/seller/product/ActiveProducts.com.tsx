@@ -1,35 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useProduct, useCategory } from '../../../hooks';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
-import AddProduct from './AddProduct.com';
-import { PlusOutlined } from '@ant-design/icons';
-// @ts-ignore
-import { GetCategoriesParams } from '../../../types/category/Category.req.type';
 
-const Products: React.FC = () => {
-    const {
-        useUnverifiedProductsBySeller,
-        filterProductsBySeller,
-        getStatusText,
-        getStatusColor,
-        // sendProductPayment, // Xoá hàm handleSendPayment và mọi chỗ gọi sendProductPayment
-        // isSendingPayment
-    } = useProduct();
+const ActiveProducts: React.FC = () => {
+    const { useProducts } = useProduct();
     const { getCategorys } = useCategory();
     const [categories, setCategories] = useState<any[]>([]);
-    useEffect(() => {
-        const loadCategories = async () => {
-            try {
-                // Request all categories for the dropdown (no pagination limit)
-                const result = await getCategorys.mutateAsync({ pageSize: 1000 });
-                if (result?.data) setCategories(result.data);
-            } catch { }
-        };
-        loadCategories();
-    }, []);
     const [sellerId, setSellerId] = useState<string>('');
     const [error, setError] = useState<string>('');
-    const [showAddProduct, setShowAddProduct] = useState(false);
     const [filter, setFilter] = useState({
         categoryId: '',
         sortField: 'createdAt',
@@ -37,6 +15,17 @@ const Products: React.FC = () => {
         pageNumber: 1,
         pageSize: 10,
     });
+
+    // Load categories
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const result = await getCategorys.mutateAsync({ pageSize: 1000 });
+                if (result?.data) setCategories(result.data);
+            } catch { }
+        };
+        loadCategories();
+    }, []);
 
     // Get sellerId from localStorage
     useEffect(() => {
@@ -56,56 +45,31 @@ const Products: React.FC = () => {
         }
     }, []);
 
-    // Use the new hook to get unverified/unpaid products for this seller
-    const { data: unverifiedProducts, isLoading, error: unverifiedProductsError, refetch } = useUnverifiedProductsBySeller(sellerId, filter);
+    // Use the products hook to get all products, then filter by seller and status
+    const { data: allProducts, isLoading, error: productsError, refetch } = useProducts({
+        ...filter,
+        status: 0, // Active status
+        isVerified: true,
+        pageSize: 100 // Get more products to filter by seller
+    });
 
-    // Filter unverified products by seller using the utility function (if needed)
-    const sellerUnverifiedProducts: ProductResponse[] = unverifiedProducts ? filterProductsBySeller(unverifiedProducts, sellerId) : [];
+    // Filter products by sellerId
+    const products = allProducts ? allProducts.filter((product: ProductResponse) => 
+        product.sellerId === sellerId && 
+        product.isVerified === true && 
+        product.status === 0
+    ) : [];
 
-    // Xoá hàm handleSendPayment và mọi chỗ gọi sendProductPayment
-    // Callback sau khi thêm sản phẩm thành công
-    const handleAddProductSuccess = () => {
-        setShowAddProduct(false);
-        refetch();
-    };
-
-    // Show loading state
-    if (isLoading) {
+    // Show error state for missing sellerId or API error
+    if (error || productsError) {
         return (
             <div className="p-6 text-center">
-                <div className="text-white flex items-center justify-center space-x-2">
-                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Đang tải sản phẩm chưa thanh toán...</span>
-                </div>
-            </div>
-        );
-    }
-
-    // Show error state for missing sellerId
-    if (error) {
-        return (
-            <div className="p-6 text-center">
-                <div className="text-red-400 mb-4">{error}</div>
+                <div className="text-red-400 mb-4">{error || 'Không thể tải sản phẩm đã kích hoạt. Vui lòng thử lại.'}</div>
                 <button
                     onClick={() => window.location.reload()}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                     Tải lại trang
-                </button>
-            </div>
-        );
-    }
-
-    // Show error state
-    if (unverifiedProductsError) {
-        return (
-            <div className="p-6 text-center">
-                <div className="text-red-400 mb-4">Có lỗi xảy ra khi tải sản phẩm chưa thanh toán</div>
-                <button
-                    onClick={() => refetch()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    Thử lại
                 </button>
             </div>
         );
@@ -155,51 +119,23 @@ const Products: React.FC = () => {
                     <div className="flex justify-end">
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center space-x-2"
+                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                         >
                             <span>🔍</span>
                             <span>Lọc</span>
                         </button>
                     </div>
                 </div>
-                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                        <label className="block text-xs text-gray-300 mb-1">Trang</label>
-                        <input
-                            type="number"
-                            min={1}
-                            className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700"
-                            value={filter.pageNumber}
-                            onChange={e => setFilter(f => ({ ...f, pageNumber: Number(e.target.value) }))}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs text-gray-300 mb-1">Số sản phẩm/trang</label>
-                        <input
-                            type="number"
-                            min={1}
-                            className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700"
-                            value={filter.pageSize}
-                            onChange={e => setFilter(f => ({ ...f, pageSize: Number(e.target.value) }))}
-                        />
-                    </div>
-                </div> */}
             </form>
+
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Sản Phẩm Chưa Thanh Toán</h2>
+                    <h2 className="text-2xl font-bold text-white">Sản Phẩm Đã Kích Hoạt</h2>
                     <p className="text-gray-400 text-sm mt-1">
-                        Quản lý các sản phẩm chưa thanh toán (chưa kích hoạt)
+                        Các sản phẩm đã thanh toán và đang được bán trên hệ thống
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowAddProduct(true)}
-                        className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center space-x-2"
-                    >
-                        <PlusOutlined />
-                        <span>Thêm sản phẩm mới</span>
-                    </button>
                     <button
                         onClick={() => refetch()}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -210,60 +146,80 @@ const Products: React.FC = () => {
                 </div>
             </div>
 
-            {/* Hiển thị form thêm sản phẩm (có thể là modal hoặc section) */}
-            {showAddProduct && (
-                <div className="mb-8 bg-gray-900/80 border border-amber-600 rounded-lg p-6 relative">
-                    <button
-                        onClick={() => setShowAddProduct(false)}
-                        className="absolute top-2 right-2 text-gray-400 hover:text-red-400 text-2xl font-bold"
-                        aria-label="Đóng"
-                    >
-                        ×
-                    </button>
-                    <AddProduct onSuccess={handleAddProductSuccess} />
+            {/* Loading state */}
+            {isLoading && (
+                <div className="p-6 text-center">
+                    <div className="text-white flex items-center justify-center space-x-2">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Đang tải sản phẩm đã kích hoạt...</span>
+                    </div>
                 </div>
             )}
 
             {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-gray-400 text-sm">Tổng sản phẩm chưa thanh toán</div>
-                    <div className="text-2xl font-bold text-white">{unverifiedProducts?.length || 0}</div>
-                </div>
-                <div className="bg-gray-800 rounded-lg p-4 border border-yellow-600">
-                    <div className="text-gray-400 text-sm">Sản phẩm của tôi</div>
-                    <div className="text-2xl font-bold text-yellow-400">{sellerUnverifiedProducts.length}</div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gray-800 rounded-lg p-4 border border-green-600">
+                    <div className="text-gray-400 text-sm">Sản phẩm đang bán</div>
+                    <div className="text-2xl font-bold text-green-400">{products.length}</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 border border-blue-600">
-                    <div className="text-gray-400 text-sm">Cần thanh toán</div>
-                    <div className="text-2xl font-bold text-blue-400">{sellerUnverifiedProducts.length}</div>
+                    <div className="text-gray-400 text-sm">Tổng doanh thu</div>
+                    <div className="text-xs text-gray-500 mb-1">(Từ đơn hàng đã bán)</div>
+                    <div className="text-2xl font-bold text-blue-400">
+                        0 ₫
+                    </div>
+                    <div className="text-xs text-blue-300 mt-1">Chưa có đơn hàng nào</div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-4 border border-amber-600">
+                    <div className="text-gray-400 text-sm">Giá trung bình</div>
+                    <div className="text-xs text-gray-500 mb-1">(Sản phẩm đang bán)</div>
+                    <div className="text-2xl font-bold text-amber-400">
+                        {products.length > 0 
+                            ? Math.round(products.reduce((sum, p) => sum + (p.price || 0), 0) / products.length).toLocaleString('vi-VN')
+                            : '0'
+                        } ₫
+                    </div>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-4 border border-red-600">
+                    <div className="text-gray-400 text-sm">Phí đã thanh toán</div>
+                    <div className="text-xs text-gray-500 mb-1">(Phí đăng bài)</div>
+                    <div className="text-2xl font-bold text-red-400">
+                        {(products.length * 2000).toLocaleString('vi-VN')} ₫
+                    </div>
+                    <div className="text-xs text-red-300 mt-1">{products.length} sản phẩm × 2,000₫</div>
                 </div>
             </div>
 
-            {/* Seller's Unverified Products */}
+            {/* Products Grid */}
             <div>
                 <h3 className="text-xl font-semibold text-white mb-4 flex items-center space-x-2">
-                    <span>⏳</span>
-                    <span>Sản phẩm của tôi cần thanh toán ({sellerUnverifiedProducts.length})</span>
+                    <span>✅</span>
+                    <span>Sản phẩm đang bán ({products.length})</span>
                 </h3>
 
-                {sellerUnverifiedProducts.length === 0 ? (
+                {!isLoading && products.length === 0 ? (
                     <div className="text-center text-gray-400 py-12 bg-gray-800 rounded-lg border border-gray-700">
-                        <div className="text-6xl mb-4">🎉</div>
-                        <p className="text-lg mb-2">Tuyệt vời! Không có sản phẩm nào cần thanh toán.</p>
-                        <p className="text-sm">Tất cả sản phẩm của bạn đã được xác thực và thanh toán.</p>
+                        <div className="text-6xl mb-4">📦</div>
+                        <p className="text-lg mb-2">Chưa có sản phẩm nào đang bán.</p>
+                        <p className="text-sm">Hãy tạo sản phẩm mới và thanh toán để có thể bán hàng.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {sellerUnverifiedProducts.map((product: ProductResponse) => (
-                            <div key={product.id} className="group bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden border border-gray-700 hover:border-amber-500 transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/20 transform hover:-translate-y-1">
+                        {products.map((product: ProductResponse) => (
+                            <div key={product.id} className="group bg-gradient-to-br from-green-800/20 to-green-900/20 rounded-xl overflow-hidden border border-green-700 hover:border-green-500 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/20 transform hover:-translate-y-1">
                                 {/* Product Images */}
                                 <div className="relative">
                                     <ProductImageGallery imageUrls={product.imageUrls || []} brand={product.brand} model={product.model} />
-                                    {/* Status badge */}
+                                    {/* Active badge */}
                                     <div className="absolute top-3 left-3 z-10">
-                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full backdrop-blur-sm ${getStatusColor(product.status)} bg-black/30`}>
-                                            {getStatusText(product.status)}
+                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/80 text-white">
+                                            ✅ Đang bán
+                                        </span>
+                                    </div>
+                                    {/* Verified badge */}
+                                    <div className="absolute top-3 right-3 z-10">
+                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/80 text-white">
+                                            ✓ Đã xác minh
                                         </span>
                                     </div>
                                 </div>
@@ -272,7 +228,7 @@ const Products: React.FC = () => {
                                 <div className="p-6">
                                     {/* Header */}
                                     <div className="mb-4">
-                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">
+                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors">
                                             {product.brand} {product.model}
                                         </h3>
                                         <div className="flex items-center gap-3 text-sm text-gray-400">
@@ -305,10 +261,10 @@ const Products: React.FC = () => {
                                     {/* Price */}
                                     <div className="mb-4">
                                         <div className="flex items-baseline gap-2">
-                                            <span className="text-2xl font-bold text-emerald-400">
+                                            <span className="text-2xl font-bold text-green-400">
                                                 {product.price?.toLocaleString('vi-VN')}
                                             </span>
-                                            <span className="text-lg text-emerald-300">₫</span>
+                                            <span className="text-lg text-green-300">₫</span>
                                         </div>
                                     </div>
 
@@ -316,7 +272,7 @@ const Products: React.FC = () => {
                                     <div className="grid grid-cols-2 gap-3 mb-6">
                                         <div className="bg-gray-700/50 rounded-lg p-3">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
@@ -327,10 +283,10 @@ const Products: React.FC = () => {
                                         
                                         <div className="bg-gray-700/50 rounded-lg p-3">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                <span className="text-xs font-medium text-gray-300">Tạo lúc</span>
+                                                <span className="text-xs font-medium text-gray-300">Kích hoạt lúc</span>
                                             </div>
                                             <p className="text-sm text-white font-medium">
                                                 {new Date(product.createdAt).toLocaleString('vi-VN', {
@@ -345,25 +301,25 @@ const Products: React.FC = () => {
                                         
                                         <div className="bg-gray-700/50 rounded-lg p-3">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 <span className="text-xs font-medium text-gray-300">Xác thực</span>
                                             </div>
-                                            <span className={`text-sm font-semibold ${product.isVerified ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                {product.isVerified ? '✓ Đã xác thực' : '✗ Chưa xác thực'}
+                                            <span className="text-sm font-semibold text-green-400">
+                                                ✓ Đã xác thực
                                             </span>
                                         </div>
                                         
                                         <div className="bg-gray-700/50 rounded-lg p-3">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                                 </svg>
                                                 <span className="text-xs font-medium text-gray-300">Trạng thái</span>
                                             </div>
-                                            <span className={`text-sm font-semibold ${getStatusColor(product.status)}`}>
-                                                {getStatusText(product.status)}
+                                            <span className="text-sm font-semibold text-green-400">
+                                                Đang bán
                                             </span>
                                         </div>
                                     </div>
@@ -378,18 +334,18 @@ const Products: React.FC = () => {
                                                 </svg>
                                                 <span>Xem chi tiết</span>
                                             </button>
-                                            <button className="px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl group">
+                                            <button className="px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl group">
                                                 <svg className="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
                                             </button>
                                         </div>
                                         
-                                        <button className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl group">
+                                        <button className="w-full px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl group">
                                             <svg className="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
                                             </svg>
-                                            <span>Xóa sản phẩm</span>
+                                            <span>Tạm ngưng bán</span>
                                         </button>
                                     </div>
                                 </div>
@@ -398,6 +354,7 @@ const Products: React.FC = () => {
                     </div>
                 )}
             </div>
+
             {/* Pagination */}
             <div className="flex justify-center mt-6">
                 <button
@@ -414,7 +371,7 @@ const Products: React.FC = () => {
                     Trang {filter.pageNumber}
                 </span>
                 <button
-                    disabled={sellerUnverifiedProducts.length < filter.pageSize}
+                    disabled={products.length < filter.pageSize}
                     onClick={() => setFilter(f => ({ ...f, pageNumber: f.pageNumber + 1 }))}
                     className="px-2 py-1 mx-1 rounded bg-gray-700 text-white disabled:opacity-50"
                 >›</button>
@@ -432,12 +389,11 @@ const conditionMap: { [key: string]: string } = {
 };
 const getConditionText = (condition: string) => conditionMap[condition] || condition;
 
-// Helper component for Image Gallery within each card
+// Helper component for Image Gallery within each card (reuse from DisplayProducts)
 const ProductImageGallery = ({ imageUrls, brand, model }: { imageUrls: string[], brand: string, model: string }) => {
     const [mainImage, setMainImage] = useState(imageUrls[0]);
 
     useEffect(() => {
-        // Reset main image if product changes
         setMainImage(imageUrls[0]);
     }, [imageUrls]);
 
@@ -471,7 +427,7 @@ const ProductImageGallery = ({ imageUrls, brand, model }: { imageUrls: string[],
                     {imageUrls.map((url, idx) => (
                         <div
                             key={idx}
-                            className={`h-full aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all duration-200 ${mainImage === url ? 'border-amber-500' : 'border-transparent hover:border-gray-500'}`}
+                            className={`h-full aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all duration-200 ${mainImage === url ? 'border-green-500' : 'border-transparent hover:border-gray-500'}`}
                             onClick={() => setMainImage(url)}
                         >
                             <img
@@ -487,4 +443,4 @@ const ProductImageGallery = ({ imageUrls, brand, model }: { imageUrls: string[],
     );
 };
 
-export default Products;
+export default ActiveProducts;

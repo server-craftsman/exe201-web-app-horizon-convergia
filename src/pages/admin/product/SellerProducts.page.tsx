@@ -3,6 +3,7 @@ import { useCategory } from '../../../hooks/modules/useCategory';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
 import { DisplayDetailComponent } from '../../../components/admin/product/DisplayDetail.com';
 import { UserSerice } from '../../../services/user/user.service';
+import { ProductService } from '../../../services/product/product.service';
 
 interface SellerProductsFilter {
     categoryId: string;
@@ -38,6 +39,7 @@ const SellerProductsPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+    const [processingPayment, setProcessingPayment] = useState<string | null>(null);
 
     const [filter, setFilter] = useState<SellerProductsFilter>({
         categoryId: '',
@@ -244,6 +246,26 @@ const SellerProductsPage: React.FC = () => {
             case 2: return 'text-yellow-400';
             case 3: return 'text-blue-400';
             default: return 'text-gray-400';
+        }
+    };
+
+    const handleSendPayment = async (productId: string) => {
+        setProcessingPayment(productId);
+        try {
+            const result = await ProductService.sendProductPayment({ productId });
+            
+            if (result?.data) {
+                alert('✅ Đã gửi link thanh toán thành công đến email người bán!\n💡 Khi seller thanh toán xong, sản phẩm sẽ được tự động xác minh.');
+                // Refresh products để cập nhật status
+                if (selectedSeller) {
+                    fetchSellerProducts(selectedSeller);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to send payment:', error);
+            alert('❌ Gửi link thanh toán thất bại. Vui lòng thử lại.');
+        } finally {
+            setProcessingPayment(null);
         }
     };
 
@@ -524,14 +546,30 @@ const SellerProductsPage: React.FC = () => {
                                             >
                                                 Xem chi tiết
                                             </button>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
-                                                    Xác minh
-                                                </button>
-                                                <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm">
-                                                    Từ chối
-                                                </button>
-                                            </div>
+                                            
+                                            {/* Single Payment/Verification Button */}
+                                            <button 
+                                                onClick={() => handleSendPayment(product.id)}
+                                                disabled={processingPayment === product.id || (product.status === 3 && product.isVerified)}
+                                                className={`w-full px-4 py-2 text-white rounded-lg transition-colors text-sm flex items-center justify-center ${
+                                                    (product.status === 3 && product.isVerified)
+                                                        ? 'bg-gray-500 cursor-not-allowed' 
+                                                        : 'bg-emerald-600 hover:bg-emerald-700'
+                                                }`}
+                                            >
+                                                {processingPayment === product.id ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                        Đang gửi...
+                                                    </>
+                                                ) : (product.status === 3 && product.isVerified) ? (
+                                                    '✅ Hoàn thành'
+                                                ) : product.status === 3 ? (
+                                                    '🔄 Đã thanh toán, chờ xác minh'
+                                                ) : (
+                                                    '📧 Gửi thanh toán'
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

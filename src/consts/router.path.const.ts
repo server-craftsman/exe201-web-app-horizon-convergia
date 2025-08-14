@@ -54,6 +54,7 @@ export const ROUTER_URL = {
         PROFILE: "/seller/ho-so",
         SHOP: "/seller/cua-hang",
         PRODUCTS: "/seller/san-pham",
+        ACTIVE_PRODUCTS: "/seller/san-pham-dang-ban",
         ADD_PRODUCT: "/seller/them-san-pham",
         EDIT_PRODUCT: "/seller/sua-san-pham",
         ORDERS: "/seller/don-hang",

@@ -5,6 +5,7 @@ import type { RouteObject } from "react-router-dom";
 // import page 
 const SellerDashboard = lazy(() => import("../../../pages/seller/dashboard"));
 const SellerProducts = lazy(() => import("../../../pages/seller/product"));
+const SellerActiveProducts = lazy(() => import("../../../pages/seller/active-products"));
 const SellerOrders = lazy(() => import("../../../pages/seller/order"));
 const SellerSupport = lazy(() => import("../../../pages/seller/support"));
 const SellerReviews = lazy(() => import("../../../pages/seller/review"));
@@ -32,6 +33,7 @@ export const SellerRoutes: RouteObject = {
         // { index: false, path: ROUTER_URL.SELLER.PROFILE, element: <SellerProfile /> },
         // { index: false, path: ROUTER_URL.SELLER.SHOP, element: <SellerShop /> },
         { index: false, path: ROUTER_URL.SELLER.PRODUCTS, element: <SellerProducts /> },
+        { index: false, path: ROUTER_URL.SELLER.ACTIVE_PRODUCTS, element: <SellerActiveProducts /> },
         { index: false, path: ROUTER_URL.SELLER.ADD_PRODUCT, element: <AddProduct /> },
         // { index: false, path: ROUTER_URL.SELLER.EDIT_PRODUCT, element: <SellerEditProduct /> },
         { index: false, path: ROUTER_URL.SELLER.ORDERS, element: <SellerOrders /> },
