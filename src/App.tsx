@@ -8,7 +8,7 @@ import ScrollTopButton from "./components/common/ScrollTopButton.com";
 import { QueryProvider } from "./providers/QueryProvider";
 // import StagewiseToolbar from "./components/common/StagewiseToolbar";
 // import TwentyFirstToolbar from "./components/common/TwentyFirstToolbar";
-
+import ChatWidget from "@components/common/ChatWidget.com";
 export const App = () => {
   const isLoading = useSelector((state: any) => state.loading);
 
@@ -26,6 +26,8 @@ export const App = () => {
         {/* 21st.dev Toolbar - Development Only */}
         {/* <TwentyFirstToolbar /> */}
       </QueryProvider>
+      <ChatWidget />
+
     </>
   );
 };

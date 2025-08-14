@@ -27,9 +27,18 @@ export const ReviewService = {
             payload,
         });
     },
-    delete(id: string) {
-        return BaseService.remove<ApiResponse<void>>({
-            url: API_PATH.REVIEW.BY_ID(id),
-        });
+    async delete(id: string) {
+        const url = API_PATH.REVIEW.BY_ID(id);
+        try {
+            return await BaseService.remove<ApiResponse<void>>({ url });
+        } catch (e: any) {
+            const status = e?.response?.status as number | undefined;
+            const msg = e?.message || '';
+            if (status === 405 || status === 415 || /Method Not Allowed|Unsupported Media Type/i.test(msg)) {
+                // Fallback: some backends expect PUT to "delete"
+                return BaseService.put<ApiResponse<void>>({ url });
+            }
+            throw e;
+        }
     },
 };

@@ -154,9 +154,9 @@ const MotorcycleCategories: React.FC = () => {
                       {category.description || `Khám phá các sản phẩm trong danh mục ${category.name}`}
                     </p>
 
-                    <div className="flex justify-between items-center">
+                    {/* <div className="flex justify-between items-center">
                       <span className="text-amber-400 font-medium">Xem sản phẩm</span>
-                      <Link to={`${ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID}/${category.id}`}>
+                      <Link to={ROUTER_URL.CLIENT.PRODUCT_LIST_BY_CATEGORY_ID.replace(':id', category.id)}>
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
@@ -168,7 +168,7 @@ const MotorcycleCategories: React.FC = () => {
                           </svg>
                         </motion.button>
                       </Link>
-                    </div>
+                    </div> */}
                   </div>
                 </motion.div>
               );

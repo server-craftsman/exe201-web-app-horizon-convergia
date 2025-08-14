@@ -3,7 +3,7 @@ import HeroSection from '../../../components/client/sell_motor/HeroSection.com';
 import SellProcessSteps from '../../../components/client/sell_motor/SellProcessSteps.com';
 import BenefitsSection from '../../../components/client/sell_motor/BenefitsSection.com';
 import PricingCalculator from '../../../components/client/sell_motor/PricingCalculator.com';
-import SellerForm from '../../../components/client/sell_motor/SellerForm.com';
+// import SellerForm from '../../../components/client/sell_motor/SellerForm.com';
 
 const SellMotorPage: React.FC = () => {
   return (
@@ -21,7 +21,7 @@ const SellMotorPage: React.FC = () => {
       <PricingCalculator />
       
       {/* Seller Form */}
-      <SellerForm />
+      {/* <SellerForm /> */}
       
       {/* Call to Action */}
       <section className="py-16 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900">

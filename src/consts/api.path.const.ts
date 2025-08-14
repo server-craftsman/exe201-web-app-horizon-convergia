@@ -80,5 +80,9 @@ export const API_PATH = {
         UPDATE: (id: string) => `/Blog/${id}`,
         DELETE: (id: string) => `/Blog/${id}`,
         SEARCH: "/Blog/search"
+    },
+    CHAT: {
+        SEND: "/Chat/send",
+        HISTORY: "/Chat/history",
     }
 };

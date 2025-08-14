@@ -95,15 +95,19 @@ const RunRoutes = () => {
                     }
                 />
                 {BuyerRoutes.children?.filter(route => !route.index).map(route => {
-                    // Extract the relative path part after the buyer base URL
-                    const relativePath = route.path?.includes('/')
-                        ? route.path?.split('/').slice(-1)[0]
-                        : route.path;
+                    // Compute relative path after the buyer base (e.g., 'lich-su-don-hang' or 'don-hang/:id')
+                    let relativePath = route.path;
+                    const base = ROUTER_URL.BUYER.BASE + '/';
+                    if (relativePath?.startsWith(base)) {
+                        relativePath = relativePath.slice(base.length);
+                    } else if (relativePath?.startsWith('/')) {
+                        relativePath = relativePath.slice(1);
+                    }
 
                     return (
                         <Route
                             key={route.path}
-                            path={relativePath}
+                            path={relativePath as string}
                             element={
                                 <Suspense>
                                     {route.element}

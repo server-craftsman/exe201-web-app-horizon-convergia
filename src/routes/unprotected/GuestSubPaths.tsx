@@ -28,6 +28,8 @@ const CartPage = lazy(() => import("../../pages/client/cart"));
 const OrderPage = lazy(() => import("../../pages/client/order"));
 // payment
 const PaymentPage = lazy(() => import("../../pages/client/payment"));
+// chat
+const ChatPage = lazy(() => import("../../pages/client/chat"));
 //======================================================
 //export public sub paths
 export const publicSubPaths: Record<string, RouteObject[]> = {
@@ -91,6 +93,10 @@ export const publicSubPaths: Record<string, RouteObject[]> = {
         {
           path: ROUTER_URL.CLIENT.PAYMENT,
           element: <PaymentPage />
+        },
+        {
+          path: ROUTER_URL.CLIENT.CHAT,
+          element: <ChatPage />
         }
       ]
     }
