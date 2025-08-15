@@ -38,7 +38,7 @@ const OverviewPage: React.FC = () => {
                 }
                 params.endDate = endDateTime.toISOString();
             }
-            
+
             // Validate date range
             if (startDate && endDate) {
                 const start = new Date(startDate);
@@ -48,7 +48,7 @@ const OverviewPage: React.FC = () => {
                     return;
                 }
             }
-            
+
             console.log('Applying filter with params:', params);
             setQueryParams(params);
         } catch (error) {
@@ -133,12 +133,12 @@ const OverviewPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900">
+        <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8">
                     <div className="mb-4 sm:mb-0">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Dashboard Admin</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Quản lý hệ thống</h1>
                         <p className="text-gray-400">Tổng quan hệ thống và thống kê</p>
                     </div>
                     <button
