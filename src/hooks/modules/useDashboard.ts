@@ -7,10 +7,21 @@ export const useDashboard = (params?: DashboardQueryParams): UseQueryResult<Dash
     return useQuery({
         queryKey: ['admin-dashboard', params],
         queryFn: async () => {
-            const response = await DashboardService.getAdminDashboard(params);
-            return response.data;
+            try {
+                console.log('Fetching dashboard with params:', params);
+                const response = await DashboardService.getAdminDashboard(params);
+                console.log('Dashboard response:', response);
+                return response.data;
+            } catch (error) {
+                console.error('Dashboard fetch error:', error);
+                throw error;
+            }
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: false,
+        retry: (failureCount, error) => {
+            console.log('Retry attempt:', failureCount, 'Error:', error);
+            return failureCount < 2; // Only retry twice
+        }
     });
 };

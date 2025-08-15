@@ -18,10 +18,43 @@ const OverviewPage: React.FC = () => {
     const { data: dashboardData, isLoading: loading, error, refetch } = useDashboard(queryParams);
 
     const handleApplyFilter = () => {
-        const params: DashboardQueryParams = {};
-        if (startDate) params.startDate = startDate;
-        if (endDate) params.endDate = endDate;
-        setQueryParams(params);
+        try {
+            const params: DashboardQueryParams = {};
+            if (startDate) {
+                // Validate date format
+                const startDateTime = new Date(startDate);
+                if (isNaN(startDateTime.getTime())) {
+                    alert('Ngày bắt đầu không hợp lệ');
+                    return;
+                }
+                params.startDate = startDateTime.toISOString();
+            }
+            if (endDate) {
+                // Validate date format
+                const endDateTime = new Date(endDate);
+                if (isNaN(endDateTime.getTime())) {
+                    alert('Ngày kết thúc không hợp lệ');
+                    return;
+                }
+                params.endDate = endDateTime.toISOString();
+            }
+            
+            // Validate date range
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                if (start > end) {
+                    alert('Ngày bắt đầu không thể lớn hơn ngày kết thúc');
+                    return;
+                }
+            }
+            
+            console.log('Applying filter with params:', params);
+            setQueryParams(params);
+        } catch (error) {
+            console.error('Error applying filter:', error);
+            alert('Có lỗi xảy ra khi áp dụng bộ lọc. Vui lòng thử lại.');
+        }
     };
 
     const handleResetFilter = () => {
@@ -55,16 +88,37 @@ const OverviewPage: React.FC = () => {
     if (error) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-center">
+                <div className="text-center max-w-md mx-auto">
                     <div className="text-red-400 text-xl mb-4">
                         {error instanceof Error ? error.message : 'Có lỗi xảy ra khi tải dữ liệu dashboard'}
                     </div>
-                    <button
-                        onClick={handleRefresh}
-                        className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                        Thử lại
-                    </button>
+                    <div className="text-gray-400 text-sm mb-6">
+                        {startDate || endDate ? (
+                            <span>Có thể do bộ lọc thời gian không hợp lệ. Thử tải dữ liệu mà không có bộ lọc.</span>
+                        ) : (
+                            <span>Vui lòng kiểm tra kết nối mạng và thử lại.</span>
+                        )}
+                    </div>
+                    <div className="flex gap-3 justify-center">
+                        <button
+                            onClick={handleRefresh}
+                            className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors"
+                        >
+                            Thử lại
+                        </button>
+                        {(startDate || endDate) && (
+                            <button
+                                onClick={() => {
+                                    setStartDate('');
+                                    setEndDate('');
+                                    setQueryParams({});
+                                }}
+                                className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg transition-colors"
+                            >
+                                Tải mà không lọc
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         );
