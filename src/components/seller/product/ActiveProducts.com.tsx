@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useProduct, useCategory } from '../../../hooks';
+import { useQuery } from '@tanstack/react-query';
+import { OrderService } from '../../../services/order/order.service';
 import type { ProductResponse } from '../../../types/product/Product.res.type';
 
 const ActiveProducts: React.FC = () => {
@@ -59,6 +61,38 @@ const ActiveProducts: React.FC = () => {
         product.isVerified === true && 
         product.status === 0
     ) : [];
+
+    // Get seller's orders to calculate real revenue
+    const { data: ordersData } = useQuery({
+        queryKey: ['seller-orders', sellerId],
+        queryFn: () => OrderService.search({ 
+            sellerId, 
+            status: 1, // Status 1 = Confirmed/Đã xác nhận
+            pageSize: 1000 
+        }),
+        enabled: !!sellerId,
+        select: (data: any) => data?.data // Extract PagedOrderResponse
+    });
+
+    // Debug: Log all orders to see actual status values
+    useEffect(() => {
+        if (ordersData?.items) {
+            console.log('🔍 Debug - Confirmed seller orders (status=1):', ordersData.items);
+            ordersData.items.forEach((order: any, index: number) => {
+                console.log(`📦 Confirmed Order ${index + 1}:`, {
+                    id: order.id,
+                    status: order.status,
+                    totalPrice: order.totalPrice,
+                    createdAt: order.createdAt
+                });
+            });
+        }
+    }, [ordersData]);
+
+    // Calculate total revenue from confirmed orders (status = 1)
+    const confirmedOrders = ordersData?.items || [];
+    const totalRevenue = confirmedOrders.reduce((sum: number, order: any) => sum + (order.totalPrice || 0), 0);
+    const confirmedOrdersCount = confirmedOrders.length;
 
     // Show error state for missing sellerId or API error
     if (error || productsError) {
@@ -166,9 +200,14 @@ const ActiveProducts: React.FC = () => {
                     <div className="text-gray-400 text-sm">Tổng doanh thu</div>
                     <div className="text-xs text-gray-500 mb-1">(Từ đơn hàng đã bán)</div>
                     <div className="text-2xl font-bold text-blue-400">
-                        0 ₫
+                        {totalRevenue.toLocaleString('vi-VN')} ₫
                     </div>
-                    <div className="text-xs text-blue-300 mt-1">Chưa có đơn hàng nào</div>
+                    <div className="text-xs text-blue-300 mt-1">
+                        {confirmedOrdersCount > 0 
+                            ? `${confirmedOrdersCount} đơn hàng đã bán`
+                            : 'Chưa có đơn hàng nào'
+                        }
+                    </div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 border border-amber-600">
                     <div className="text-gray-400 text-sm">Giá trung bình</div>
