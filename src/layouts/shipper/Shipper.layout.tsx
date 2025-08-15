@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import ShipperHeader from './ShipperHeader';
 
 interface ShipperLayoutProps {
     children?: React.ReactNode;
@@ -7,19 +8,23 @@ interface ShipperLayoutProps {
 
 const ShipperLayout: React.FC<ShipperLayoutProps> = ({ children }) => {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-900 via-orange-800 to-black">
-            {/* Shipper Header placeholder - can be created later */}
-            <header className="bg-black/20 backdrop-blur-md border-b border-orange-500/20 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-bold text-white">Shipper Dashboard</h1>
-                    <div className="text-orange-400 text-sm">
-                        Horizon Convergia - Delivery
-                    </div>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-black">
+            {/* Shipper Header */}
+            <ShipperHeader />
+
+            {/* Main Content */}
+            <main className="pt-20 pb-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {children || <Outlet />}
                 </div>
-            </header>
-            <main className="pt-4">
-                {children || <Outlet />}
             </main>
+
+            {/* Background Pattern */}
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-blue-500/5"></div>
+                <div className="absolute top-0 left-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+            </div>
         </div>
     );
 };
