@@ -1,9 +1,34 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ROUTER_URL } from '../../../consts/router.path.const';
+import { DashboardService } from '../../../services/dashboard/dashboard.service';
+import { useUserInfo } from '../../../hooks';
+import TransactionTable from '../../../components/admin/dashboard/TransactionTable';
+import type { DashboardResponse } from '../../../types';
 
 const SellerDashboard: React.FC = () => {
+    const user = useUserInfo();
+
+    // Call API để lấy dữ liệu dashboard
+    const { data: dashboardData, isLoading, error } = useQuery({
+        queryKey: ['seller-dashboard', user?.id],
+        queryFn: () => DashboardService.getSellerDashboard(),
+        enabled: !!user?.id,
+        select: (response) => response.data as DashboardResponse,
+        staleTime: 5 * 60 * 1000, // 5 phút
+        refetchOnWindowFocus: false
+    });
+
+    // Format currency cho hiển thị
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    };
+
     const quickActions = [
         {
             title: 'Thêm Sản Phẩm',
@@ -52,30 +77,64 @@ const SellerDashboard: React.FC = () => {
     ];
 
     const salesData = [
-        { period: 'Hôm nay', value: '2.5M₫', change: '+12%', trend: 'up' },
-        { period: 'Tuần này', value: '18.2M₫', change: '+8%', trend: 'up' },
-        { period: 'Tháng này', value: '125M₫', change: '+25%', trend: 'up' },
-        { period: 'Năm nay', value: '890M₫', change: '+18%', trend: 'up' },
+        { 
+            period: 'Tổng doanh thu', 
+            value: dashboardData ? formatCurrency(dashboardData.totalRevenue) : '0₫', 
+            change: '+12%', 
+            trend: 'up' as const,
+            icon: (
+                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+            )
+        },
+        { 
+            period: 'Tổng sản phẩm', 
+            value: dashboardData ? dashboardData.totalProducts.toString() : '0', 
+            change: '+8%', 
+            trend: 'up' as const,
+            icon: (
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+            )
+        },
+        { 
+            period: 'Tổng đơn hàng', 
+            value: dashboardData ? dashboardData.totalOrders.toString() : '0', 
+            change: '+25%', 
+            trend: 'up' as const,
+            icon: (
+                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+            )
+        },
+        { 
+            period: 'Giao dịch', 
+            value: dashboardData ? dashboardData.transactions.length.toString() : '0', 
+            change: '+18%', 
+            trend: 'up' as const,
+            icon: (
+                <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            )
+        },
     ];
 
-    const recentOrders = [
-        {
-            id: '#DH003',
-            customer: 'Nguyễn Văn A',
-            product: 'Honda Wave Alpha',
-            status: 'Chờ xử lý',
-            amount: '35,000,000₫',
-            date: '2024-01-15',
-        },
-        {
-            id: '#DH004',
-            customer: 'Trần Thị B',
-            product: 'Yamaha Exciter 155',
-            status: 'Đã xác nhận',
-            amount: '47,000,000₫',
-            date: '2024-01-14',
-        },
-    ];
+    const recentOrders = dashboardData?.transactions?.slice(0, 3).map((transaction) => ({
+        id: transaction.reference,
+        customer: `Khách hàng #${transaction.reference.slice(-6)}`,
+        product: `Sản phẩm từ đơn hàng ${transaction.reference}`,
+        status: transaction.paymentStatus === 'Completed' ? 'Đã thanh toán' : 
+               transaction.paymentStatus === 'Pending' ? 'Chờ thanh toán' : 'Thất bại',
+        amount: formatCurrency(transaction.amount),
+        date: transaction.transactionDate,
+        statusColor: transaction.paymentStatus === 'Completed' ? 'bg-green-500/20 text-green-400' :
+                    transaction.paymentStatus === 'Pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-red-500/20 text-red-400'
+    })) || [];
 
     const topProducts = [
         { name: 'Honda Wave Alpha', sales: 25, revenue: '875M₫' },
@@ -139,30 +198,62 @@ const SellerDashboard: React.FC = () => {
                     ))}
                 </motion.div>
 
-                {/* Sales Overview */}
+                {/* Statistics Overview */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
                 >
-                    {salesData.map((data) => (
-                        <div
-                            key={data.period}
-                            className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl p-6"
-                        >
-                            <div className="flex items-center justify-between mb-2">
-                                <p className="text-gray-400 text-sm">{data.period}</p>
-                                <span className={`text-xs px-2 py-1 rounded-full ${data.trend === 'up'
-                                    ? 'bg-green-500/20 text-green-400'
-                                    : 'bg-red-500/20 text-red-400'
-                                    }`}>
-                                    {data.change}
-                                </span>
+                    {isLoading ? (
+                        // Loading skeleton
+                        Array.from({ length: 4 }).map((_, index) => (
+                            <div key={index} className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl p-6 animate-pulse">
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-3">
+                                        <div className="h-4 bg-gray-600 rounded w-20"></div>
+                                        <div className="h-8 bg-gray-600 rounded w-16"></div>
+                                    </div>
+                                    <div className="w-12 h-12 bg-gray-600 rounded-lg"></div>
+                                </div>
                             </div>
-                            <p className="text-2xl font-bold text-white">{data.value}</p>
+                        ))
+                    ) : error ? (
+                        <div className="col-span-full bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center">
+                            <svg className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="text-red-400 font-medium">Không thể tải dữ liệu dashboard</p>
+                            <p className="text-gray-400 text-sm mt-1">Vui lòng thử lại sau</p>
                         </div>
-                    ))}
+                    ) : (
+                        salesData.map((data, index) => (
+                            <motion.div
+                                key={data.period}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-all duration-300 group"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <p className="text-gray-400 text-sm font-medium">{data.period}</p>
+                                        <p className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">{data.value}</p>
+                                        <span className={`inline-flex items-center text-xs px-2 py-1 rounded-full font-medium ${
+                                            data.trend === 'up'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-red-500/20 text-red-400'
+                                        }`}>
+                                            {data.trend === 'up' ? '↗' : '↘'} {data.change}
+                                        </span>
+                                    </div>
+                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                        {data.icon}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
                 </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -184,33 +275,59 @@ const SellerDashboard: React.FC = () => {
                         </div>
 
                         <div className="space-y-4">
-                            {recentOrders.map((order) => (
-                                <div
-                                    key={order.id}
-                                    className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-600/30"
-                                >
-                                    <div className="flex items-center space-x-4">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-white">{order.product}</p>
-                                            <p className="text-sm text-gray-400">{order.customer} • {order.id}</p>
+                            {isLoading ? (
+                                // Loading skeleton for orders
+                                Array.from({ length: 2 }).map((_, index) => (
+                                    <div key={index} className="animate-pulse">
+                                        <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-600/30">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-12 h-12 bg-gray-600 rounded-lg"></div>
+                                                <div className="space-y-2">
+                                                    <div className="h-4 bg-gray-600 rounded w-32"></div>
+                                                    <div className="h-3 bg-gray-600 rounded w-24"></div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right space-y-2">
+                                                <div className="h-4 bg-gray-600 rounded w-20"></div>
+                                                <div className="h-6 bg-gray-600 rounded w-16"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-semibold text-white">{order.amount}</p>
-                                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${order.status === 'Chờ xử lý'
-                                            ? 'bg-yellow-500/20 text-yellow-400'
-                                            : 'bg-green-500/20 text-green-400'
-                                            }`}>
-                                            {order.status}
-                                        </span>
+                                ))
+                            ) : recentOrders.length > 0 ? (
+                                recentOrders.map((order) => (
+                                    <div
+                                        key={order.id}
+                                        className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg border border-gray-600/30 hover:border-gray-500/50 transition-all duration-300 group"
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-white group-hover:text-blue-400 transition-colors">{order.product}</p>
+                                                <p className="text-sm text-gray-400">{order.customer} • {order.id}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-semibold text-white">{order.amount}</p>
+                                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${order.statusColor}`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-8 text-gray-400">
+                                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                    <p className="text-lg font-medium mb-1">Chưa có đơn hàng nào</p>
+                                    <p className="text-sm">Đơn hàng sẽ hiển thị ở đây khi có giao dịch</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </motion.div>
 
@@ -313,6 +430,18 @@ const SellerDashboard: React.FC = () => {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Transaction Table */}
+                {dashboardData?.transactions && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="mt-8"
+                    >
+                        <TransactionTable transactions={dashboardData.transactions} />
+                    </motion.div>
+                )}
             </div>
         </div>
     );

@@ -86,6 +86,7 @@ export const API_PATH = {
         HISTORY: "/Chat/history",
     },
     DASHBOARD: {
-        ADMIN: "/Dashboard/admin"
+        ADMIN: "/Dashboard/admin",
+        SELLER: "/Dashboard/seller"
     }
 };
