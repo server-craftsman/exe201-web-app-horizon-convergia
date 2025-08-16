@@ -1,4 +1,4 @@
-import { Gender, UserRoleInteger } from "../../app/enums";
+import { UserRoleInteger } from "../../app/enums";
 
 export interface LoginRequest {
     email: string;
@@ -11,7 +11,7 @@ export interface RegisterRequest {
     password: string,
     phoneNumber: string,
     address: string,
-    gender: Gender,
+    gender: number,
     dob: Date,
     role?: UserRoleInteger,
     shopName?: string,

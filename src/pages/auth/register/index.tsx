@@ -208,13 +208,14 @@ const RegisterPage: React.FC = () => {
       // }
     }
 
-    register.mutate({
+    // Create the payload with dto wrapper
+    const payload = {
       name: formData.name?.trim() || '',
       email: formData.email.trim(),
       password: formData.password.trim(),
       phoneNumber: formData.phoneNumber.toString(),
       address: fullAddress || '',
-      gender: formData.gender,
+      gender: Number(formData.gender), // Convert enum to number
       dob: formData.dob ? new Date(formData.dob) : new Date(),
       role: formData.role,
       ...(formData.role === UserRoleInteger.SELLER && {
@@ -225,7 +226,11 @@ const RegisterPage: React.FC = () => {
         // bankAccountNumber: formData.bankAccountNumber.trim(),
         // bankAccountHolder: formData.bankAccountHolder.trim(),
       })
-    });
+    }
+
+    console.log('Register payload:', payload); // Debug log
+
+    register.mutate(payload as any);
   };
 
   const getStrengthColor = () => {
