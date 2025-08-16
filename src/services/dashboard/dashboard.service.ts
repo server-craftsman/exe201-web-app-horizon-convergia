@@ -10,5 +10,13 @@ export const DashboardService = {
             payload: params,
             isLoading: true
         });
+    },
+
+    getSellerDashboard: (params?: DashboardQueryParams): Promise<PromiseState<DashboardResponse>> => {
+        return BaseService.get<DashboardResponse>({
+            url: API_PATH.DASHBOARD.SELLER,
+            payload: params,
+            isLoading: true
+        });
     }
 };
