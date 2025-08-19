@@ -221,7 +221,7 @@ const ProductDetails: React.FC = () => {
                             <div className="text-sm text-gray-500">Giá đã bao gồm VAT (nếu có)</div>
 
                             <div className="mt-6 grid grid-cols-2 gap-3">
-                                <button onClick={openChatWithSeller} className="w-full bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium transition-colors">Liên hệ người bán</button>
+                                {/* <button onClick={openChatWithSeller} className="w-full bg-gray-900 hover:bg-amber-600 text-white rounded-lg py-2 font-medium transition-colors">Liên hệ người bán</button> */}
                                 <button onClick={() => user?.id && addItem(user.id, product.id, 1, `${product.brand} ${product.model}`)} className="w-full border border-gray-300 hover:bg-gray-50 rounded-lg py-2 font-medium">Thêm vào giỏ</button>
                             </div>
                         </motion.div>
