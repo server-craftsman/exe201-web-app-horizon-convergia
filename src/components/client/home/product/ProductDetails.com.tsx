@@ -47,15 +47,15 @@ const ProductDetails: React.FC = () => {
         })()
     }, [user?.id, id])
 
-    const openChatWithSeller = () => {
-        if (!user?.id) { notificationMessage('Vui lòng đăng nhập để chat với người bán', 'warning'); return }
-        // In absence of explicit sellerId, try to use product.sellerId
-        const receiverId = (product as any)?.sellerId || ''
-        if (!receiverId) { notificationMessage('Không tìm thấy người bán để liên hệ', 'error'); return }
-        const message = `Xin chào, tôi quan tâm sản phẩm ${product?.brand || ''} ${product?.model || ''}.`;
-        const event = new CustomEvent('hc:open-chat', { detail: { senderId: user.id, receiverId, message } })
-        window.dispatchEvent(event)
-    }
+    // const openChatWithSeller = () => {
+    //     if (!user?.id) { notificationMessage('Vui lòng đăng nhập để chat với người bán', 'warning'); return }
+    //     // In absence of explicit sellerId, try to use product.sellerId
+    //     const receiverId = (product as any)?.sellerId || ''
+    //     if (!receiverId) { notificationMessage('Không tìm thấy người bán để liên hệ', 'error'); return }
+    //     const message = `Xin chào, tôi quan tâm sản phẩm ${product?.brand || ''} ${product?.model || ''}.`;
+    //     const event = new CustomEvent('hc:open-chat', { detail: { senderId: user.id, receiverId, message } })
+    //     window.dispatchEvent(event)
+    // }
 
     const toggleFavorite = async () => {
         try {
